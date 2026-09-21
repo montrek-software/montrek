@@ -33,11 +33,12 @@
     </div>
     <div class="row tile m-1">
       {{ report_form }}
-      <div id="report-content"
-             hx-get="{{ request.get_full_path }}"
-             hx-trigger="load"
-             hx-target="#report-content">
-            {{ report  }}
-        </div>
+      {% comment %}
+        The skeleton is rendered here rather than fetched: it is static, so a
+        round trip that only returns it is a round trip for nothing. It already
+        carries hx-vals state="loading", so the page goes straight to the one
+        request that builds the report.
+      {% endcomment %}
+      {% include "partials/montrek_report_loading.html" %}
     </div>
 {% endblock %}

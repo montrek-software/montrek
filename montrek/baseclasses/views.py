@@ -1068,14 +1068,12 @@ class MontrekPostActionView(MontrekRedirectView):
         return self.action_response(request, *args, **kwargs)
 
     def action_response(self, request, *args, **kwargs) -> HttpResponse:
-        url = self.get_redirect_url(*args, **kwargs)
-        if request.headers.get("HX-Request"):
-            # htmx would swap the whole redirect target into the element's
-            # hx-target, so ask it to navigate instead.
-            response = HttpResponse(status=204)
-            response["HX-Redirect"] = url
-            return response
-        return HttpResponseRedirect(url)
+        # htmx would swap the whole redirect target into the element's
+        # hx-target, so the helper asks it to navigate instead. Shared with the
+        # error middlewares, which have to answer a denied action the same way.
+        return utils.htmx_aware_redirect(
+            request, self.get_redirect_url(*args, **kwargs)
+        )
 
 
 class MontrekHtmxRowActionView(MontrekHtmxRowRenderMixin, MontrekPostActionView):

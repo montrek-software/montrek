@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponseRedirect
-from baseclasses.utils import get_safe_redirect_url
+from baseclasses.utils import get_safe_redirect_url, htmx_aware_redirect
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 
@@ -30,5 +29,7 @@ class PermissionErrorMiddleware:
                 )
             else:
                 redirect_url = settings.LOGIN_URL
-            return HttpResponseRedirect(redirect_url)
+            # htmx aware: a denied action is usually clicked on an hx-post
+            # button, and a plain redirect would be swapped into that button.
+            return htmx_aware_redirect(request, redirect_url)
         return None

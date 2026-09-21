@@ -2,22 +2,26 @@ import re
 from urllib.parse import parse_qs
 
 from django.conf import settings
-from django.http import HttpResponseRedirect
+
+from baseclasses.utils import htmx_aware_redirect
 
 
 class LoginRequiredMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.login_redirect = HttpResponseRedirect(settings.LOGIN_URL)
 
     def __call__(self, request):
         is_login_exempt = self.is_login_exempt_path(request) or self.is_rest_api(
             request
         )
         if not request.user.is_authenticated and not is_login_exempt:
-            return self.login_redirect
-        response = self.get_response(request)
-        return response
+            # Built per request rather than once in __init__: a single response
+            # instance shared by every request is mutable state, and the answer
+            # now depends on the request anyway - a session that expired while
+            # the page was open is most likely noticed by an htmx call, which
+            # would otherwise swap the login page into whatever was clicked.
+            return htmx_aware_redirect(request, settings.LOGIN_URL)
+        return self.get_response(request)
 
     def is_rest_api(self, request) -> bool:
         query_params = parse_qs(request.META.get("QUERY_STRING", ""))
