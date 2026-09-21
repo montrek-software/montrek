@@ -36,9 +36,7 @@ class TestMontrekAppConfigDefaults(TestCase):
 class TestConcreteConfigMustOptIntoDiscovery(TestCase):
     def test_concrete_config_without_default_true_is_rejected(self):
         with self.assertRaises(ImproperlyConfigured) as ctx:
-
-            class BrokenConfig(MontrekAppConfig):
-                name = "baseclasses"
+            type("BrokenConfig", (MontrekAppConfig,), {"name": "baseclasses"})
 
         self.assertIn("default = True", str(ctx.exception))
 
