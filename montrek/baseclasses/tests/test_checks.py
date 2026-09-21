@@ -24,6 +24,7 @@ from baseclasses.app_config import MontrekAppConfig
 from baseclasses.checks import (
     check_access_policy_declarations,
     check_claimed_namespaces,
+    check_navigation_entries,
     check_restricted_app_views,
 )
 from baseclasses.views import MontrekDeleteView, MontrekListView
@@ -361,3 +362,42 @@ class TestAccessPolicyDeclarations(TestCase):
         with mock.patch.object(app_config, "access_policy", "restrcted", create=True):
             clear_access_policy_cache()
             check_restricted_app_views()
+
+
+# --- navigation entries -----------------------------------------------------
+
+
+@override_settings(ROOT_URLCONF=__name__)
+class TestNavigationEntries(TestCase):
+    """A navigation entry that does not resolve is hidden from every user,
+    which is indistinguishable from a missing permission. The check is what
+    turns that into something visible."""
+
+    def setUp(self):
+        super().setUp()
+        # The routes are cached, and the cache outlives the URLconf override.
+        clear_access_policy_cache()
+        self.addCleanup(clear_access_policy_cache)
+
+    @override_settings(NAVBAR_APPS=["test_gated_list", "some_repo.test_gated_delete"])
+    def test_routed_entries_are_silent(self):
+        self.assertEqual(check_navigation_entries(), [])
+
+    @override_settings(NAVBAR_APPS=["test_gated_list", "some_repo.test_gated_lsit"])
+    def test_a_typo_is_reported(self):
+        errors = check_navigation_entries()
+
+        self.assertEqual([error.id for error in errors], ["montrek.E006"])
+        self.assertIn("test_gated_lsit", errors[0].msg)
+
+    @override_settings(NAVBAR_APPS=[""])
+    def test_an_unconfigured_navigation_is_silent(self):
+        """``NAVBAR_APPS`` is split out of a string, so an unset setting arrives
+        as one empty entry rather than an empty list."""
+        self.assertEqual(check_navigation_entries(), [])
+
+    @override_settings(NAVBAR_APPS=["test_explicitly_gated"])
+    def test_an_entry_whose_app_configures_no_permission_is_not_reported_here(self):
+        """That is montrek.E004's business, and reporting it twice under two
+        ids would send the reader to the wrong setting."""
+        self.assertEqual(check_navigation_entries(), [])

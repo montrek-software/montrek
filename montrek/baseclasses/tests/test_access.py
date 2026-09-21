@@ -24,6 +24,7 @@ from baseclasses.access import (
     clear_access_policy_cache,
     declared_access_permissions,
     declared_access_policy,
+    permissions_for_callback,
     permissions_for_view,
     resolve_app_policy,
 )
@@ -515,23 +516,21 @@ class TestStringPermissionRequired(TestCase):
             self._resolved(views.MontrekNavigationRedirectView()), (self.PERMISSION,)
         )
 
-    def test_the_startup_check_keeps_it_whole(self):
-        from baseclasses.checks import _effective_permissions
-
+    def test_the_route_resolution_keeps_it_whole(self):
         view_class = type(
             "StringPermissionView",
             (views.MontrekListView,),
             {"permission_required": self.PERMISSION},
         )
 
-        self.assertEqual(_effective_permissions(view_class, {}), (self.PERMISSION,))
-
-    def test_the_startup_check_keeps_it_whole_from_the_urlconf(self):
-        from baseclasses.checks import _effective_permissions
-
         self.assertEqual(
-            _effective_permissions(
-                views.MontrekListView, {"permission_required": self.PERMISSION}
+            permissions_for_callback(view_class.as_view()), (self.PERMISSION,)
+        )
+
+    def test_the_route_resolution_keeps_it_whole_from_the_urlconf(self):
+        self.assertEqual(
+            permissions_for_callback(
+                views.MontrekListView.as_view(permission_required=self.PERMISSION)
             ),
             (self.PERMISSION,),
         )
@@ -539,32 +538,27 @@ class TestStringPermissionRequired(TestCase):
 
 class TestExplicitlyEmptyPermissionRequired(TestCase):
     """``as_view(permission_required=[])`` clears a class-level permission so the
-    app policy applies. The startup check has to read presence, not truthiness,
-    or it disagrees with the gate about which routes are open."""
+    app policy applies. Resolving a route has to read presence, not truthiness,
+    or the startup check and the navigation disagree with the gate about which
+    routes are open."""
 
-    def test_the_check_honours_an_empty_init_kwarg(self):
-        from baseclasses.checks import _effective_permissions
-
-        view_class = type(
+    @staticmethod
+    def _view_class():
+        return type(
             "ClassPermissionView",
             (views.MontrekListView,),
             {"permission_required": ["cls.perm"]},
         )
 
-        self.assertEqual(
-            _effective_permissions(view_class, {"permission_required": []}), ()
-        )
+    def test_an_empty_init_kwarg_is_honoured(self):
+        callback = self._view_class().as_view(permission_required=[])
+
+        self.assertEqual(permissions_for_callback(callback), ())
 
     def test_an_absent_init_kwarg_still_uses_the_class_permission(self):
-        from baseclasses.checks import _effective_permissions
+        callback = self._view_class().as_view()
 
-        view_class = type(
-            "ClassPermissionView",
-            (views.MontrekListView,),
-            {"permission_required": ["cls.perm"]},
-        )
-
-        self.assertEqual(_effective_permissions(view_class, {}), ("cls.perm",))
+        self.assertEqual(permissions_for_callback(callback), ("cls.perm",))
 
     def test_the_gate_agrees(self):
         view = views.MontrekListView()

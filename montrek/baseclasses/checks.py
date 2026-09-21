@@ -1,9 +1,13 @@
-"""Startup checks for the per-app access policy.
+"""Startup checks for the per-app access policy and the navigation built on it.
 
 Restricting an app (see ``baseclasses.access``) only holds if every view in it
 ends up behind a permission. These turn the two ways that can quietly fail - an
 app slipping out of a restricted subtree, and a view slipping past the gate -
 into startup errors. Silent for open apps.
+
+The last one guards the other direction: the navigation hides an entry it cannot
+resolve, so a mistyped ``NAVBAR_APPS`` entry would silently disappear from every
+menu instead of failing. It is reported here instead.
 """
 
 from django.apps import apps
@@ -15,14 +19,16 @@ from baseclasses.access import (
     UNCONFIGURED_PERMISSION,
     AccessKind,
     declared_access_policy,
-    permissions_for_view,
+    permissions_for_callback,
     resolve_app_policy,
+    route_for_url_name,
 )
 from baseclasses.app_config import (
     NAMESPACE_ATTRIBUTE,
     declaring_namespace_class,
     is_below_namespace,
 )
+from baseclasses.navigation import navigation_url_names
 
 
 def _namespace_owners() -> dict[str, type]:
@@ -118,33 +124,6 @@ def _iter_url_patterns(resolver=None, urlconf_module=""):
             yield pattern, module
 
 
-def _effective_permissions(view_class: type, initkwargs: dict) -> tuple[str, ...]:
-    """What the gate would require, without instantiating the view.
-
-    ``initkwargs`` are the arguments the URLconf passed to ``as_view``, which is
-    where a shared view is told which app's policy applies to it - see
-    ``MontrekNavigationRedirectView.access_module``.
-    """
-    # Presence, not truthiness: ``as_view(permission_required=[])`` deliberately
-    # clears a class-level permission so the app policy applies, and at runtime
-    # the empty instance attribute wins. Reading the class attribute instead
-    # would make this check disagree with the gate.
-    permission_required = (
-        initkwargs["permission_required"]
-        if "permission_required" in initkwargs
-        else getattr(view_class, "permission_required", None)
-    )
-    if permission_required:
-        # Django accepts a bare string as well as a list, so a plain tuple()
-        # here would report the characters of a single permission.
-        if isinstance(permission_required, str):
-            return (permission_required,)
-        return tuple(permission_required)
-    access_kind = getattr(view_class, "access_kind", AccessKind.VIEW)
-    module = initkwargs.get("access_module") or view_class.__module__
-    return permissions_for_view(module, access_kind)
-
-
 @register(Tags.security)
 def check_restricted_app_views(app_configs=None, **kwargs) -> list[Error]:
     """No view routed from a restricted app may be reachable without a
@@ -202,7 +181,7 @@ def _pattern_errors(pattern, urlconf_module: str, seen: set) -> list[Error]:
             )
         ]
 
-    permissions = _effective_permissions(view_class, initkwargs)
+    permissions = permissions_for_callback(callback)
     if not permissions:
         return [
             Error(
@@ -233,3 +212,29 @@ def _pattern_errors(pattern, urlconf_module: str, seen: set) -> list[Error]:
             )
         ]
     return []
+
+
+@register(Tags.security)
+def check_navigation_entries(app_configs=None, **kwargs) -> list[Error]:
+    """Every ``NAVBAR_APPS`` entry must resolve to a view.
+
+    The navigation filters itself down to what its user may reach, and an entry
+    whose URL name will not reverse resolves to a permission nobody holds - so
+    it is hidden from everybody, which looks exactly like a missing permission.
+    Without this check a typo in ``.env`` would be invisible until somebody
+    noticed a menu item was gone.
+    """
+    return [
+        Error(
+            f"Navigation entry {url_name!r} does not resolve to a view, so it "
+            f"is hidden from every user.",
+            hint=(
+                "Fix the entry in the NAVBAR_APPS setting: its last dotted "
+                "segment is the name of a URL pattern that takes no arguments."
+            ),
+            obj=f"NAVBAR_APPS: {url_name}",
+            id="montrek.E006",
+        )
+        for url_name in navigation_url_names()
+        if route_for_url_name(url_name) is None
+    ]

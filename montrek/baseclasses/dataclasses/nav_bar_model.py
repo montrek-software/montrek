@@ -7,6 +7,7 @@ class NavBarModel:
 
     app_name: str
     force_display_name: str | None = None
+    url: str = ""
 
     @property
     def display_name(self) -> str:
