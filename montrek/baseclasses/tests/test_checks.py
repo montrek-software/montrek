@@ -6,6 +6,7 @@ test views below live in an app (``baseclasses``) whose policy the tests swap
 out, and overriding ROOT_URLCONF keeps the walk to exactly these patterns.
 """
 
+import sys
 from unittest import mock
 
 from django.apps import apps
@@ -25,6 +26,7 @@ from baseclasses.checks import (
     check_access_policy_declarations,
     check_claimed_namespaces,
     check_navigation_entries,
+    check_object_scope_is_enforced,
     check_restricted_app_views,
 )
 from baseclasses.views import MontrekDeleteView, MontrekListView
@@ -328,6 +330,7 @@ class TestChecksAreRegistered(TestCase):
         self.assertIn(check_access_policy_declarations, registered)
         self.assertIn(check_claimed_namespaces, registered)
         self.assertIn(check_navigation_entries, registered)
+        self.assertIn(check_object_scope_is_enforced, registered)
         self.assertIn(check_restricted_app_views, registered)
 
 
@@ -402,3 +405,58 @@ class TestNavigationEntries(TestCase):
         """That is montrek.E004's business, and reporting it twice under two
         ids would send the reader to the wrong setting."""
         self.assertEqual(check_navigation_entries(), [])
+
+
+# --- object scope declarations ---------------------------------------------
+
+
+class DeclaresScopeWithoutEnforcing(MontrekListView):
+    """The failure montrek.E007 exists for: the attribute reads as a gate, the
+    test harness grants what it names, and nothing ever checks it."""
+
+    object_scope_permissions = ("some_app.may_touch_this_object",)
+
+
+class DeclaresScopeAndEnforces(MontrekListView):
+    object_scope_permissions = ("some_app.may_touch_this_object",)
+
+    def has_permission(self) -> bool:
+        return super().has_permission()
+
+
+SCOPE_URLPATTERNS = [
+    path("inert/", DeclaresScopeWithoutEnforcing.as_view(), name="test_inert_scope"),
+]
+ENFORCED_SCOPE_URLPATTERNS = [
+    path("enforced/", DeclaresScopeAndEnforces.as_view(), name="test_enforced_scope"),
+]
+NO_SCOPE_URLPATTERNS = [
+    path("plain/", GatedListView.as_view(), name="test_plain"),
+]
+
+
+class TestObjectScopeIsEnforced(TestCase):
+    def _errors_for(self, urlpatterns_):
+        """Run the check against one set of routes."""
+        module = sys.modules[__name__]
+        with (
+            override_settings(ROOT_URLCONF=__name__),
+            mock.patch.object(module, "urlpatterns", urlpatterns_),
+        ):
+            return check_object_scope_is_enforced()
+
+    def test_a_declaration_without_a_check_is_reported(self):
+        errors = self._errors_for(SCOPE_URLPATTERNS)
+
+        self.assertEqual([error.id for error in errors], ["montrek.E007"])
+        self.assertIn("DeclaresScopeWithoutEnforcing", errors[0].msg)
+
+    def test_a_declaration_with_a_check_passes(self):
+        self.assertEqual(self._errors_for(ENFORCED_SCOPE_URLPATTERNS), [])
+
+    def test_a_view_declaring_nothing_is_silent(self):
+        self.assertEqual(self._errors_for(NO_SCOPE_URLPATTERNS), [])
+
+    def test_the_real_scoped_views_enforce_what_they_declare(self):
+        """The project's own routes, not a fixture."""
+        self.assertEqual(check_object_scope_is_enforced(), [])
