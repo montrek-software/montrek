@@ -48,21 +48,26 @@ docker-logs: # Show docker compose logs
 docker-build: # Build the docker images
 	@$(SECURE_WRAPPER) bin/docker/build.sh
 
+# Shared by the db and keycloak-db backup/restore targets. Backups are binary
+# (pg_dump custom format) by default; FORMAT=plain falls back to the old SQL
+# text dump, and on a restore restricts the search to one of the two.
+DB_FORMAT_FLAG := $(if $(FORMAT),--$(FORMAT))
+
 .PHONY: docker-db-backup
-docker-db-backup: # Make a backup of the docker database.
-	@$(SECURE_WRAPPER) bin/docker/db.sh backup
+docker-db-backup: # Make a backup of the docker database (add FORMAT=plain for a SQL text dump).
+	@$(SECURE_WRAPPER) bin/docker/db.sh backup $(DB_FORMAT_FLAG)
 
 .PHONY: docker-db-restore
-docker-db-restore: # Restore the docker database from a backup.
-	@$(SECURE_WRAPPER) bin/docker/db.sh restore
+docker-db-restore: # Restore the docker database from a backup (add FORMAT=plain or FORMAT=binary to pick a format).
+	@$(SECURE_WRAPPER) bin/docker/db.sh restore $(DB_FORMAT_FLAG)
 
 .PHONY: docker-keycloak-db-backup
-docker-keycloak-db-backup: # Make a backup of the keycloak database.
-	@$(SECURE_WRAPPER) bin/docker/keycloak-db.sh backup
+docker-keycloak-db-backup: # Make a backup of the keycloak database (add FORMAT=plain for a SQL text dump).
+	@$(SECURE_WRAPPER) bin/docker/keycloak-db.sh backup $(DB_FORMAT_FLAG)
 
 .PHONY: docker-keycloak-db-restore
-docker-keycloak-db-restore: # Restore the keycloak database from a backup.
-	@$(SECURE_WRAPPER) bin/docker/keycloak-db.sh restore
+docker-keycloak-db-restore: # Restore the keycloak database from a backup (add FORMAT=plain or FORMAT=binary to pick a format).
+	@$(SECURE_WRAPPER) bin/docker/keycloak-db.sh restore $(DB_FORMAT_FLAG)
 
 .PHONY: docker-django-manage
 docker-django-manage: # Run Django management commands inside the docker container.

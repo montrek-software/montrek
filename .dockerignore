@@ -1,7 +1,7 @@
 # Deny everything, then allow only what the Dockerfile actually COPYs.
 #
 # Deliberately an allowlist. The context otherwise included montrek/uploads
-# (customer files) and db_backups (SQL dumps) -- 18GB shipped to the daemon on
+# (customer files) and db_backups (database dumps) -- 18GB shipped to the daemon on
 # every build, and one `COPY . .` away from being baked into an image that gets
 # pushed to a registry.
 #

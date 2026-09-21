@@ -243,9 +243,22 @@ make docker-db-backup
 
 - Ensure `db` and `web` containers are running.
 - Backup files are stored in `db_backups/`.
+- Backups are written in `pg_dump`'s **custom format**: a compressed binary
+  archive (`backup_<date>.dump`) that is read back with `pg_restore`.
 - Old backups are pruned automatically:
   - Older than **30 days** (unless end-of-month) → deleted.
   - Older than **1 year** → deleted.
+
+For the transition away from the previous plain-text dumps, a SQL text backup
+can still be written with `FORMAT=plain`:
+
+```bash
+make docker-db-backup FORMAT=plain
+```
+
+This produces `backup_<date>.sql` as before. `DB_BACKUP_FORMAT=plain` in `.env`
+changes the default for every backup, so a scheduled job does not have to pass
+the flag.
 
 To automate backups on Unix systems, add a cronjob:
 
@@ -270,3 +283,27 @@ make docker-db-restore
 ```
 
 You will be prompted to enter the backup date you want to restore.
+
+The format is detected from the file itself, so both the new `.dump` archives
+and the older `.sql` dumps restore with the same command. Where both exist for
+the chosen date, the most recent one is used; add `FORMAT=binary` or
+`FORMAT=plain` to restrict the search to one of them:
+
+```bash
+make docker-db-restore FORMAT=plain
+```
+
+---
+
+### Keycloak Database
+
+The keycloak database has its own pair of targets, which behave exactly as the
+ones above and take the same `FORMAT` option:
+
+```bash
+make docker-keycloak-db-backup
+make docker-keycloak-db-restore
+```
+
+Its dumps share `db_backups/` but are named `keycloak_backup_<date>.<ext>`, and
+the retention rules only ever prune a database's own files.
