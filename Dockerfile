@@ -43,18 +43,22 @@ RUN apt-get update && \
   && apt-get install -y --no-install-recommends \
   ttf-mscorefonts-installer \
   postgresql-client-16 \
-  && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+  && curl --fail --silent --show-error --location \
+  --proto '=https' --proto-redir '=https' --tlsv1.2 \
+  https://deb.nodesource.com/setup_20.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
   && chown -R appuser:appgroup ${DOCKERHOME} \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
-  && curl -L \
-  --proto https \
-  --proto-redir https \
+  && curl --location \
+  --proto '=https' \
+  --proto-redir '=https' \
   --tlsv1.2 \
-  -sSf \
+  --silent --show-error --fail \
   -o /tmp/pandoc-3.1.3-1-amd64.deb \
   https://github.com/jgm/pandoc/releases/download/3.1.3/pandoc-3.1.3-1-amd64.deb \
+  && echo "caa7e0410f9e2cb1da2eb8db13cc97b5548fe455985e2c944e3929d22f99bcdc  /tmp/pandoc-3.1.3-1-amd64.deb" \
+  | sha256sum --check --strict - \
   && dpkg -i /tmp/pandoc-3.1.3-1-amd64.deb \
   && rm /tmp/pandoc-3.1.3-1-amd64.deb
 # port where the Django app runs

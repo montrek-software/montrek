@@ -59,7 +59,7 @@ FULL_PERMISSIONS = {
 }
 
 
-class RestrictedAppTestCaseMixin:
+class RestrictedAppTestCase(TestCase):
     """Turn ``HOST_APP`` into a restricted app for the duration of a test."""
 
     access_permissions: dict = FULL_PERMISSIONS
@@ -106,7 +106,7 @@ class TestResolveAppPolicy(TestCase):
         self.assertFalse(resolve_app_policy("baseclasses.views").is_restricted)
 
 
-class TestRestrictedAppPolicy(RestrictedAppTestCaseMixin, TestCase):
+class TestRestrictedAppPolicy(RestrictedAppTestCase):
     def test_policy_is_restricted(self):
         self.assertTrue(resolve_app_policy(HOST_MODULE).is_restricted)
 
@@ -122,7 +122,7 @@ class TestRestrictedAppPolicy(RestrictedAppTestCaseMixin, TestCase):
         self.assertEqual(permissions_for_view("baseclasses.views", AccessKind.VIEW), ())
 
 
-class TestUnconfiguredAccessKind(RestrictedAppTestCaseMixin, TestCase):
+class TestUnconfiguredAccessKind(RestrictedAppTestCase):
     access_permissions = {AccessKind.VIEW: AccessTestPermissions.CAN_VIEW}
 
     def test_missing_access_kind_denies_instead_of_allowing(self):
@@ -199,7 +199,7 @@ class GateTestView(views.MontrekPermissionRequiredMixin):
     __module__ = HOST_MODULE
 
 
-class TestPermissionGate(RestrictedAppTestCaseMixin, TestCase):
+class TestPermissionGate(RestrictedAppTestCase):
     def _view(self, access_kind=AccessKind.VIEW, permission_required=None):
         view = GateTestView()
         view.access_kind = access_kind
@@ -277,7 +277,7 @@ class TestBaseViewAccessKinds(TestCase):
         self.assertIs(views.MontrekRedirectView.access_kind, AccessKind.UPDATE)
 
 
-class TestSimpleFileUploadPermission(RestrictedAppTestCaseMixin, TestCase):
+class TestSimpleFileUploadPermission(RestrictedAppTestCase):
     def _list_view(self, simple_file_upload_permission=None):
         view = views.MontrekListView()
         view.__class__ = type(
@@ -389,7 +389,7 @@ class TestMalformedPermissionsDenyRatherThanRaise(TestCase):
         self.assertEqual(permissions, (UNCONFIGURED_PERMISSION,))
 
 
-class TestStartupChecksSurviveAMalformedApp(RestrictedAppTestCaseMixin, TestCase):
+class TestStartupChecksSurviveAMalformedApp(RestrictedAppTestCase):
     """The checks must report a malformed app, not die on it."""
 
     access_permissions = [object()]
@@ -464,7 +464,7 @@ class TestNavigationRedirectView(TestCase):
         self.assertEqual(view.get_redirect_url(), "somewhere/else")
 
 
-class TestNavigationRedirectAccessModule(RestrictedAppTestCaseMixin, TestCase):
+class TestNavigationRedirectAccessModule(RestrictedAppTestCase):
     """The class lives in ``baseclasses``, an open app, so it has to be told
     which app's policy applies to it."""
 

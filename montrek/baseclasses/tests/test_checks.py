@@ -13,6 +13,7 @@ from django.core.checks import registry
 from django.http import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import include, path
+from django.views.decorators.http import require_safe
 
 from baseclasses.access import (
     AccessKind,
@@ -68,8 +69,14 @@ class OutsideAppExplicitListView(MontrekListView):
     permission_required = ["some_app.explicit_permission"]
 
 
+@require_safe
 def ungated_function_view(request):
-    return HttpResponse("no gate at all")
+    """Carries no permission gate - which is what the check must report.
+
+    ``require_safe`` keeps the fixture read-only all the same: the check walks
+    URL patterns, so nothing here needs to answer an unsafe method.
+    """
+    return HttpResponse("no permission gate at all")
 
 
 urlpatterns = [
@@ -102,7 +109,7 @@ NESTED_URLPATTERNS = [
 ]
 
 
-class RestrictHostAppMixin:
+class RestrictedHostAppTestCase(TestCase):
     """Restrict ``HOST_APP`` for the duration of a test."""
 
     access_permissions: dict = {
@@ -211,7 +218,7 @@ class TestClaimedNamespaces(TestCase):
 
 
 @override_settings(ROOT_URLCONF=__name__)
-class TestRestrictedAppViews(RestrictHostAppMixin, TestCase):
+class TestRestrictedAppViews(RestrictedHostAppTestCase):
     def test_fully_mapped_views_pass(self):
         self.assertEqual(check_restricted_app_views(), [])
 
@@ -222,7 +229,7 @@ class TestRestrictedAppViews(RestrictHostAppMixin, TestCase):
 
 
 @override_settings(ROOT_URLCONF=__name__)
-class TestUnmappedAccessKind(RestrictHostAppMixin, TestCase):
+class TestUnmappedAccessKind(RestrictedHostAppTestCase):
     access_permissions = {AccessKind.VIEW: READ_PERMISSION}
 
     def test_view_whose_access_kind_is_unmapped_is_reported(self):
@@ -238,7 +245,7 @@ class TestUnmappedAccessKind(RestrictHostAppMixin, TestCase):
 
 
 @override_settings(ROOT_URLCONF=__name__)
-class TestExplicitPermissionSatisfiesTheCheck(RestrictHostAppMixin, TestCase):
+class TestExplicitPermissionSatisfiesTheCheck(RestrictedHostAppTestCase):
     access_permissions: dict = {}
 
     def test_only_the_views_without_their_own_permission_are_reported(self):
@@ -254,7 +261,7 @@ class TestExplicitPermissionSatisfiesTheCheck(RestrictHostAppMixin, TestCase):
         self.assertIn(f"{__name__}.GatedListView", reported)
 
 
-class TestUngatedFunctionView(RestrictHostAppMixin, TestCase):
+class TestUngatedFunctionView(RestrictedHostAppTestCase):
     def test_function_based_view_in_a_restricted_app_is_reported(self):
         with (
             override_settings(ROOT_URLCONF=__name__),
@@ -266,7 +273,7 @@ class TestUngatedFunctionView(RestrictHostAppMixin, TestCase):
         self.assertIn("ungated_function_view", errors[0].obj)
 
 
-class TestViewClassOutsideTheRoutingApp(RestrictHostAppMixin, TestCase):
+class TestViewClassOutsideTheRoutingApp(RestrictedHostAppTestCase):
     """The gate resolves the policy from the view class' module, so a class
     routed from a restricted app but defined outside it is ungated."""
 
