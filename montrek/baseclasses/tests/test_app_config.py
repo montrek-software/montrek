@@ -131,9 +131,11 @@ class TestNestedNamespacesAreRefused(TestCase):
 
     def test_a_second_claim_in_the_same_hierarchy_is_refused(self):
         with self.assertRaises(ImproperlyConfigured) as ctx:
-
-            class NestedConfig(SubtreeBaseConfig):
-                namespace = f"{ROOT_NAMESPACE}.inner"
+            type(
+                "NestedConfig",
+                (SubtreeBaseConfig,),
+                {"namespace": f"{ROOT_NAMESPACE}.inner"},
+            )
 
         message = str(ctx.exception)
         self.assertIn(ROOT_NAMESPACE, message)
