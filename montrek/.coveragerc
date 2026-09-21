@@ -6,5 +6,16 @@ omit =
     */_remote_module_non_scriptable*
     */site-packages/*
     */migrations/*
+    # Apps the code_generation tests generate, import and then delete in
+    # addCleanup: measured but gone by report time, which aborts the whole
+    # XML report with "No source for code".
+    */code_generation/tests/data/*
     baseclasses/static/*
     */scripts/*
+
+[report]
+# Also at report time, not only at record time: a data file written before this
+# pattern existed -- or a generated file that slipped past [run] omit -- would
+# otherwise abort the whole XML report with "No source for code".
+omit =
+    */code_generation/tests/data/*

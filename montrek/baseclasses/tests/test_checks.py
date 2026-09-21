@@ -13,6 +13,7 @@ from django.core.checks import registry
 from django.http import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import include, path
+from django.views.decorators.http import require_safe
 
 from baseclasses.access import (
     AccessKind,
@@ -68,8 +69,14 @@ class OutsideAppExplicitListView(MontrekListView):
     permission_required = ["some_app.explicit_permission"]
 
 
+@require_safe
 def ungated_function_view(request):
-    return HttpResponse("no gate at all")
+    """Carries no permission gate - which is what the check must report.
+
+    ``require_safe`` keeps the fixture read-only all the same: the check walks
+    URL patterns, so nothing here needs to answer an unsafe method.
+    """
+    return HttpResponse("no permission gate at all")
 
 
 urlpatterns = [
