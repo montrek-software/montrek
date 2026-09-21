@@ -18,6 +18,7 @@ from typing import Protocol
 
 from django.apps import apps
 from django.core.exceptions import ImproperlyConfigured
+from django.urls import NoReverseMatch, Resolver404, resolve, reverse
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +164,93 @@ def permissions_for_view(module: str, access_kind: AccessKind) -> tuple[str, ...
     return resolve_app_policy(module).permissions_for(access_kind)
 
 
+def permissions_for_callback(callback) -> tuple[str, ...]:
+    """What the gate would require of ``callback``, without instantiating it.
+
+    ``callback`` is what a URL pattern routes to, so its ``view_initkwargs`` are
+    the arguments the URLconf passed to ``as_view`` - which is where a shared
+    view is told whose policy applies to it, see
+    ``MontrekNavigationRedirectView.access_module``.
+    """
+    view_class = getattr(callback, "view_class", None)
+    initkwargs = getattr(callback, "view_initkwargs", {}) or {}
+    target = view_class if view_class is not None else callback
+    # Presence, not truthiness: ``as_view(permission_required=[])`` deliberately
+    # clears a class-level permission so the app policy applies, and at runtime
+    # the empty instance attribute wins. Reading the class attribute instead
+    # would make this disagree with the gate.
+    permission_required = (
+        initkwargs["permission_required"]
+        if "permission_required" in initkwargs
+        else getattr(target, "permission_required", None)
+    )
+    if permission_required:
+        # Django accepts a bare string as well as a list, so a plain tuple()
+        # here would return the characters of a single permission.
+        if isinstance(permission_required, str):
+            return (permission_required,)
+        return tuple(permission_required)
+    # Read from the URLconf first, like the two above: ``as_view`` accepts any
+    # declared class attribute, so a route may name the access kind it grants
+    # and the gate would honour that instance value.
+    access_kind = initkwargs.get(
+        "access_kind", getattr(target, "access_kind", AccessKind.VIEW)
+    )
+    module = initkwargs.get("access_module") or getattr(target, "__module__", "")
+    return permissions_for_view(str(module), access_kind)
+
+
+@cache
+def route_for_url_name(url_name: str) -> tuple[str, object] | None:
+    """The URL and the view callback a name routes to, or ``None``.
+
+    ``None`` for a name that will not reverse without arguments or does not
+    resolve - a typo in ``NAVBAR_APPS``, a URL that has since moved. Callers
+    drop the entry instead of rendering a link that raises ``NoReverseMatch``
+    the moment the page is built; the montrek.E006 check reports it at startup.
+
+    Cached: the URLconf is fixed once the apps are loaded.
+    """
+    try:
+        url = reverse(url_name)
+        return url, resolve(url).func
+    except (NoReverseMatch, Resolver404):
+        logger.error("URL name %r does not route to a view.", url_name)
+        return None
+
+
+def permissions_for_url_name(url_name: str) -> tuple[str, ...]:
+    """The permissions needed to enter the view ``url_name`` routes to.
+
+    For navigation that wants to show only what its user may follow. Resolving
+    the route rather than naming a permission per menu entry is what keeps the
+    menu and the gate from drifting apart.
+
+    An unroutable name yields ``UNCONFIGURED_PERMISSION``, which is never
+    granted, so nothing but the gate decides who sees what.
+    """
+    route = route_for_url_name(url_name)
+    if route is None:
+        return (UNCONFIGURED_PERMISSION,)
+    return permissions_for_callback(route[1])
+
+
+def can_access_url_name(user, url_name: str) -> bool:
+    """Whether ``user`` would get past the gate of the view ``url_name`` routes
+    to.
+
+    An open app requires no permission, so everybody passes - the same answer
+    the gate gives. An unroutable name is False for everybody including a
+    superuser, who holds every permission and would otherwise be handed a link
+    that cannot be reversed.
+    """
+    if route_for_url_name(url_name) is None:
+        return False
+    return user.has_perms(permissions_for_url_name(url_name))
+
+
 def clear_access_policy_cache() -> None:
-    """Drop the resolution cache. Only needed by tests that swap a policy in."""
+    """Drop the resolution caches. Only needed by tests that swap a policy or a
+    URLconf in."""
     resolve_app_policy.cache_clear()
+    route_for_url_name.cache_clear()
