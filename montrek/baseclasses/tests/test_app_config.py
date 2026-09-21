@@ -23,6 +23,15 @@ from baseclasses.app_config import (
 )
 
 
+def declare_app_config(name, bases, attributes):
+    """Create an app config class the way importing an ``apps.py`` would.
+
+    Class creation is what runs ``__init_subclass__``, so the refusals below
+    happen here. The class itself is never used afterwards.
+    """
+    return type(name, bases, attributes)
+
+
 class TestMontrekAppConfigDefaults(TestCase):
     def test_apps_are_open_unless_they_say_otherwise(self):
         self.assertIs(MontrekAppConfig.access_policy, AccessPolicy.OPEN)
@@ -36,7 +45,9 @@ class TestMontrekAppConfigDefaults(TestCase):
 class TestConcreteConfigMustOptIntoDiscovery(TestCase):
     def test_concrete_config_without_default_true_is_rejected(self):
         with self.assertRaises(ImproperlyConfigured) as ctx:
-            type("BrokenConfig", (MontrekAppConfig,), {"name": "baseclasses"})
+            declare_app_config(
+                "BrokenConfig", (MontrekAppConfig,), {"name": "baseclasses"}
+            )
 
         self.assertIn("default = True", str(ctx.exception))
 
@@ -129,7 +140,7 @@ class TestNestedNamespacesAreRefused(TestCase):
 
     def test_a_second_claim_in_the_same_hierarchy_is_refused(self):
         with self.assertRaises(ImproperlyConfigured) as ctx:
-            type(
+            declare_app_config(
                 "NestedConfig",
                 (SubtreeBaseConfig,),
                 {"namespace": f"{ROOT_NAMESPACE}.inner"},
