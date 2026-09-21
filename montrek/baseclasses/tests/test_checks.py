@@ -327,6 +327,7 @@ class TestChecksAreRegistered(TestCase):
 
         self.assertIn(check_access_policy_declarations, registered)
         self.assertIn(check_claimed_namespaces, registered)
+        self.assertIn(check_navigation_entries, registered)
         self.assertIn(check_restricted_app_views, registered)
 
 

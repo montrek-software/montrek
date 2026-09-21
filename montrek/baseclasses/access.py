@@ -190,7 +190,12 @@ def permissions_for_callback(callback) -> tuple[str, ...]:
         if isinstance(permission_required, str):
             return (permission_required,)
         return tuple(permission_required)
-    access_kind = getattr(target, "access_kind", AccessKind.VIEW)
+    # Read from the URLconf first, like the two above: ``as_view`` accepts any
+    # declared class attribute, so a route may name the access kind it grants
+    # and the gate would honour that instance value.
+    access_kind = initkwargs.get(
+        "access_kind", getattr(target, "access_kind", AccessKind.VIEW)
+    )
     module = initkwargs.get("access_module") or getattr(target, "__module__", "")
     return permissions_for_view(str(module), access_kind)
 

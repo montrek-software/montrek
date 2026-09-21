@@ -25,6 +25,7 @@ from baseclasses.access import (
     AccessPolicy,
     can_access_url_name,
     clear_access_policy_cache,
+    permissions_for_callback,
     permissions_for_url_name,
     route_for_url_name,
 )
@@ -183,6 +184,43 @@ class TestCanAccessUrlName(NavigationTestCase):
         asked separately - otherwise the one user who sees everything is handed
         a link that cannot be reversed."""
         self.assertFalse(can_access_url_name(StubSuperuser(), "no_such_entry"))
+
+
+class TestRouteResolutionAgreesWithTheGate(NavigationTestCase):
+    """``as_view`` accepts any declared class attribute, so a route may override
+    what the gate reads. Resolving a route has to follow every one of those, or
+    the menu shows an entry for a permission the gate does not ask for."""
+
+    def _gate_permissions(self, callback) -> tuple[str, ...]:
+        """What the view itself would demand, built the way ``as_view`` does."""
+        view = callback.view_class(**callback.view_initkwargs)
+        return view.get_permission_required()
+
+    def _assert_agree(self, callback):
+        self.assertEqual(
+            permissions_for_callback(callback), self._gate_permissions(callback)
+        )
+
+    def test_a_plain_route(self):
+        self._assert_agree(GatedEntryView.as_view())
+
+    def test_a_route_naming_its_access_kind(self):
+        self._assert_agree(GatedEntryView.as_view(access_kind=AccessKind.DELETE))
+
+    def test_a_route_naming_its_permission(self):
+        self._assert_agree(
+            GatedEntryView.as_view(permission_required=["app.some_permission"])
+        )
+
+    def test_a_route_clearing_the_class_permission(self):
+        self._assert_agree(ExplicitlyGatedEntryView.as_view(permission_required=[]))
+
+    def test_a_route_naming_its_access_module(self):
+        self._assert_agree(
+            MontrekNavigationRedirectView.as_view(
+                access_module=__name__, pattern_name="fund"
+            )
+        )
 
 
 # --- the structure the templates render -------------------------------------
