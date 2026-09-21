@@ -91,7 +91,10 @@ class MontrekReportView(
                 # This is the data request - return the content with data
                 context = self.get_template_context(load=True)
                 return render(request, self.display_template_name, context)
-            # For HTMX requests where state is not "loading", return the loading template
+            # Fallback only. The page shell renders the skeleton inline and it
+            # asks for state="loading" straight away, so nothing in this project
+            # reaches here; an HTMX caller that does gets the skeleton, which
+            # then loads itself, rather than a whole base.html inside a div.
             return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
 

@@ -8,6 +8,7 @@ import pandas as pd
 from baseclasses.typing import SessionDataType
 from django.conf import settings
 from django.db import models
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
@@ -287,6 +288,27 @@ class ChoicesEnum(Enum):
     @classmethod
     def to_list(cls) -> list[tuple[str, str]]:
         return [(member.value, member.value) for member in cls]
+
+
+def htmx_aware_redirect(request, url: str) -> HttpResponse:
+    """Send ``request`` to ``url`` in a way htmx will act on.
+
+    An XHR follows a 302 itself, so htmx never sees the redirect - it receives
+    the *target page* with status 200 and swaps that into the triggering
+    element's ``hx-target``, which defaults to the element itself. A denied
+    action button therefore ended up with a whole page rendered inside it, and
+    the message explaining the denial went in there with it instead of onto the
+    page the user was sent to.
+
+    ``HX-Redirect`` asks htmx to navigate instead, which is the answer
+    ``MontrekPostActionView.action_response`` already gives on its success path.
+    A non-htmx request still gets the ordinary redirect.
+    """
+    if request.headers.get("HX-Request"):
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = url
+        return response
+    return HttpResponseRedirect(url)
 
 
 def get_safe_redirect_url(request, url: str | None, fallback: str) -> str:
