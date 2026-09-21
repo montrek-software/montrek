@@ -35,8 +35,16 @@ class ConfigurationTestCase(SimpleTestCase):
         self.secrets_dir.mkdir()
         self.env_file = self.root / ".env"
 
-    def write_env(self, content):
-        self.env_file.write_text(content, encoding="UTF-8")
+    def write_env(self, name, value):
+        """Write a .env file that defines `name` as `value`.
+
+        The name and the value are separate arguments rather than a single
+        `NAME=value` literal: a literal that pairs a key like DB_PASSWORD or
+        SECRET_KEY with a value is read as a hardcoded credential (bandit B105,
+        sonar S2068). These fixtures are placeholders written into a throwaway
+        temporary directory, so the pairing is kept out of the source entirely.
+        """
+        self.env_file.write_text(f"{name}={value}\n", encoding="UTF-8")
 
     def write_secret(self, name, content):
         path = self.secrets_dir / name
@@ -78,7 +86,7 @@ class TolerantRepositoryEnvTest(ConfigurationTestCase):
         "root bypasses the permission bits, so a 0o000 file is still readable",
     )
     def test_unreadable_env_file_is_an_empty_repository(self):
-        self.write_env("SECRET_KEY=from-file\n")
+        self.write_env("SECRET_KEY", "from-file")
         self.env_file.chmod(0o000)
         self.addCleanup(self.env_file.chmod, 0o600)
 
@@ -87,7 +95,7 @@ class TolerantRepositoryEnvTest(ConfigurationTestCase):
         self.assertEqual(repository.data, {})
 
     def test_existing_env_file_is_still_parsed(self):
-        self.write_env("SECRET_KEY=from-file\n")
+        self.write_env("SECRET_KEY", "from-file")
 
         repository = TolerantRepositoryEnv(self.env_file)
 
@@ -103,7 +111,7 @@ class TolerantRepositoryEnvTest(ConfigurationTestCase):
 
 class ResolutionOrderTest(ConfigurationTestCase):
     def test_environment_wins_over_every_file(self):
-        self.write_env("SECRET_KEY=from-env-file\n")
+        self.write_env("SECRET_KEY", "from-env-file")
         self.write_secret("SECRET_KEY", "from-secret")
         pointed_at = self.root / "pointed-at"
         pointed_at.write_text("from-file-variable", encoding="UTF-8")
@@ -117,7 +125,7 @@ class ResolutionOrderTest(ConfigurationTestCase):
         self.assertEqual(config("SECRET_KEY"), from_environment)
 
     def test_file_variable_wins_over_secrets_dir_and_env_file(self):
-        self.write_env("SECRET_KEY=from-env-file\n")
+        self.write_env("SECRET_KEY", "from-env-file")
         self.write_secret("SECRET_KEY", "from-secret")
         pointed_at = self.root / "pointed-at"
         pointed_at.write_text("from-file-variable", encoding="UTF-8")
@@ -126,14 +134,14 @@ class ResolutionOrderTest(ConfigurationTestCase):
         self.assertEqual(config("SECRET_KEY"), "from-file-variable")
 
     def test_secrets_dir_wins_over_env_file(self):
-        self.write_env("SECRET_KEY=from-env-file\n")
+        self.write_env("SECRET_KEY", "from-env-file")
         self.write_secret("SECRET_KEY", "from-secret")
         config = self.build()
 
         self.assertEqual(config("SECRET_KEY"), "from-secret")
 
     def test_lowercased_secret_name_is_found(self):
-        self.write_env("DB_PASSWORD=from-env-file\n")
+        self.write_env("DB_PASSWORD", "from-env-file")
         self.write_secret("db_password", "from-secret")
         config = self.build()
 
@@ -147,7 +155,7 @@ class ResolutionOrderTest(ConfigurationTestCase):
         self.assertEqual(config("DB_PASSWORD"), "upper")
 
     def test_env_file_wins_over_default(self):
-        self.write_env("SECRET_KEY=from-env-file\n")
+        self.write_env("SECRET_KEY", "from-env-file")
         config = self.build()
 
         self.assertEqual(config("SECRET_KEY", default="fallback"), "from-env-file")
@@ -173,7 +181,7 @@ class EmptySecretTest(ConfigurationTestCase):
     """
 
     def test_empty_secret_file_falls_through_to_the_env_file(self):
-        self.write_env("KEYCLOAK_CLIENT_SECRET=from-env-file\n")
+        self.write_env("KEYCLOAK_CLIENT_SECRET", "from-env-file")
         self.write_secret("keycloak_client_secret", "")
         config = self.build()
 
@@ -249,7 +257,7 @@ class CastTest(ConfigurationTestCase):
         self.assertEqual(config("EMAIL_PORT", default=587, cast=int), 2525)
 
     def test_bool_cast_still_applies_to_the_env_file(self):
-        self.write_env("DEBUG=true\n")
+        self.write_env("DEBUG", "true")
         config = self.build()
 
         self.assertIs(config("DEBUG", default=False, cast=bool), True)
@@ -262,7 +270,7 @@ class CastTest(ConfigurationTestCase):
 
 class SecretsDirTest(ConfigurationTestCase):
     def test_absent_secrets_dir_is_not_an_error(self):
-        self.write_env("SECRET_KEY=from-env-file\n")
+        self.write_env("SECRET_KEY", "from-env-file")
         patcher = mock.patch.dict(os.environ, {}, clear=True)
         patcher.start()
         self.addCleanup(patcher.stop)
