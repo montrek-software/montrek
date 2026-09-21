@@ -238,3 +238,49 @@ def check_navigation_entries(app_configs=None, **kwargs) -> list[Error]:
         for url_name in navigation_url_names()
         if route_for_url_name(url_name) is None
     ]
+
+
+@register(Tags.security)
+def check_object_scope_is_enforced(app_configs=None, **kwargs) -> list[Error]:
+    """A view declaring ``object_scope_permissions`` must actually check them.
+
+    That attribute is a *declaration*, not a gate. It tells callers reasoning
+    about a view without issuing a request - the test harness above all - which
+    permissions a request may additionally need; the check itself has to live in
+    the view's own ``has_permission``, because which of them applies depends on
+    the object the URL names, which is not known until the request arrives.
+
+    A view that declares the attribute and inherits ``has_permission`` unchanged
+    would therefore read as object scoped while enforcing nothing, and the test
+    harness would hand its user the permissions to match - so nothing would fail.
+    That is the one way this contract can be silently empty, and it is what this
+    turns into a startup error.
+    """
+    from django.contrib.auth.mixins import PermissionRequiredMixin
+
+    errors: list[Error] = []
+    seen: set = set()
+    for pattern, _ in _iter_url_patterns():
+        view_class = getattr(pattern.callback, "view_class", None)
+        if view_class is None or view_class in seen:
+            continue
+        seen.add(view_class)
+        if not getattr(view_class, "object_scope_permissions", ()):
+            continue
+        if view_class.has_permission is not PermissionRequiredMixin.has_permission:
+            continue
+        name = f"{view_class.__module__}.{view_class.__qualname__}"
+        errors.append(
+            Error(
+                f"{name} declares 'object_scope_permissions' but does not "
+                f"override 'has_permission', so nothing checks them.",
+                hint=(
+                    "Mix in a view that resolves the object and checks the "
+                    "matching permission - see FundScopeMixin - or drop the "
+                    "declaration."
+                ),
+                obj=name,
+                id="montrek.E007",
+            )
+        )
+    return errors

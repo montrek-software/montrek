@@ -221,6 +221,14 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
     # Only needed by views shared out of ``baseclasses`` and routed from an app,
     # which pass ``access_module=__name__`` from that app's ``urls.py``.
     access_module: str = ""
+    # Permissions a view may demand *in addition*, chosen per object rather than
+    # per view - see ``FundScopeMixin``. They cannot appear in
+    # ``permission_required``, because which one applies is only known once the
+    # object is loaded, so ``get_permission_required()`` alone stops describing
+    # everything a request needs. Anything that reasons about a view's
+    # requirements without issuing a request - the test harness above all - has
+    # to read these as well.
+    object_scope_permissions: tuple[str, ...] = ()
 
     def get_permission_required(self) -> tuple[str, ...]:
         if self.permission_required:

@@ -237,7 +237,13 @@ class MontrekViewTestCase(TestCase):
     def _permissions_the_view_requires(self) -> tuple[str, ...]:
         if not issubclass(self.view_class, MontrekPermissionRequiredMixin):
             return ()
-        return tuple(self.view_class().get_permission_required())
+        # object_scope_permissions as well: a view that narrows access by the
+        # object it is given cannot name that permission in
+        # permission_required, so get_permission_required() alone would leave
+        # the test user short of what the view actually demands.
+        return tuple(self.view_class().get_permission_required()) + tuple(
+            self.view_class.object_scope_permissions
+        )
 
     def _permission_row(self, namespaced_codename: str) -> Permission:
         """The Permission the view's codename refers to, created if missing.
