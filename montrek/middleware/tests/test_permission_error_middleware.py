@@ -2,7 +2,7 @@ from django.contrib.messages.test import MessagesTestMixin
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, HttpResponse
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from middleware import PermissionErrorMiddleware
 from django.views import View
@@ -12,7 +12,10 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages import get_messages
 from django.contrib.messages import ERROR
 
-from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
+from middleware.permission_error_middleware import (
+    MISSING_PERMISSION_TEXT,
+    get_missing_permission_message,
+)
 
 
 class MockView(View):
@@ -21,7 +24,7 @@ class MockView(View):
 
 
 def _get_messages_from_storage(request):
-    return [m for m in get_messages(request)]
+    return list(get_messages(request))
 
 
 class PermissionErrorMiddlewareTest(MessagesTestMixin, TestCase):
@@ -33,7 +36,8 @@ class PermissionErrorMiddlewareTest(MessagesTestMixin, TestCase):
 
     def test_process_exception__permission_denied_authenticated_user(self):
         self.request.user = get_user_model().objects.create_user(
-            email="test@example.com", password="testpassword"
+            email="test@example.com",
+            password="testpassword",  # noqa: S106 # nosec B106
         )
         exception = PermissionDenied()
         response = self.middleware.process_exception(self.request, exception)
@@ -44,7 +48,7 @@ class PermissionErrorMiddlewareTest(MessagesTestMixin, TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             str(messages[0]),
-            MISSING_PERMISSION_MESSAGE,
+            get_missing_permission_message(),
         )
         self.assertEqual(messages[0].level, ERROR)
 
@@ -64,6 +68,24 @@ class PermissionErrorMiddlewareTest(MessagesTestMixin, TestCase):
         self.assertEqual(response.url, reverse("login"))
         self.assertEqual(
             str(messages[0]),
-            MISSING_PERMISSION_MESSAGE,
+            get_missing_permission_message(),
         )
         self.assertEqual(messages[0].level, ERROR)
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_process_exception__message_in_english(self):
+        self.request.user = AnonymousUser()
+
+        self.middleware.process_exception(self.request, PermissionDenied())
+        messages = _get_messages_from_storage(self.request)
+
+        self.assertEqual(str(messages[0]), MISSING_PERMISSION_TEXT.en)
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_process_exception__message_in_german(self):
+        self.request.user = AnonymousUser()
+
+        self.middleware.process_exception(self.request, PermissionDenied())
+        messages = _get_messages_from_storage(self.request)
+
+        self.assertEqual(str(messages[0]), MISSING_PERMISSION_TEXT.de)

@@ -443,6 +443,9 @@
     border-radius: var(--mt-radius-sm);
     box-shadow: var(--mt-shadow);
     color: var(--mt-text);
+    /* Bootstrap's .toast is 0.875rem; action feedback should read at body size.
+       The status icon is a Bootstrap Icon and scales with this font-size. */
+    font-size: 1rem;
     animation: mt-toast-in 0.25s ease;
   }
 

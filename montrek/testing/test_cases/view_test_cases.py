@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.views import View
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from mailing.repositories.mailing_repository import MailingRepository
-from middleware.permission_error_middleware import MISSING_PERMISSION_MESSAGE
+from middleware.permission_error_middleware import get_missing_permission_message
 from testing.decorators.mock_external_get import mock_external_get__report_image
 from testing.decorators.mock_plotly_image_write import mock_plotly_write_dummy_png
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -323,7 +323,7 @@ class MontrekViewTestCase(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(
             messages[0].message,
-            MISSING_PERMISSION_MESSAGE,
+            get_missing_permission_message(),
         )
         self.user.user_permissions.set(required_user_permissions)
 
