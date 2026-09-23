@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import datetime
 from abc import ABC, abstractmethod
 from datetime import timedelta
@@ -11,6 +12,8 @@ from django.db import models
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+
+from reporting.core.reporting_colors import Color, ReportingColors
 
 # TODO Make universal MontrekDateTime class
 PANDAS_MIN = pd.Timestamp("1677-09-22")
@@ -288,6 +291,18 @@ class ChoicesEnum(Enum):
     @classmethod
     def to_list(cls) -> list[tuple[str, str]]:
         return [(member.value, member.value) for member in cls]
+
+
+@dataclass()
+class MontrekType:
+    name: str
+    color: Color = ReportingColors.BLUE
+
+
+class MontrekTypeEnum(Enum):
+    @classmethod
+    def to_list(cls) -> list[tuple[str, str]]:
+        return [(member.value.name, member.value.name) for member in cls]
 
 
 def htmx_aware_redirect(request, url: str) -> HttpResponse:
