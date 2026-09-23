@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass
+@dataclass(frozen=True)
 class Color:
     name: str
     hex: str
@@ -99,7 +99,7 @@ class ReportingColors:
         g = int(g + (255 - g) * factor)
         b = int(b + (255 - b) * factor)
 
-        return Color(f"{color.name}_light", "#{:02x}{:02x}{:02x}".format(r, g, b))
+        return Color(f"{color.name}_light", f"#{r:02x}{g:02x}{b:02x}")
 
     @classmethod
     def contrast_font_color(cls, color: Color) -> Color:
