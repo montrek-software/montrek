@@ -1,14 +1,16 @@
+import datetime
 import inspect
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
-from django.apps.registry import AppRegistryNotReady
+from typing import Any, cast
+from django.core.exceptions import AppRegistryNotReady
 from django.db import models
 from django.db.models import ExpressionWrapper, Field, QuerySet, Subquery
-from django.utils import timezone
+from django.db.models.expressions import BaseExpression
 from baseclasses.repositories.subquery_builder import (
     LINK_AGG_FIELD_TYPE_MAP,
     LinkedSatelliteSubqueryBuilderBase,
+    SatelliteSubqueryBuilderABC,
     SubqueryBuilder,
     TSSumFieldSubqueryBuilder,
     ValueDateSubqueryBuilder,
@@ -27,7 +29,7 @@ from baseclasses.models import (
 @dataclass
 class SatelliteAlias:
     alias_name: str
-    subquery_builder: SubqueryBuilder
+    subquery_builder: SatelliteSubqueryBuilderABC
 
 
 @dataclass
@@ -103,7 +105,11 @@ class Annotator:
 
         if "link_class" in kwargs:
             self._handle_linked_satellite(
-                fields, satellite_class, subquery_builder, rename_field_map, **kwargs
+                fields,
+                satellite_class,
+                cast(type[LinkedSatelliteSubqueryBuilderBase], subquery_builder),
+                rename_field_map,
+                **kwargs,
             )
             return
 
@@ -116,7 +122,7 @@ class Annotator:
         self._handle_scalar_satellite(
             fields,
             satellite_class,
-            subquery_builder,
+            cast(type[SatelliteSubqueryBuilderABC], subquery_builder),
             rename_field_map,
             hub_satellite_filter,
         )
@@ -144,7 +150,7 @@ class Annotator:
     def field_projections_to_subqueries(
         self,
     ) -> dict[str, Subquery | ExpressionWrapper]:
-        subquery_map = {}
+        subquery_map: dict[str, Subquery | ExpressionWrapper] = {}
         for field_projection in self.field_projections:
             alias_name = field_projection.satellite_alias.alias_name
             subquery_builder = field_projection.satellite_alias.subquery_builder
@@ -165,9 +171,9 @@ class Annotator:
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> dict[str, Subquery]:
+    ) -> dict[str, BaseExpression]:
         return {
             field: (
                 subquery_builder.build(reference_date, queryset=queryset)
@@ -181,10 +187,10 @@ class Annotator:
         self, field: str, outfield: str, satellite_class: type[MontrekSatelliteBaseABC]
     ) -> None:
         field_parts = field.split("__")
-        field_type = satellite_class._meta.get_field(field_parts[0])
+        field_type = cast(Field, satellite_class._meta.get_field(field_parts[0]))
         if isinstance(field_type, models.ForeignKey):
             field_type = models.IntegerField(null=True, blank=True)
-        self.field_type_map[outfield] = field_type.clone()
+        self.field_type_map[outfield] = field_type.clone()  # type: ignore[attr-defined]  # Field.clone is missing in django-stubs
 
     def satellite_fields(self) -> list[Field]:
         fields = []
@@ -279,7 +285,7 @@ class Annotator:
         self,
         fields: list[str],
         satellite_class: type[MontrekSatelliteBaseABC],
-        subquery_builder: type[SubqueryBuilder],
+        subquery_builder: type[LinkedSatelliteSubqueryBuilderBase],
         rename_field_map: dict[str, str],
         **kwargs,
     ):
@@ -330,7 +336,7 @@ class Annotator:
     def _get_or_create_linked_satellite_alias(
         self,
         satellite_class: type[MontrekSatelliteBaseABC],
-        subquery_builder_class: type[SubqueryBuilder],
+        subquery_builder_class: type[LinkedSatelliteSubqueryBuilderBase],
         probe_builder: LinkedSatelliteSubqueryBuilderBase,
     ) -> LinkedSatelliteAlias:
         """Return an existing alias if the same (satellite, link, config)
@@ -395,7 +401,7 @@ class Annotator:
         self,
         fields: list[str],
         satellite_class: type[MontrekSatelliteBaseABC],
-        subquery_builder: type[SubqueryBuilder],
+        subquery_builder: type[SatelliteSubqueryBuilderABC],
         rename_field_map: dict[str, str],
         hub_satellite_filter: dict[str, Any] | None,
     ):
@@ -417,7 +423,7 @@ class Annotator:
     def _get_or_create_satellite_alias(
         self,
         satellite_class: type[MontrekSatelliteBaseABC],
-        subquery_builder: type[SubqueryBuilder],
+        subquery_builder: type[SatelliteSubqueryBuilderABC],
         hub_satellite_filter: dict[str, Any] | None,
     ) -> SatelliteAlias:
         hub_satellite_filter = hub_satellite_filter or {}

@@ -1,35 +1,45 @@
-from typing import Protocol
+from typing import Protocol, TypeVar, cast
 
 from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
     MontrekLinkABC,
-    MontrekSatelliteABC,
+    MontrekSatelliteBaseABC,
 )
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.typing import HubValueDateProtocol, MontrekHubProtocol
+from django.db import models
 from django.utils import timezone
 
-StalledSatelliteDict = dict[type[MontrekSatelliteABC], list[MontrekSatelliteABC]]
+StalledSatelliteDict = dict[
+    type[MontrekSatelliteBaseABC], list[MontrekSatelliteBaseABC]
+]
 
 StalledHubDict = dict[type[MontrekHubABC], list[MontrekHubABC]]
 StalledHubValueDateDict = dict[type[HubValueDate], list[HubValueDate]]
 StalledLinksDict = dict[type[MontrekLinkABC], list[MontrekLinkABC]]
 
 
-StalledObject = MontrekSatelliteABC | MontrekHubABC | HubValueDate | MontrekLinkABC
-
 StalledDicts = (
     StalledSatelliteDict | StalledHubDict | StalledHubValueDateDict | StalledLinksDict
 )
 
 
-class DbStallerProtocol(Protocol):
-    hub_class: type[MontrekHubProtocol]
-    hub_value_date_class: type[HubValueDateProtocol]
+TStalledObject = TypeVar("TStalledObject", bound=models.Model)
 
-    def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]: ...
-    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]: ...
+
+class DbStallerProtocol(Protocol):
+    @property
+    def hub_class(self) -> type[MontrekHubABC] | type[MontrekHubProtocol]: ...
+    @property
+    def hub_value_date_class(
+        self,
+    ) -> type[HubValueDate] | type[HubValueDateProtocol]: ...
+
+    def get_static_satellite_classes(
+        self,
+    ) -> list[type[MontrekSatelliteBaseABC]]: ...
+    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]: ...
 
 
 class DbStaller:
@@ -41,10 +51,12 @@ class DbStaller:
         self.updated_satellites: StalledSatelliteDict = {
             sat_class: [] for sat_class in annotator.annotated_satellite_classes
         }
-        self.hub_class: type[MontrekHubProtocol] = annotator.hub_class
+        self.hub_class: type[MontrekHubABC] = annotator.hub_class
         self.hubs: StalledHubDict = {self.hub_class: []}
         self.updated_hubs: StalledHubDict = {self.hub_class: []}
-        self.hub_value_date_class = self.hub_class.hub_value_date.field.model
+        self.hub_value_date_class = cast(
+            type[HubValueDate], self.hub_class.get_hub_value_date_model()
+        )
         self.hub_value_dates: StalledHubValueDateDict = {self.hub_value_date_class: []}
         self.links: StalledLinksDict = {
             link_class: [] for link_class in annotator.annotated_link_classes
@@ -71,10 +83,10 @@ class DbStaller:
     def stall_hub_value_date(self, new_hub_value_date: HubValueDate):
         self._add_stalled_object(new_hub_value_date, self.hub_value_dates)
 
-    def stall_new_satellite(self, new_satellite: MontrekSatelliteABC):
+    def stall_new_satellite(self, new_satellite: MontrekSatelliteBaseABC):
         self._add_stalled_object(new_satellite, self.new_satellites)
 
-    def stall_updated_satellite(self, updated_satellite: MontrekSatelliteABC):
+    def stall_updated_satellite(self, updated_satellite: MontrekSatelliteBaseABC):
         self._add_stalled_object(updated_satellite, self.updated_satellites)
 
     def stall_links(self, links: list[MontrekLinkABC]):
@@ -106,7 +118,7 @@ class DbStaller:
     def get_updated_links(self) -> StalledLinksDict:
         return self.updated_links
 
-    def get_static_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+    def get_static_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         static_hub_classes = [
             sat_class
             for sat_class in self.new_satellites
@@ -124,7 +136,7 @@ class DbStaller:
         ]
         return hub_not_identifier_sat_classes + hub_as_identifier_sat_classes
 
-    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteABC]]:
+    def get_ts_satellite_classes(self) -> list[type[MontrekSatelliteBaseABC]]:
         return [
             sat_class for sat_class in self.new_satellites if sat_class.is_timeseries
         ]
@@ -134,7 +146,9 @@ class DbStaller:
         self.updated_hubs: StalledHubDict = {self.hub_class: []}
 
     def _add_stalled_object(
-        self, new_object: StalledObject, stalled_list: StalledDicts
+        self,
+        new_object: TStalledObject,
+        stalled_list: dict[type[TStalledObject], list[TStalledObject]],
     ):
         object_type = type(new_object)
         if object_type not in stalled_list:

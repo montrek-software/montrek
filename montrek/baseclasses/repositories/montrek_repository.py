@@ -2,10 +2,11 @@ import datetime
 import logging
 import warnings
 from dataclasses import dataclass
-from typing import Any, cast
-from collections.abc import Mapping
+from typing import Any, ClassVar, cast
+from collections.abc import Callable, Mapping
 
 import pandas as pd
+from baseclasses.dataclasses.montrek_message import MontrekMessage
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.models import (
     HubValueDate,
@@ -28,8 +29,10 @@ from baseclasses.repositories.subquery_builder import (
     LinkedHubJsonField,
     LinkedHubPairedJsonSubqueryBuilder,
     LinkedSatelliteSubqueryBuilder,
+    LinkedSatelliteSubqueryBuilderBase,
     ReverseLinkedSatelliteSubqueryBuilder,
     SatelliteSubqueryBuilder,
+    SatelliteSubqueryBuilderABC,
     SubqueryBuilder,
     TSSatelliteSubqueryBuilder,
 )
@@ -66,7 +69,12 @@ class TSQueryContainer:
 
 
 class MontrekRepository:
-    hub_class = MontrekHubABC
+    # Placeholder; subclasses assign their concrete hub. The cast is needed because
+    # django-stubs treats abstract models as abstract classes.
+    hub_class: type[MontrekHubABC] = cast(type[MontrekHubABC], MontrekHubABC)
+    _link_fields_cache: ClassVar[
+        dict[type[MontrekHubABC], list[tuple[type[MontrekLinkABC], list[str]]]]
+    ]
     # default_order_fields: tuple[str, ...] = ("hub_id",)
     default_order_fields: tuple[str, ...] = ()
     latest_ts: bool = False
@@ -81,7 +89,7 @@ class MontrekRepository:
 
     def __init__(self, session_data: SessionDataType | None = None):
         self.annotator = Annotator(self.hub_class)
-        self._ts_queryset_containers = []
+        self._ts_queryset_containers: list[TSQueryContainer] = []
         self.session_data = session_data if session_data is not None else {}
         self.query_builder = QueryBuilder(
             self.annotator,
@@ -91,7 +99,7 @@ class MontrekRepository:
             self.session_end_date,
         )
         self._reference_date = None
-        self.messages = []
+        self.messages: list[MontrekMessage] = []
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
         self.set_annotations()
@@ -121,27 +129,27 @@ class MontrekRepository:
 
     def create_by_dict(self, data: DataDict) -> MontrekHubABC:
         self._debug_logging("Start create by dict")
-        self._raise_for_anonymous_user()
+        user_id = self._require_session_user_id()
         self._raise_for_frozen_reference_date()
         db_staller = DbStaller(self.annotator)
-        db_creator = DbCreator(
-            db_staller, self.session_user_id, strict_none_semantics=True
-        )
+        db_creator = DbCreator(db_staller, user_id, strict_none_semantics=True)
         db_creator.create(data)
         db_writer = DbWriter(db_staller)
         db_writer.write()
         self.save_db_staller(db_staller)
         self.store_in_view_model(db_staller)
         self._debug_logging("End create by dict")
+        if db_creator.hub is None:
+            raise ValueError("DbCreator did not create or find a hub")
         return db_creator.hub
 
     def create_by_data_frame(self, data_frame: pd.DataFrame) -> list[MontrekHubABC]:
         self._debug_logging("raise for anonymous user")
-        self._raise_for_anonymous_user()
+        user_id = self._require_session_user_id()
         self._raise_for_frozen_reference_date()
         self._debug_logging("Get DbDataFrame")
         data_frame = self.skim_data_frame(data_frame)
-        db_data_frame = DbDataFrame(self.annotator, self.session_user_id)
+        db_data_frame = DbDataFrame(self.annotator, user_id)
         self._debug_logging("Write to DB")
         db_data_frame.create(data_frame)
         self.messages += db_data_frame.messages
@@ -240,7 +248,11 @@ class MontrekRepository:
         return query
 
     def get_view_model_query(self, apply_filter: bool = True) -> QuerySet:
-        query = self.view_model.objects.all()
+        if self.view_model is None:
+            raise ValueError(f"{self.__class__.__name__} has no view model")
+        # The generated view model has no custom managers, so _default_manager
+        # is its ``objects`` manager (which the stubs don't know about).
+        query = self.view_model._default_manager.all()
         if apply_filter:
             query_builder = QueryBuilder(
                 self.annotator,
@@ -295,7 +307,7 @@ class MontrekRepository:
     def delete_from_view_model(self, obj: MontrekHubABC):
         self.view_model_repository.delete_from_view_model(obj)
 
-    def _delete_links(self, obj: MontrekHubABC, closing_date: timezone.datetime):
+    def _delete_links(self, obj: MontrekHubABC, closing_date: datetime.datetime):
         for link_class, field_names in self._get_link_fields_for_hub(type(obj)):
             link_filter = Q()
             for field_name in field_names:
@@ -317,14 +329,18 @@ class MontrekRepository:
         return self.annotator.annotations
 
     @property
-    def reference_date(self) -> timezone.datetime:
+    def reference_date(self) -> datetime.datetime:
         explicit_reference_date = self.explicit_reference_date
         if explicit_reference_date is None:
             return timezone.now()
         return explicit_reference_date
 
+    @reference_date.setter
+    def reference_date(self, value):
+        self._reference_date = value
+
     @property
-    def explicit_reference_date(self) -> timezone.datetime | None:
+    def explicit_reference_date(self) -> datetime.datetime | None:
         """The reference date a caller pinned, or None when this runs at now().
 
         Reading the pin separately from ``reference_date`` is what lets the
@@ -344,22 +360,22 @@ class MontrekRepository:
         return reference_date
 
     @property
-    def session_end_date(self) -> timezone.datetime:
+    def session_end_date(self) -> datetime.datetime:
         if self.consider_session_dates:
-            return self._get_session_date("end_date", timezone.datetime.max)
-        return self._ensure_aware_datetime(timezone.datetime.max)
+            return self._get_session_date("end_date", datetime.datetime.max)
+        return self._ensure_aware_datetime(datetime.datetime.max)
 
     @property
-    def session_start_date(self) -> timezone.datetime:
+    def session_start_date(self) -> datetime.datetime:
         if self.consider_session_dates:
-            return self._get_session_date("start_date", timezone.datetime.min)
-        return self._ensure_aware_datetime(timezone.datetime.min)
+            return self._get_session_date("start_date", datetime.datetime.min)
+        return self._ensure_aware_datetime(datetime.datetime.min)
 
     @property
     def session_user_id(self) -> int | None:
         return self.session_data.get("user_id")
 
-    def _ensure_aware_datetime(self, value: timezone.datetime) -> timezone.datetime:
+    def _ensure_aware_datetime(self, value: datetime.datetime) -> datetime.datetime:
         if isinstance(value, datetime.date) and not isinstance(
             value, datetime.datetime
         ):
@@ -371,16 +387,12 @@ class MontrekRepository:
         return value
 
     def _get_session_date(
-        self, date_type: str, default: timezone.datetime
-    ) -> timezone.datetime:
+        self, date_type: str, default: datetime.datetime
+    ) -> datetime.datetime:
         date_value = self.session_data.get(date_type, default)
         if isinstance(date_value, str):
-            date_value = timezone.datetime.strptime(date_value, "%Y-%m-%d")
+            date_value = datetime.datetime.strptime(date_value, "%Y-%m-%d")
         return self._ensure_aware_datetime(date_value)
-
-    @reference_date.setter
-    def reference_date(self, value):
-        self._reference_date = value
 
     def object_to_dict(self, obj: HubValueDate) -> dict[str, Any]:
         object_dict = {field: getattr(obj, field) for field in self.get_all_fields()}
@@ -423,9 +435,10 @@ class MontrekRepository:
     def get_link_names(self) -> list[str]:
         forward = [f.name for f in self.hub_class._meta.many_to_many]
         reverse = [
-            f.get_accessor_name()
+            accessor_name
             for f in self.hub_class._meta.get_fields()
             if isinstance(f, ManyToManyRel)
+            and (accessor_name := f.get_accessor_name()) is not None
         ]
         return forward + reverse
 
@@ -496,6 +509,7 @@ class MontrekRepository:
                 UserWarning,
                 stacklevel=2,
             )
+        subquery_builder: type[SatelliteSubqueryBuilderABC]
         if satellite_class.is_timeseries:
             subquery_builder = TSSatelliteSubqueryBuilder
         else:
@@ -528,6 +542,7 @@ class MontrekRepository:
         value_date_scope_path: str = "",
         link_hub_value_date_filter: dict[str, Any] | None = None,
     ):
+        link_subquery_builder_class: type[LinkedSatelliteSubqueryBuilderBase]
         if reversed_link:
             link_subquery_builder_class = ReverseLinkedSatelliteSubqueryBuilder
         else:
@@ -703,14 +718,22 @@ class MontrekRepository:
         ):
             hub_entity = self.hub_class.objects.get(pk=data["hub_entity_id"])
         else:
-            hub_entity = self.hub_class(
+            # Instantiate via a Callable: hub_class is typed as the abstract
+            # MontrekHubABC, which mypy refuses to instantiate directly.
+            hub_factory: Callable[..., MontrekHubABC] = self.hub_class
+            hub_entity = hub_factory(
                 created_by_id=self.session_user_id, state_date_start=timezone.now()
             )
         return hub_entity
 
     def _raise_for_anonymous_user(self):
-        if not self.session_user_id:
+        self._require_session_user_id()
+
+    def _require_session_user_id(self) -> int:
+        user_id = self.session_user_id
+        if not user_id:
             raise PermissionDenied("User not authenticated!")
+        return user_id
 
     def _raise_for_frozen_reference_date(self):
         """Refuse to change data while this repository reads an as-of state.
@@ -737,7 +760,10 @@ class MontrekRepository:
         return self.hub_class.objects.get(hub_value_date__pk=pk)
 
     def get_hub_value_date_object(self, pk: int) -> HubValueDate:
-        return self.hub_class.get_hub_value_date_model().objects.get(pk=pk)
+        hub_value_date_class = cast(
+            type[HubValueDate], self.hub_class.get_hub_value_date_model()
+        )
+        return hub_value_date_class.objects.get(pk=pk)
 
     def _debug_logging(self, msg: str):
         logger.debug("%s: %s", self.__class__.__name__, msg)
@@ -861,7 +887,7 @@ class MontrekRepository:
         for col in datetime_cols:
             s = df[col]
 
-            mask = s.isin([datetime.date.min, timezone.datetime.min])
+            mask = s.isin([datetime.date.min, datetime.datetime.min])
             if bool(mask.any()):
                 logger.warning(
                     f"Detected DB min dates in '{col}'; mapped to pandas min sentinel ({PANDAS_MIN})"

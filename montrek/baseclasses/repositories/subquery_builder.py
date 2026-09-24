@@ -1,17 +1,20 @@
+import datetime
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 from collections.abc import Callable
 
 from django.db.models.expressions import BaseExpression
 
 from baseclasses.models import (
+    HubValueDate,
     LinkTypeEnum,
     MontrekHubABC,
     MontrekLinkABC,
     MontrekManyToManyLinkABC,
     MontrekOneToManyLinkABC,
     MontrekSatelliteABC,
+    MontrekSatelliteBaseABC,
     MontrekTimeSeriesSatelliteABC,
     ValueDateList,
 )
@@ -36,7 +39,6 @@ from django.db.models import (
     Window,
 )
 from django.db.models.functions import Cast, FirstValue, JSONObject, Lag, NullIf
-from django.utils import timezone
 
 
 @dataclass
@@ -75,9 +77,11 @@ class AnnotationContext:
 
 
 class SubqueryBuilder:
+    field_type: models.Field
+
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
     ) -> BaseExpression:
         raise NotImplementedError(
@@ -118,7 +122,9 @@ class SubqueryBuilder:
             A Django ``Subquery`` or ``ExpressionWrapper`` suitable for use in
             queryset annotations or filters.
         """
-        ...
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support build_subquery"
+        )
 
 
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
@@ -127,7 +133,7 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
 
     def __init__(
         self,
-        satellite_class: type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteBaseABC],
         hub_satellite_filter: dict[str, Any] | None = None,
     ):
         hub_satellite_filter = (
@@ -138,7 +144,7 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
 
     def subquery_filter(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         lookup_field: str | None = None,
         outer_ref: str | None = None,
     ) -> dict[str, object]:
@@ -152,15 +158,15 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
         subquery_filter.update(self.hub_satellite_filter)
         return subquery_filter
 
-    def satellite_query(self, reference_date: timezone.datetime) -> QuerySet:
+    def satellite_query(self, reference_date: datetime.datetime) -> QuerySet:
         return self.satellite_class.objects.filter(
             **self.subquery_filter(reference_date)
         ).values("pk")
 
-    def satellite_subquery(self, reference_date: timezone.datetime) -> Subquery:
+    def satellite_subquery(self, reference_date: datetime.datetime) -> Subquery:
         return Subquery(self.satellite_query(reference_date))
 
-    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+    def build_alias(self, reference_date: datetime.datetime) -> Subquery:
         return self.satellite_subquery(reference_date)
 
     def build_subquery(
@@ -181,7 +187,7 @@ class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     lookup_field: str = "hub_value_date"
     outer_ref: str = "pk"
 
-    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+    def build_alias(self, reference_date: datetime.datetime) -> Subquery:
         if not self.hub_satellite_filter:
             return super().build_alias(reference_date)
         return Subquery(
@@ -264,8 +270,9 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
         self.satellite_filter = satellite_filter
         # Type of the satellite field itself, used as output_field of the inner
         # subqueries; field_type is the type of what build() finally annotates.
-        self.value_field_type = satellite_class._meta.get_field(field).clone()
-        self.field_type = self.value_field_type.clone()
+        value_field = cast(models.Field, satellite_class._meta.get_field(field))
+        self.value_field_type: models.Field = value_field.clone()  # type: ignore[attr-defined]  # Field.clone is missing in django-stubs
+        self.field_type = self.value_field_type.clone()  # type: ignore[attr-defined]  # Field.clone is missing in django-stubs
 
     def bind_context(self, context: AnnotationContext) -> None:
         self.use_window = not context.latest_ts
@@ -292,7 +299,7 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
 
     def value_subquery(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         value_date_filter: Q,
         *,
         latest: bool = True,
@@ -310,7 +317,7 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
             output_field=self.value_field_type,
         )
 
-    def window(self, function: type[Func], reference_date: timezone.datetime) -> Window:
+    def window(self, function: type[Func], reference_date: datetime.datetime) -> Window:
         """Apply a window function to the row's own value, over the rows of the
         queryset: per hub, ordered by value date."""
         return Window(
@@ -321,12 +328,12 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
             order_by=F("value_date_list__value_date").asc(),
         )
 
-    def previous_value(self, reference_date: timezone.datetime) -> Subquery | Window:
+    def previous_value(self, reference_date: datetime.datetime) -> Subquery | Window:
         if not self.use_window:
             return self.value_subquery(reference_date, self.previous_filter())
         return self.window(Lag, reference_date)
 
-    def first_value(self, reference_date: timezone.datetime) -> Subquery | Window:
+    def first_value(self, reference_date: datetime.datetime) -> Subquery | Window:
         """Value at the start of the series: the hub's earliest value date, or —
         in window mode — the first row the queryset holds for that hub.
 
@@ -341,9 +348,9 @@ class PreviousTSValueSubqueryBuilder(SubqueryBuilder):
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> Subquery | Window:
+    ) -> BaseExpression:
         return self.previous_value(reference_date)
 
 
@@ -380,14 +387,14 @@ class TSRelativeChangeSubqueryBuilder(PreviousTSValueSubqueryBuilder):
             self.is_cumulated = is_cumulated
         self.field_type = FloatField(null=True, blank=True)
 
-    def base_value(self, reference_date: timezone.datetime) -> Subquery | Window:
+    def base_value(self, reference_date: datetime.datetime) -> Subquery | Window:
         if self.is_cumulated:
             return self.first_value(reference_date)
         return self.previous_value(reference_date)
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
     ) -> ExpressionWrapper:
         current = self.value_subquery(reference_date, self.current_filter())
@@ -402,9 +409,15 @@ class TSRelativeChangeSubqueryBuilder(PreviousTSValueSubqueryBuilder):
 class ValueDateSubqueryBuilder(SubqueryBuilder):
     field_type = models.DateField()
 
-    def build(self, reference_date: timezone.datetime) -> Subquery:
-        return ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
-            "value_date"
+    def build(
+        self,
+        reference_date: datetime.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery:
+        return Subquery(
+            ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
+                "value_date"
+            )
         )
 
 
@@ -414,7 +427,11 @@ class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
     def __init__(self, hub_class: type[MontrekHubABC]):
         self.hub_class = hub_class
 
-    def build(self, reference_date: timezone.datetime) -> Subquery:
+    def build(
+        self,
+        reference_date: datetime.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery:
         # TODO: Rearrange this with an alias
         return Subquery(
             self.hub_class.objects.filter(pk=OuterRef("hub")).values(self.field)
@@ -444,7 +461,7 @@ class CommentSubqueryBuilder(HubDirectFieldSubqueryBuilder):
 class HasLinkAttrs(Protocol):
     link_class: type[MontrekLinkABC]
     parent_link_classes: tuple[type[MontrekLinkABC], ...]
-    parent_link_reversed: tuple[bool, ...]
+    parent_link_reversed: tuple[bool, ...] | list[bool]
 
 
 class MultipleLinksCheckMixin(HasLinkAttrs):
@@ -482,8 +499,8 @@ class MultipleLinksCheckMixin(HasLinkAttrs):
         return db_name, parent_link_strings
 
     def _get_parent_link_filters(
-        self, reference_date: timezone.datetime, parent_link_strings: list[str]
-    ) -> dict[str, timezone.datetime]:
+        self, reference_date: datetime.datetime, parent_link_strings: list[str]
+    ) -> dict[str, datetime.datetime]:
         parent_link_filters = {}
         for parent_link_string in parent_link_strings:
             parent_link_filters[parent_link_string + "__state_date_end__gt"] = (
@@ -497,7 +514,7 @@ class MultipleLinksCheckMixin(HasLinkAttrs):
 
 class AggregationMixin:
     field: str
-    satellite_class: MontrekSatelliteABC
+    satellite_class: type[MontrekSatelliteBaseABC]
 
     def _annotate_sum(self, query: QuerySet) -> QuerySet:
         return query.annotate(
@@ -636,7 +653,7 @@ class LinkedHubIdSubqueryBuilder(
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
     ) -> Subquery:
         value_field = "hub_in_id" if self.reversed_link else "hub_out_id"
@@ -687,7 +704,7 @@ class LinkedSatelliteSubqueryBuilderBase(
 
     def __init__(
         self,
-        satellite_class: type[MontrekSatelliteABC],
+        satellite_class: type[MontrekSatelliteBaseABC],
         field: str,
         link_class: type[MontrekLinkABC],
         *,
@@ -727,7 +744,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         self.link_hub_value_date_filter = link_hub_value_date_filter
 
     def get_link_query(
-        self, hub_field: str, reference_date: timezone.datetime, outer_ref: str = "hub"
+        self, hub_field: str, reference_date: datetime.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
         hub_db_field_name, parent_link_strings = (
             self._get_parent_db_name_und_link_string(hub_field)
@@ -768,9 +785,14 @@ class LinkedSatelliteSubqueryBuilderBase(
         )
 
     def get_link_hub_value_date_query(
-        self, hub_field: str, reference_date: timezone.datetime
+        self, hub_field: str, reference_date: datetime.datetime
     ) -> QuerySet:
-        hub_value_date_class = self.satellite_class.hub_value_date.field.related_model
+        ts_satellite_class = cast(
+            type[MontrekTimeSeriesSatelliteABC], self.satellite_class
+        )
+        hub_value_date_class = cast(
+            type[HubValueDate], ts_satellite_class.hub_value_date.field.related_model
+        )
 
         # By default the linked HVD must share the outer row's value_date_list,
         # i.e. the linked satellite is read at the same value date as the outer
@@ -796,7 +818,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         )
 
     def _build_cross_satellite_filter_dict(
-        self, reference_date: timezone.datetime
+        self, reference_date: datetime.datetime
     ) -> dict:
         """Build ORM filter kwargs that traverse from the fetched satellite's hub
         through a second link to a different hub's satellite."""
@@ -841,7 +863,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         self,
         hub_field_to: str,
         hub_field_from: str,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
     ) -> Subquery:
         sat_query = self.satellite_class.objects.filter(
             self.link_satellite_filter,
@@ -861,7 +883,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         return Subquery(query)
 
     def _link_hubs_and_get_ts_subquery(
-        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
+        self, hub_field_to: str, hub_field_from: str, reference_date: datetime.datetime
     ) -> Subquery:
         query = (
             self.get_link_hub_value_date_query(hub_field_from, reference_date)
@@ -876,7 +898,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         return Subquery(query)
 
     def _link_hubs_and_get_ts_sum_subquery(
-        self, hub_field_to: str, hub_field_from: str, reference_date: timezone.datetime
+        self, hub_field_to: str, hub_field_from: str, reference_date: datetime.datetime
     ) -> Subquery:
         query = self.get_link_query(hub_field_from, reference_date)
         query, value_date_filter = self._apply_ts_satellite_value_date_filter(
@@ -920,7 +942,7 @@ class LinkedSatelliteSubqueryBuilderBase(
     def _annotate_ts_satellite_dict(
         self,
         hub_field_to: str,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         outer_ref_field: str,
         lookup_field: str,
         value_date_filter: dict[str, object] | None = None,
@@ -950,7 +972,7 @@ class LinkedSatelliteSubqueryBuilderBase(
                     self.field
                 ),
             )
-        inner_subquery = Subquery(inner_qs)
+        inner_subquery: Subquery | NullIf = Subquery(inner_qs)
         # COUNT returns 0 (not NULL) for empty sets, unlike other aggregates.
         # The outer COUNT in _link_hubs_and_get_ts_subquery relies on NULL to
         # skip HVDs with no matching satellites, so convert 0 → NULL here.
@@ -983,7 +1005,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         self,
         hub_field_to: str,
         hub_field_from: str,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
     ) -> Subquery:
         """Return a scalar subquery that resolves to the linked satellite's pk.
 
@@ -1011,7 +1033,7 @@ class LinkedSatelliteSubqueryBuilderBase(
     def _build_ts_scalar_alias(
         self,
         hub_field_from: str,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
     ) -> Subquery:
         """Return a scalar subquery that resolves to the linked TS satellite's pk.
 
@@ -1039,7 +1061,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         )
 
     def _get_subquery(
-        self, hub_a: str, hub_b: str, reference_date: timezone.datetime
+        self, hub_a: str, hub_b: str, reference_date: datetime.datetime
     ) -> Subquery:
         if self.satellite_class.is_timeseries:
             if self.agg_func in [LinkAggFunctionEnum.SUM, LinkAggFunctionEnum.LATEST]:
@@ -1056,12 +1078,12 @@ class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
     ) -> Subquery:
         return self._get_subquery("hub_out", "hub_in", reference_date)
 
-    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+    def build_alias(self, reference_date: datetime.datetime) -> Subquery:
         if self.satellite_class.is_timeseries:
             return self._build_ts_scalar_alias("hub_in", reference_date)
         return self._build_scalar_alias("hub_out", "hub_in", reference_date)
@@ -1073,12 +1095,12 @@ class ReverseLinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
     ) -> Subquery:
         return self._get_subquery("hub_in", "hub_out", reference_date)
 
-    def build_alias(self, reference_date: timezone.datetime) -> Subquery:
+    def build_alias(self, reference_date: datetime.datetime) -> Subquery:
         if self.satellite_class.is_timeseries:
             return self._build_ts_scalar_alias("hub_out", reference_date)
         return self._build_scalar_alias("hub_in", "hub_out", reference_date)
@@ -1143,7 +1165,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         self._hub_field_from = "hub_out" if reversed_link else "hub_in"
 
     def _build_primary_field_subquery(
-        self, field: str, reference_date: timezone.datetime
+        self, field: str, reference_date: datetime.datetime
     ) -> Subquery:
         return Subquery(
             self.satellite_class.objects.filter(
@@ -1160,7 +1182,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         )
 
     def _build_extra_field_subquery(
-        self, json_field: LinkedHubJsonField, reference_date: timezone.datetime
+        self, json_field: LinkedHubJsonField, reference_date: datetime.datetime
     ) -> Subquery:
         if json_field.link_class.link_type == LinkTypeEnum.NONE:
             raise TypeError(
@@ -1177,7 +1199,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
         )
 
     def build(
-        self, reference_date: timezone.datetime, queryset: QuerySet | None = None
+        self, reference_date: datetime.datetime, queryset: QuerySet | None = None
     ) -> Subquery:
         _ = queryset
         rows = self.get_link_hub_value_date_query(

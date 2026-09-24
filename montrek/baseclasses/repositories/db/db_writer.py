@@ -1,6 +1,10 @@
+from typing import cast
+
+from baseclasses.models import MontrekSatelliteABC, MontrekTimeSeriesSatelliteABC
 from baseclasses.repositories.db.db_staller import (
     DbStaller,
     StalledDicts,
+    StalledSatelliteDict,
 )
 from django.db import transaction
 
@@ -63,12 +67,15 @@ class DbWriter:
                 ),
             )
 
-    def _set_sat_hashes(self, new_satellites: StalledDicts):
+    def _set_sat_hashes(self, new_satellites: StalledSatelliteDict):
         for sat_class, sats in new_satellites.items():
             for sat in sats:
                 if sat_class.is_timeseries:
-                    sat.hub_value_date_id = sat.hub_value_date.id
+                    ts_sat = cast(MontrekTimeSeriesSatelliteABC, sat)
+                    ts_sat.hub_value_date_id = ts_sat.hub_value_date.id
                 else:
-                    sat.hub_entity_id = sat.hub_entity.id
-                sat.get_hash_identifier
-                sat.get_hash_value
+                    static_sat = cast(MontrekSatelliteABC, sat)
+                    static_sat.hub_entity_id = static_sat.hub_entity.id
+                # Compute and store the hashes on the satellite before saving
+                sat._get_hash_identifier()
+                sat._get_hash_value()

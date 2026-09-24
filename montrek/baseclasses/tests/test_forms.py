@@ -625,8 +625,8 @@ class TestGermanFloatFormField(TestCase):
 
 class _MockNumberRepository:
     hub_class = MockHubClass
-    display_field_names = {}
-    field_help_texts = {}
+    display_field_names: dict[str, str] = {}
+    field_help_texts: dict[str, str] = {}
 
     def std_satellite_fields(self):
         decimal_field = ModelDecimalField(max_digits=10, decimal_places=2)

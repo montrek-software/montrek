@@ -2,7 +2,7 @@ import logging
 import os
 from functools import wraps
 from pathlib import Path
-from typing import Any, BinaryIO, Protocol
+from typing import TYPE_CHECKING, Any, BinaryIO, Protocol
 
 from django.conf import settings
 from django.contrib import messages
@@ -50,8 +50,11 @@ from baseclasses.access import AccessKind, permissions_for_view
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
-from baseclasses.managers.montrek_manager import MontrekManagerNotImplemented
-from baseclasses.pages import NoPage
+from baseclasses.managers.montrek_manager import (
+    MontrekManager,
+    MontrekManagerNotImplemented,
+)
+from baseclasses.pages import MontrekPage, NoPage
 from baseclasses.sanitizer import HtmlSanitizer
 from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
@@ -107,10 +110,10 @@ def under_construction(request):
 
 
 class MontrekPageViewMixin:
-    page_class = NoPage
+    page_class: type[MontrekPage] = NoPage
     tab = "empty_tab"
     title = "No Title set!"
-    request = None
+    request: Any = None
 
     @property
     def actions(self) -> tuple[ActionElement] | tuple:
@@ -153,8 +156,9 @@ class MontrekPageViewMixin:
 
 
 class MontrekViewMixin:
+    manager_class: type[MontrekManager] = MontrekManagerNotImplemented
     _manager = None
-    request = None
+    request: Any = None
     _session_data = None
 
     @property
@@ -374,7 +378,6 @@ class MontrekListView(
     ToPdfMixin,
 ):
     template_name = "montrek_table.html"
-    manager_class = MontrekManagerNotImplemented
     do_simple_file_upload = False
     simple_file_upload_permission: list[str] = []
 
@@ -567,7 +570,6 @@ class MontrekTemplateView(
     MontrekPermissionRequiredMixin, TemplateView, MontrekPageViewMixin, MontrekViewMixin
 ):
     template_name = "montrek.html"
-    manager_class = MontrekManagerNotImplemented
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -618,7 +620,6 @@ class MontrekDetailView(
     """
 
     template_name = "montrek_details.html"
-    manager_class = MontrekManagerNotImplemented
     is_hub_based = True
     excel_sheet_name = "Details"
     _prefetched_object = None
@@ -703,7 +704,7 @@ class MontrekDetailView(
         self.kwargs["pk"] = hub_value_date_pk
         # session_data is cached at this point; the manager expects the
         # hub value date pk, not the hub pk.
-        self._session_data["pk"] = hub_value_date_pk
+        self.session_data["pk"] = hub_value_date_pk
         return kwargs
 
     def list_to_rest_api(self):
@@ -748,7 +749,6 @@ class MontrekCreateUpdateView(
     MontrekViewMixin,
 ):
     access_kind = AccessKind.UPDATE
-    manager_class = MontrekManagerNotImplemented
     form_class = MontrekCreateForm
     is_compact_form: bool = False
     template_name = "montrek_create.html"
@@ -895,7 +895,6 @@ class MontrekDeleteView(
     MontrekPageViewMixin,
 ):
     access_kind = AccessKind.DELETE
-    manager_class = MontrekManagerNotImplemented
     success_url = "under_construction"
     do_return_to_referer: bool = False
     template_name = "montrek_delete.html"
@@ -915,8 +914,6 @@ class MontrekRestApiView(
     Carries ``MontrekPermissionRequiredMixin`` so ``MontrekApiViewMixin.initial``
     enforces the permission after JWT auth; without it any valid token suffices.
     """
-
-    manager_class = MontrekManagerNotImplemented
 
     @classmethod
     def is_rest_request(cls, request) -> bool:
@@ -945,7 +942,6 @@ class MontrekRedirectView(
     """
 
     access_kind = AccessKind.UPDATE
-    manager_class = MontrekManagerNotImplemented
 
     def get_redirect_url(self, *args, **kwargs) -> str:
         raise NotImplementedError("Please implement this method in your subclass!")
@@ -1001,6 +997,11 @@ class MontrekHtmxRowRenderMixin:
     row_table_manager_class: type[MontrekTableManager] | None = None
     hx_trigger_event: str | None = None
     _row_table_manager: MontrekTableManager | None = None
+
+    if TYPE_CHECKING:
+
+        @property
+        def session_data(self) -> SessionDataType: ...
 
     @property
     def row_table_manager(self) -> MontrekTableManager:
@@ -1246,8 +1247,6 @@ class MontrekInlineFieldEditView(
 
 
 class MontrekDownloadView(MontrekPermissionRequiredMixin, MontrekViewMixin, View):
-    manager_class = MontrekManagerNotImplemented
-
     def get(self, request, *args, **kwargs) -> HttpResponse:
         response = self.manager.download()
         filename = self.manager.get_filename()

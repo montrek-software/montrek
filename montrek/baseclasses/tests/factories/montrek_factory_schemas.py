@@ -1,6 +1,5 @@
 import factory
 import datetime
-from django.utils import timezone
 
 
 from baseclasses.models import ValueDateList
@@ -28,7 +27,7 @@ class ValueDateListFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("value_date",)
 
     value_date = factory.Sequence(
-        lambda n: timezone.datetime(2023, 1, 1) + datetime.timedelta(days=n)
+        lambda n: datetime.datetime(2023, 1, 1) + datetime.timedelta(days=n)
     )
 
 

@@ -1,4 +1,5 @@
 import datetime
+from collections.abc import Callable
 
 from baseclasses.models import MontrekHubABC, MontrekSatelliteABC
 from baseclasses.repositories.db.typing import DataDict
@@ -25,7 +26,7 @@ class SatelliteCreator:
         sat_data["state_date_start"] = creation_date
         if hub is not None:
             sat_data["hub_entity"] = hub
-        return sat_class(**sat_data)
+        return self._instantiate(sat_class, sat_data)
 
     def create_ts_satellite(
         self,
@@ -46,9 +47,16 @@ class SatelliteCreator:
         sat_data["state_date_start"] = creation_date
         if hub_value_date is not None:
             sat_data["hub_value_date"] = hub_value_date
-        return sat_class(
-            **sat_data,
-        )
+        return self._instantiate(sat_class, sat_data)
+
+    @staticmethod
+    def _instantiate(
+        sat_class: type[MontrekSatelliteABC], sat_data: DataDict
+    ) -> MontrekSatelliteABC:
+        # Calling the abstract model class directly crashes the django-stubs
+        # plugin (it cannot resolve the FK target of the abstract hub_entity).
+        factory: Callable[..., MontrekSatelliteABC] = sat_class
+        return factory(**sat_data)
 
     def _fill_missing_fields_from_existing(
         self,

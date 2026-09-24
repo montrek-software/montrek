@@ -1,6 +1,8 @@
 import datetime
 import json
 import logging
+from collections.abc import Callable
+from typing import cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
@@ -10,6 +12,8 @@ from baseclasses.models import (
     MontrekLinkABC,
     MontrekOneToOneLinkABC,
     MontrekSatelliteABC,
+    MontrekSatelliteBaseABC,
+    MontrekTimeSeriesSatelliteABC,
     ValueDateList,
 )
 from baseclasses.repositories.db.db_creator_cache import DbCreatorCache
@@ -95,8 +99,8 @@ class DbCreator:
             self._process_ts_satellite(sat)
 
     def _get_previous_static_satellite(
-        self, sat_class: type[MontrekSatelliteABC]
-    ) -> MontrekSatelliteABC | None:
+        self, sat_class: type[MontrekSatelliteBaseABC]
+    ) -> MontrekSatelliteBaseABC | None:
         # Source of truth for fields not explicitly provided in this update.
         if self.hub is None or self.hub.pk is None:
             return None
@@ -113,8 +117,8 @@ class DbCreator:
         )
 
     def _get_previous_ts_satellite(
-        self, sat_class: type[MontrekSatelliteABC]
-    ) -> MontrekSatelliteABC | None:
+        self, sat_class: type[MontrekSatelliteBaseABC]
+    ) -> MontrekSatelliteBaseABC | None:
         # Source of truth for fields not explicitly provided in this update.
         if self.hub_value_date is None or self.hub_value_date.pk is None:
             return None
@@ -158,24 +162,24 @@ class DbCreator:
         if value.tzinfo is None:
             self.data[key] = timezone.make_aware(value, timezone.get_default_timezone())
 
-    def _convert_json(self, sat_class: type[MontrekSatelliteABC]):
+    def _convert_json(self, sat_class: type[MontrekSatelliteBaseABC]):
         for field in sat_class.get_value_fields():
             if field.name in self.data and isinstance(field, JSONField):
                 value = self.data[field.name]
                 if isinstance(value, str):
                     self.data[field.name] = json.loads(value.replace("'", '"'))
 
-    def _process_static_satellite(self, sat: MontrekSatelliteABC):
+    def _process_static_satellite(self, sat: MontrekSatelliteBaseABC):
         state_date_end_criterion = Q(hub_entity__state_date_end__gt=timezone.now())
         existing_sat = self._get_existing_satellite(sat, state_date_end_criterion)
         if existing_sat is None:
             self._stall_new_satellite(sat)
             self._close_existing_sat_if_hub_is_forced(sat)
             return
-        self.hub = existing_sat.hub_entity
+        self.hub = cast(MontrekSatelliteABC, existing_sat).hub_entity
         self._updated_satellite(sat, existing_sat)
 
-    def _process_ts_satellite(self, sat: MontrekSatelliteABC):
+    def _process_ts_satellite(self, sat: MontrekSatelliteBaseABC):
         state_date_end_criterion = Q(
             hub_value_date__hub__state_date_end__gt=timezone.now()
         )
@@ -185,12 +189,12 @@ class DbCreator:
             return
         self._updated_satellite(sat, existing_sat)
 
-    def _stall_new_satellite(self, sat: MontrekSatelliteABC):
+    def _stall_new_satellite(self, sat: MontrekSatelliteBaseABC):
         self.db_staller.stall_new_satellite(sat)
         sat_class = type(sat)
         self.new_satellites[sat_class] = sat
 
-    def _stall_updated_satellite(self, sat: MontrekSatelliteABC):
+    def _stall_updated_satellite(self, sat: MontrekSatelliteBaseABC):
         self.db_staller.stall_updated_satellite(sat)
         sat_class = type(sat)
         self.updated_satellites[sat_class] = sat
@@ -215,7 +219,9 @@ class DbCreator:
         if "hub_entity_id" in self.data and not pd.isnull(self.data["hub_entity_id"]):
             hub_entity_id = self.data["hub_entity_id"]
             if self.cache is not None:
-                self.hub = self.cache.get_cached_hub(hub_entity_id)
+                self.hub = cast(
+                    MontrekHubABC | None, self.cache.get_cached_hub(hub_entity_id)
+                )
                 return
             self.hub = self.db_staller.hub_class.objects.get(
                 id=self.data["hub_entity_id"]
@@ -231,10 +237,11 @@ class DbCreator:
             self.db_staller.stall_hub(self.hub)
 
     def _stall_hub_value_date(self, stall: bool = True):
-        if self.hub.id is not None:
+        hub = self._require_hub()
+        if hub.id is not None:
             if self.cache is not None:
                 existing_hub_value_date = self.cache.get_cached_hub_value_date(
-                    self.hub.id, self.value_date_list.value_date
+                    hub.id, self._require_value_date_list().value_date
                 )
             else:
                 existing_hub_value_date = (
@@ -244,9 +251,14 @@ class DbCreator:
                 )
 
             if existing_hub_value_date:
-                self.hub_value_date = existing_hub_value_date
+                self.hub_value_date = cast(HubValueDate, existing_hub_value_date)
                 return
-        self.hub_value_date = self.db_staller.hub_value_date_class(
+        # Instantiate via a Callable: calling the abstract HubValueDate class
+        # directly crashes the django-stubs plugin on the abstract hub FK.
+        hub_value_date_factory: Callable[..., HubValueDate] = (
+            self.db_staller.hub_value_date_class
+        )
+        self.hub_value_date = hub_value_date_factory(
             hub=self.hub, value_date_list=self.value_date_list
         )
         if stall:
@@ -260,8 +272,8 @@ class DbCreator:
             sat.hub_entity = self.hub
 
     def _get_existing_satellite(
-        self, sat: MontrekSatelliteABC, state_date_end_criterion: Q
-    ) -> MontrekSatelliteABC | None:
+        self, sat: MontrekSatelliteBaseABC, state_date_end_criterion: Q
+    ) -> MontrekSatelliteBaseABC | None:
         # Check if satellite already exists, if it is updated or if it is new
         sat_hash_identifier = sat.get_hash_identifier
         satellite_class = type(sat)
@@ -275,12 +287,13 @@ class DbCreator:
         ).first()
 
     def _updated_satellite(
-        self, sat: MontrekSatelliteABC, existing_sat: MontrekSatelliteABC
+        self, sat: MontrekSatelliteBaseABC, existing_sat: MontrekSatelliteBaseABC
     ):
         if existing_sat.is_timeseries:
-            self.hub = existing_sat.hub_value_date.hub
+            ts_sat = cast(MontrekTimeSeriesSatelliteABC, existing_sat)
+            self.hub = cast(MontrekHubABC, ts_sat.hub_value_date.hub)
         else:
-            self.hub = existing_sat.hub_entity
+            self.hub = cast(MontrekSatelliteABC, existing_sat).hub_entity
         self._raise_error_if_existing_hub_does_not_match(existing_sat)
         if existing_sat.hash_value == sat.get_hash_value:
             self.existing_satellites[existing_sat.__class__] = existing_sat
@@ -307,23 +320,25 @@ class DbCreator:
             self._close_and_renew_satellite(existing_sat)
         self._stall_hub()
 
-    def _close_and_renew_satellite(self, existing_sat: MontrekSatelliteABC):
-        old_hub = existing_sat.hub_entity
+    def _close_and_renew_satellite(self, existing_sat: MontrekSatelliteBaseABC):
+        static_sat = cast(MontrekSatelliteABC, existing_sat)
+        old_hub = static_sat.hub_entity
         old_hub.state_date_end = self.db_staller.creation_date
         self.db_staller.stall_updated_hub(old_hub)
         existing_sat.state_date_end = self.db_staller.creation_date
         self.db_staller.stall_updated_satellite(existing_sat)
         existing_sat.state_date_end = self.creation_date
-        existing_sat.hub_entity = None
+        # Detach from the old hub; a new one is assigned before the satellite is saved
+        static_sat.hub_entity = None  # type: ignore[assignment]  # FK is non-nullable
         existing_sat.state_date_start = self.creation_date
         existing_sat.state_date_end = timezone.make_aware(
-            timezone.datetime.max, timezone.get_default_timezone()
+            datetime.datetime.max, timezone.get_default_timezone()
         )
         existing_sat.pk = None
-        existing_sat.id = None
+        existing_sat.id = None  # type: ignore[assignment]  # reset to insert a copy
         self._stall_new_satellite(existing_sat)
 
-    def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteABC):
+    def _close_existing_sat_if_hub_is_forced(self, sat: MontrekSatelliteBaseABC):
         if "hub_entity_id" not in self.data:
             return
         if self.cache is not None:
@@ -343,20 +358,22 @@ class DbCreator:
         self.db_staller.stall_updated_satellite(latest_sat)
 
     def _get_link_data(self) -> dict[str, list[MontrekHubABC]]:
-        link_data = {}
+        link_data: dict[str, list[MontrekHubABC]] = {}
         hub_fields = self._get_hub_fields()
         for key, value in self.data.items():
             if key not in hub_fields:
                 continue
             if isinstance(value, HubValueDate):
-                link_data[key] = [value.hub]
+                link_data[key] = [cast(MontrekHubABC, value.hub)]
             elif isinstance(value, MontrekHubABC):
                 link_data[key] = [value]
             elif value is None:
                 link_data[key] = []
             elif isinstance(value, list | QuerySet):
                 many_links = [
-                    item.hub for item in value if isinstance(item, HubValueDate)
+                    cast(MontrekHubABC, item.hub)
+                    for item in value
+                    if isinstance(item, HubValueDate)
                 ]
                 many_links += [
                     item for item in value if isinstance(item, MontrekHubABC)
@@ -367,16 +384,19 @@ class DbCreator:
     def _create_new_links(
         self, link_class: type[MontrekLinkABC], values: list[MontrekHubABC]
     ) -> list[MontrekLinkABC]:
+        # Instantiate via a Callable: calling the abstract link class directly
+        # crashes the django-stubs plugin on the abstract hub_in/hub_out FKs.
+        link_factory: Callable[..., MontrekLinkABC] = link_class
         if link_class.hub_in.field.related_model == self.hub.__class__:
             new_links = [
-                link_class(
+                link_factory(
                     hub_in=self.hub, hub_out=value, state_date_start=self.creation_date
                 )
                 for value in values
             ]
             return self._update_links_if_exist(new_links, "hub_in", link_class)
         new_links = [
-            link_class(
+            link_factory(
                 hub_in=value, hub_out=self.hub, state_date_start=self.creation_date
             )
             for value in values
@@ -389,7 +409,8 @@ class DbCreator:
         hub_field: str,
         link_class: type[MontrekLinkABC],
     ) -> list[MontrekLinkABC]:
-        if not self.hub.pk:
+        hub = self._require_hub()
+        if not hub.pk:
             return links
 
         is_one_to_one_link = issubclass(link_class, MontrekOneToOneLinkABC)
@@ -400,9 +421,7 @@ class DbCreator:
 
         # Try to get from cache first
         if self.cache is not None:
-            existing_links = self.cache.get_cached_links(
-                link_class, self.hub.id, hub_field
-            )
+            existing_links = self.cache.get_cached_links(link_class, hub.id, hub_field)
         else:
             # Fallback to database query if not in cache
             filter_args = {
@@ -443,15 +462,25 @@ class DbCreator:
             link.state_date_start = self.creation_date
         return new_links
 
+    def _require_hub(self) -> MontrekHubABC:
+        if self.hub is None:
+            raise RuntimeError("Hub has not been set yet")
+        return self.hub
+
+    def _require_value_date_list(self) -> ValueDateList:
+        if self.value_date_list is None:
+            raise RuntimeError("Value date list has not been set yet")
+        return self.value_date_list
+
     def _get_opposite_field(self, field):
         return "hub_out" if field == "hub_in" else "hub_in"
 
     def _raise_error_if_existing_hub_does_not_match(
-        self, existing_sat: MontrekSatelliteABC
+        self, existing_sat: MontrekSatelliteBaseABC
     ):
         if "hub_entity_id" not in self.data:
             return
-        if self.data["hub_entity_id"] != self.hub.id:
+        if self.data["hub_entity_id"] != self._require_hub().id:
             existing_id_str = ""
             for field in existing_sat.identifier_fields:
                 existing_id_str += f"{field}: {getattr(existing_sat, field)}, "

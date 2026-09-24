@@ -1,11 +1,10 @@
 import datetime
-from typing import Any, Optional, Protocol, Union
+from typing import Any, ClassVar, Protocol
 
-from django.db import models
 from reporting.dataclasses.table_elements import TableElement
 
 SessionDataType = dict[str, Any]
-TableElementsType = Union[list[TableElement], tuple[TableElement], list, tuple]
+TableElementsType = list[TableElement] | tuple[TableElement] | list | tuple
 
 
 class ModelInstanceProtocol(Protocol):
@@ -13,13 +12,15 @@ class ModelInstanceProtocol(Protocol):
 
 
 class ValueDateListProtocol(ModelInstanceProtocol):
-    value_date: Optional[datetime.date]
+    value_date: datetime.date | None
 
 
 class MontrekHubProtocol(ModelInstanceProtocol):
-    hub_value_date: models.Model
+    objects: ClassVar[Any]
+    _meta: ClassVar[Any]
 
 
 class HubValueDateProtocol(ModelInstanceProtocol):
+    objects: ClassVar[Any]
     hub: MontrekHubProtocol
     value_date_list: ValueDateListProtocol

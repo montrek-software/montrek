@@ -18,7 +18,7 @@ class MockMontrekPage(MontrekPage):
 
 
 class MockMontrekDetailsPage(MontrekDetailsPage):
-    repository_class = MockRepository
+    repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
     title_field = "field"
 
 

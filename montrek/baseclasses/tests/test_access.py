@@ -393,7 +393,7 @@ class TestMalformedPermissionsDenyRatherThanRaise(TestCase):
 class TestStartupChecksSurviveAMalformedApp(RestrictedAppTestCase):
     """The checks must report a malformed app, not die on it."""
 
-    access_permissions = [object()]
+    access_permissions = [object()]  # type: ignore[assignment]  # deliberately malformed
 
     def test_view_check_reports_instead_of_raising(self):
         from baseclasses.checks import check_restricted_app_views

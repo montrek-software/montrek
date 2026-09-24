@@ -57,22 +57,22 @@ def montrek_time(
     minute: int = 0,
     second: int = 0,
     microsecond: int = 0,
-) -> timezone.datetime:
+) -> datetime.datetime:
     return timezone.make_aware(
         datetime.datetime(year, month, day, hour, minute, second, microsecond),
         timezone=timezone.get_current_timezone(),
     )
 
 
-def montrek_today() -> timezone.datetime:
+def montrek_today() -> datetime.date:
     return timezone.now().date()
 
 
-def montrek_date_string(date: timezone.datetime) -> str:
+def montrek_date_string(date: datetime.date) -> str:
     return date.strftime("%Y-%m-%d")
 
 
-def datetime_to_montrek_time(datetime: datetime.datetime) -> timezone.datetime:
+def datetime_to_montrek_time(datetime: datetime.datetime) -> datetime.datetime:
     return montrek_time(
         datetime.year,
         datetime.month,
@@ -206,7 +206,7 @@ class PagesMetaSessionDataElement(TableMetaSessionDataElement):
     field: str = "pages"
 
     def apply_data(self) -> SessionDataType:
-        pages_data = {}
+        pages_data: SessionDataType = {}
         if self.field not in self.session_data:
             pages_data[self.field] = {}
             self.session_data[self.field] = {}

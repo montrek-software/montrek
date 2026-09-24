@@ -56,9 +56,9 @@ class TestMontrekRepository(TestCase):
         montrek_repo = MockMontrekRepository()
         session_start_date = montrek_repo.session_start_date
         session_end_date = montrek_repo.session_end_date
-        self.assertEqual(session_start_date.date(), timezone.datetime.min.date())
+        self.assertEqual(session_start_date.date(), datetime.datetime.min.date())
         self.assertTrue(session_start_date.tzinfo is not None)
-        self.assertEqual(session_end_date.date(), timezone.datetime.max.date())
+        self.assertEqual(session_end_date.date(), datetime.datetime.max.date())
         self.assertTrue(session_end_date.tzinfo is not None)
 
     def test_session_date_set(self):
@@ -68,10 +68,10 @@ class TestMontrekRepository(TestCase):
         session_start_date = montrek_repo.session_start_date
         session_end_date = montrek_repo.session_end_date
         self.assertEqual(
-            session_start_date.date(), timezone.datetime(2020, 1, 1).date()
+            session_start_date.date(), datetime.datetime(2020, 1, 1).date()
         )
         self.assertTrue(session_start_date.tzinfo is not None)
-        self.assertEqual(session_end_date.date(), timezone.datetime(2020, 2, 1).date())
+        self.assertEqual(session_end_date.date(), datetime.datetime(2020, 2, 1).date())
         self.assertTrue(session_end_date.tzinfo is not None)
 
     def test_session_user_id(self):

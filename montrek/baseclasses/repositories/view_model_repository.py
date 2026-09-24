@@ -2,9 +2,15 @@ import datetime
 import logging
 import time
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast
 
-from baseclasses.models import MontrekHubABC, MontrekSatelliteBaseABC
+from baseclasses.models import (
+    MontrekHubABC,
+    MontrekLinkABC,
+    MontrekSatelliteABC,
+    MontrekSatelliteBaseABC,
+    MontrekTimeSeriesSatelliteABC,
+)
 from baseclasses.repositories.db.db_staller import DbStaller, StalledSatelliteDict
 from django.db import models, transaction
 from django.db.utils import IntegrityError
@@ -92,7 +98,10 @@ class ViewModelRepository:
     # ───────────────────────────────────────────────
     def _sat_hub_pk(self, sat: "MontrekSatelliteBaseABC") -> int:
         """Extract the hub primary key from a satellite instance."""
-        return sat.hub_value_date.hub.pk if sat.is_timeseries else sat.hub_entity_id
+        if sat.is_timeseries:
+            hub = cast(MontrekTimeSeriesSatelliteABC, sat).hub_value_date.hub
+            return cast(MontrekHubABC, hub).pk
+        return cast(MontrekSatelliteABC, sat).hub_entity_id
 
     def _collect_new_hub_ids(
         self, db_staller: "DbStaller", hub_class: type["MontrekHubABC"]
@@ -115,7 +124,7 @@ class ViewModelRepository:
         self, db_staller: "DbStaller", hub_class: type["MontrekHubABC"]
     ) -> list[int]:
         """Collect hub IDs that are updated via satellites or links."""
-        hub_ids = []
+        hub_ids: list[int] = []
 
         # Satellites
         hub_ids += self._get_satellite_hub_ids(db_staller.get_updated_satellites())
@@ -129,8 +138,8 @@ class ViewModelRepository:
 
     def _collect_link_hub_ids(
         self,
-        link_class: type[models.Model],
-        link_instances: list[models.Model],
+        link_class: type[MontrekLinkABC],
+        link_instances: list[MontrekLinkABC],
         hub_class: type["MontrekHubABC"],
     ) -> list[int]:
         """Extract hub primary keys from a link class for the relevant hub_class."""
@@ -141,7 +150,7 @@ class ViewModelRepository:
         return [getattr(link, hub_field).pk for link in link_instances]
 
     def _get_satellite_hub_ids(self, sat_dict: StalledSatelliteDict) -> list[int]:
-        hub_ids = []
+        hub_ids: list[int] = []
         for sat_class, satellites in sat_dict.items():
             sat_ids = [sat.id for sat in satellites]
             sat_query = sat_class.objects.filter(id__in=sat_ids)
@@ -173,16 +182,18 @@ class ViewModelRepository:
                     datetime.datetime.combine(row["value_date"], datetime.time()),
                     timezone.get_current_timezone(),
                 )
-        instances = [self.view_model(**item) for item in data]
+        view_model = self._require_view_model()
+        # The generated view model has no custom managers, so _default_manager
+        # is its ``objects`` manager (which the stubs don't know about).
+        manager = view_model._default_manager
+        instances = [view_model(**item) for item in data]
         if mode == "all":
-            self.view_model.objects.all().delete()
-            self.view_model.objects.bulk_create(instances, batch_size=1000)
+            manager.all().delete()
+            manager.bulk_create(instances, batch_size=1000)
         elif mode in {"create", "update"}:
             if instances:
-                self.view_model.objects.filter(
-                    pk__in=[inst.pk for inst in instances]
-                ).delete()
-            self.view_model.objects.bulk_create(
+                manager.filter(pk__in=[inst.pk for inst in instances]).delete()
+            manager.bulk_create(
                 instances,
                 batch_size=1000,
             )
@@ -191,8 +202,13 @@ class ViewModelRepository:
     def delete_from_view_model(self, obj: MontrekHubABC):
         if not self.view_model:
             return
-        deleted_object = self.view_model.objects.filter(hub_entity_id=obj.pk)
+        deleted_object = self.view_model._default_manager.filter(hub_entity_id=obj.pk)
         deleted_object.delete()
+
+    def _require_view_model(self) -> type[models.Model]:
+        if self.view_model is None:
+            raise ValueError(f"{self.__class__.__name__} has no view model")
+        return self.view_model
 
     def _debug_logging(self, msg: str):
         logger.debug("%s: %s", self.__class__.__name__, msg)

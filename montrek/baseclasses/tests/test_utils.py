@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 
 from baseclasses.utils import (
     FilterCountMetaSessionDataElement,
@@ -17,7 +18,6 @@ from baseclasses.utils import (
 )
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
-from django.utils import timezone
 from freezegun import freeze_time
 
 
@@ -34,15 +34,15 @@ class TestMontrekTime(TestCase):
 
     def test_montrek_time(self):
         mtime = montrek_time(2023, 10, 1)
-        self.assertEqual(mtime.date(), timezone.datetime(2023, 10, 1).date())
+        self.assertEqual(mtime.date(), datetime.datetime(2023, 10, 1).date())
 
     @freeze_time("2023-10-01")
     def test_montrek_today(self):
-        self.assertEqual(montrek_today(), timezone.datetime(2023, 10, 1).date())
+        self.assertEqual(montrek_today(), datetime.datetime(2023, 10, 1).date())
 
     def test_montrek_date_string(self):
         self.assertEqual(
-            montrek_date_string(timezone.datetime(2023, 10, 1)), "2023-10-01"
+            montrek_date_string(datetime.datetime(2023, 10, 1)), "2023-10-01"
         )
 
     @freeze_time("2023-01-01")
@@ -85,7 +85,7 @@ class TestGetContentType(TestCase):
 class MockRequest:
     def __init__(self) -> None:
         self.path = "/test-path/"
-        self.session = {}
+        self.session: dict[str, Any] = {}
 
 
 class TestFilterMetaSessionDataElement(TestCase):
@@ -397,7 +397,7 @@ class TestTableMetaSessionData(TestCase):
         }
 
         # Update session data
-        updated_data = table_meta.update_session_data(session_data)
+        table_meta.update_session_data(session_data)
 
         # Verify session updates
         self.assertIn("filter", self.request.session)
@@ -413,7 +413,7 @@ class TestTableMetaSessionData(TestCase):
 
         session_data = {}
 
-        updated_data = table_meta.update_session_data(session_data)
+        table_meta.update_session_data(session_data)
 
         self.assertEqual(self.request.session["filter"], {})
         self.assertEqual(self.request.session["pages"], {})

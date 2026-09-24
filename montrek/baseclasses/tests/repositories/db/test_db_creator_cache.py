@@ -2,7 +2,6 @@ import datetime
 from typing import cast
 
 from baseclasses.repositories.db.db_creator_cache import DbCreatorCache
-from baseclasses.repositories.db.db_staller import DbStallerProtocol
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.typing import MontrekHubProtocol
 from django.test import TestCase
@@ -100,7 +99,7 @@ class DummyStaticSatellite:
 
 class DummyTimeSeriesSatellite:
     is_timeseries = True
-    identifier_fields = []
+    identifier_fields: list[str] = []
 
     def __init__(self, hash_identifier, hub_value_date):
         self.hash_identifier = hash_identifier
@@ -135,7 +134,7 @@ class DummyLink:
 # ============================================================
 
 
-class DummyDbStaller(DbStallerProtocol):
+class DummyDbStaller:
     hub_class = DummyHub
 
     def __init__(self, hub_value_dates):

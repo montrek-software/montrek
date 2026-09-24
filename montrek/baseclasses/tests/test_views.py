@@ -1,4 +1,5 @@
 import datetime
+from typing import Any
 from unittest.mock import patch
 
 from baseclasses.dataclasses.montrek_message import (
@@ -44,6 +45,8 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class MockRequester:
+    request: Any
+
     def add_mock_request(self, url: str):
         self.request = RequestFactory().get(url)
         self._pass_request_to_middleware()
@@ -62,7 +65,7 @@ class MockRequester:
 
 
 class MockManager(MontrekTableManager):
-    repository_class = MockRepository
+    repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
 
     @property
     def table_elements(self):
@@ -85,7 +88,7 @@ class MockFooter:
 
 
 class MockManager2(MontrekManager):
-    repository_class = MockRepository
+    repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
     document_title = "Guten Tag!"
     footer_text = MockFooter()
     draft = True
@@ -169,7 +172,7 @@ class MockFormClass(MockFormBase):
 
 
 class MockFormClassValid(MockFormBase):
-    cleaned_data = {}
+    cleaned_data: dict[str, Any] = {}
 
     def is_valid(self):
         return True
@@ -178,7 +181,7 @@ class MockFormClassValid(MockFormBase):
 class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
     manager_class = MockManager
     is_hub_based = False
-    form_class = MockFormClass
+    form_class = MockFormClass  # type: ignore[assignment]  # test double, not a Django form
     page_class = MockPage
 
     def __init__(self, url: str):
@@ -188,7 +191,7 @@ class MockMontrekCreateView(MontrekCreateUpdateView, MockRequester):
 
 
 class MockMontrekCreateValidView(MockMontrekCreateView):
-    form_class = MockFormClassValid
+    form_class = MockFormClassValid  # type: ignore[assignment]  # test double, not a Django form
 
     def form_valid(self, form):
         # Keep the form the view built; post() itself does not hold on to it.
@@ -199,7 +202,7 @@ class MockMontrekCreateValidView(MockMontrekCreateView):
 class MockMontrekUpdateView(MontrekUpdateView, MockRequester):
     manager_class = MockManager
     is_hub_based = False
-    form_class = MockFormClassValid
+    form_class = MockFormClassValid  # type: ignore[assignment]  # test double, not a Django form
     page_class = MockPage
 
     def __init__(self, url: str):
@@ -480,7 +483,7 @@ class MockMontrekListView(MontrekListView, MockRequester):
 
 
 class MockManagerPdfFails(MontrekTableManager):
-    repository_class = MockRepository
+    repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
 
     def to_latex(self):
         return "\\textbf{This is a bold text with a missing closing brace."

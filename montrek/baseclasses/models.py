@@ -1,7 +1,7 @@
 import datetime
 import hashlib
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar, cast
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.fields import HubForeignKey
@@ -29,10 +29,10 @@ class StateMixin(models.Model):
         abstract = True
 
     state_date_start = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.min)
+        default=timezone.make_aware(datetime.datetime.min)
     )
     state_date_end = models.DateTimeField(
-        default=timezone.make_aware(timezone.datetime.max)
+        default=timezone.make_aware(datetime.datetime.max)
     )
     comment = models.CharField(max_length=255, default="", blank=True)
 
@@ -84,6 +84,9 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 
     identifier = models.CharField(max_length=12, default="")
 
+    id: int
+    objects: ClassVar[models.Manager[Any]]
+
     def get_hub_value_date(self):
         return self.hub_value_date.get(value_date_list__value_date=None)
 
@@ -124,6 +127,9 @@ class HubValueDate(models.Model):
     hub = HubForeignKey(MontrekHubABC)
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
 
+    id: int
+    objects: ClassVar[models.Manager[Any]]
+
     def __str__(self):
         return f"hub: {self.hub} value_date_list: {self.value_date_list}"
 
@@ -136,7 +142,10 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
     hash_identifier = models.CharField(max_length=64, default="")
     hash_value = models.CharField(max_length=64, default="")
 
-    identifier_fields = []
+    identifier_fields: list[str] = []
+
+    id: int
+    objects: ClassVar[models.Manager[Any]]
 
     # Some hubs can have multiple satellites (e.g. timeseries).
     allow_multiple = False
@@ -216,11 +225,12 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
         return value_fields
 
     @classmethod
-    def get_value_fields(cls) -> list[str]:
+    def get_value_fields(cls) -> list[models.Field]:
         value_fields = [
             field
             for field in cls._meta.get_fields()
-            if field.name not in cls.exclude_fields()
+            if isinstance(field, models.Field)
+            and field.name not in cls.exclude_fields()
             and not field.is_relation
             and not isinstance(field, models.GeneratedField)
         ]
@@ -245,7 +255,8 @@ class MontrekSatelliteBaseABC(TimeStampMixin, StateMixin, UserMixin):
         )
 
     @classmethod
-    def get_related_hub_class(cls) -> type[MontrekHubABC]: ...
+    def get_related_hub_class(cls) -> type[MontrekHubABC]:
+        raise NotImplementedError
 
 
 class MontrekSatelliteABC(MontrekSatelliteBaseABC):
@@ -258,10 +269,11 @@ class MontrekSatelliteABC(MontrekSatelliteBaseABC):
         ]
 
     hub_entity = models.ForeignKey(MontrekHubABC, on_delete=models.CASCADE)
+    hub_entity_id: int
 
     @classmethod
     def get_related_hub_class(cls) -> type[MontrekHubABC]:
-        return cls.hub_entity.field.related_model
+        return cast(type[MontrekHubABC], cls.hub_entity.field.related_model)
 
     def get_hub_value_date(self) -> HubValueDate:
         return self.hub_entity.get_hub_value_date()
@@ -277,6 +289,7 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
         ]
 
     hub_value_date = models.ForeignKey(HubValueDate, on_delete=models.CASCADE)
+    hub_value_date_id: int
     value_date = models.DateField()
     allow_multiple = True
     is_timeseries = True
@@ -284,7 +297,10 @@ class MontrekTimeSeriesSatelliteABC(MontrekSatelliteBaseABC):
 
     @classmethod
     def get_related_hub_class(cls) -> type[MontrekHubABC]:
-        return cls.hub_value_date.field.related_model.hub.field.related_model
+        hub_value_date_class = cast(
+            type[HubValueDate], cls.hub_value_date.field.related_model
+        )
+        return cast(type[MontrekHubABC], hub_value_date_class.hub.field.related_model)
 
 
 class MontrekTypeSatelliteABC(MontrekSatelliteABC):
@@ -311,6 +327,8 @@ class MontrekLinkABC(TimeStampMixin, StateMixin):
         ]
 
     link_type = LinkTypeEnum.NONE
+    id: int
+    objects: ClassVar[models.Manager[Any]]
     hub_in = models.ForeignKey(
         MontrekHubABC, on_delete=models.CASCADE, related_name="in_hub"
     )
@@ -380,7 +398,7 @@ class TestMontrekSatelliteNoIdFields(MontrekSatelliteABC):
 
 
 class TestLinkHub(MontrekHubABC):
-    link_link_hub_test_montrek_hub = models.ManyToManyField(
+    link_link_hub_test_montrek_hub: models.ManyToManyField = models.ManyToManyField(
         TestMontrekHub,
         related_name="link_test_montrek_hub_link_hub",
         through="LinkTestMontrekTestLink",

@@ -1,4 +1,4 @@
-import unittest.mock as mock
+from unittest import mock
 
 from django.test import TestCase
 
@@ -6,8 +6,7 @@ from baseclasses.repositories.db.db_data_frame import DbDataFrame
 
 
 class MockDbDataFrame(DbDataFrame):
-    def __init__(self):
-        ...
+    def __init__(self): ...
 
     def get_link_field_names(self) -> list[str]:
         return []
