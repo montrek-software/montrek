@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Setup python environment
-PYTHON_VERSION=3.14.7
+PYTHON_VERSION=3.14.0
 PROJECT_NAME=$(basename "$PWD")
 ENV_NAME="$PROJECT_NAME-$PYTHON_VERSION"
 echo "$ENV_NAME" >.python-version

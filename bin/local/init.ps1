@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop"
 
 # 1. Define python version and environment name
-$PYTHON_VERSION = "3.14.7"
+$PYTHON_VERSION = "3.14.0"
 $PROJECT_NAME = Split-Path -Leaf (Get-Location)
 $ENV_NAME = "$PROJECT_NAME-$PYTHON_VERSION"
 $VENV_PATH = Join-Path -Path $PWD -ChildPath ".venv"
