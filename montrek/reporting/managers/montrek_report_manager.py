@@ -22,14 +22,14 @@ class MontrekReportManager(MontrekManager):
 
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)
-        self._report_elements = []
+        self._report_elements: list[ReportElementProtocol] = []
 
     @property
     def footer_text(self) -> ReportElementProtocol:
         return rt.ReportingFooter("Internal Report")
 
     @property
-    def report_elements(self) -> list[ReportElementProtocol, ...]:
+    def report_elements(self) -> list[ReportElementProtocol]:
         return self._report_elements
 
     def append_report_element(
@@ -46,6 +46,12 @@ class MontrekReportManager(MontrekManager):
     def cleanup_report_elements(self) -> None:
         self._report_elements = []
 
+    @staticmethod
+    def _get_error_details() -> list[str]:
+        if settings.DEBUG:
+            return traceback.format_exc().split("\n")
+        return ["Contact admin and check Debug mode"]
+
     def to_html(self) -> list[str]:
         html_list = []
         try:
@@ -55,11 +61,7 @@ class MontrekReportManager(MontrekManager):
         except Exception as e:
             self.cleanup_report_elements()
             error_header = f"Error during report generation: {e}"
-            if settings.DEBUG:
-                error_details = traceback.format_exc()
-                error_details = error_details.split("\n")
-            else:
-                error_details = ["Contact admin and check Debug mode"]
+            error_details = self._get_error_details()
             return [
                 rt.ReportingError(
                     error_header=error_header, error_texts=error_details
@@ -81,11 +83,7 @@ class MontrekReportManager(MontrekManager):
         except Exception as e:
             self.cleanup_report_elements()
             error_header = f"Error during report generation: {e}"
-            if settings.DEBUG:
-                error_details = traceback.format_exc()
-                error_details = error_details.split("\n")
-            else:
-                error_details = ["Contact admin and check Debug mode"]
+            error_details = self._get_error_details()
             return rt.ReportingError(
                 error_header=error_header, error_texts=error_details
             ).to_html()

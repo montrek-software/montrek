@@ -910,15 +910,16 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
         mock_get.return_value = mock_response
 
         # mock tempfile
-        mock_file = mock.Mock()
+        mock_file = mock.MagicMock()
         mock_file.name = "/mock_tmp/fake_image.png"
+        mock_file.__enter__.return_value = mock_file
         mock_tmpfile.return_value = mock_file
 
         test_str = table_element.format_latex(url)
 
         mock_get.assert_called_once_with(url, timeout=10)
         mock_file.write.assert_called_once_with(b"fake image bytes")
-        mock_file.close.assert_called_once()
+        mock_file.__exit__.assert_called_once()
 
         self.assertEqual(
             test_str,

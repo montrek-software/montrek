@@ -1,6 +1,7 @@
 import datetime
 import math
-from typing import Any
+from collections.abc import Sequence
+from typing import Any, cast
 
 import pandas as pd
 from baseclasses.managers.montrek_manager import MontrekManager
@@ -54,7 +55,7 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
             ]
         )
 
-    def arrange_in_grid(self, items: list) -> list[list]:
+    def arrange_in_grid(self, items: Sequence) -> list[list]:
         """Lay items out down the columns, the way the HTML view reads.
 
         Shared with the Excel export, so the sheet keeps the order and shape
@@ -162,8 +163,9 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
             end_idx = min(self.row_size * (i + 1), len(self.table_elements))
             for table_element in self.table_elements[start_idx:end_idx]:
                 element_name = LaTeXEscaper.escape(table_element.name)
-                element_attribute = table_element.get_attribute(
-                    self.object_query, "latex"
+                # The latex tag always renders a string.
+                element_attribute = cast(
+                    str, table_element.get_attribute(self.object_query, "latex")
                 )[:-2]
 
                 latex_str += (

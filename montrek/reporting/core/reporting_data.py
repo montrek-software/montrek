@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
@@ -17,8 +17,8 @@ class ReportingData(ReportingDataBase):
     data_df: pd.DataFrame
     x_axis_column: str | None = None
     x_axis_is_index: bool = False
-    y_axis_columns: list[str] | None = None
-    plot_types: list[ReportingPlotType | str] | None = None
+    y_axis_columns: list[str] = field(default_factory=list)
+    plot_types: list[ReportingPlotType | str] = field(default_factory=list)
     plot_parameters: list[dict[str, Any]] | None = None
 
 

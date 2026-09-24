@@ -54,7 +54,7 @@ class TestLayeredPos(SimpleTestCase):
 
         # Y should increase with layer
         sorted_layers = sorted(layer_to_y)
-        ys_in_order = [sorted(list(layer_to_y[L]))[0] for L in sorted_layers]
+        ys_in_order = [sorted(layer_to_y[L])[0] for L in sorted_layers]
         self.assertEqual(ys_in_order, sorted(ys_in_order), "Y should increase by layer")
 
     def test_dag_left_to_right_vertical_align(self):
@@ -83,7 +83,7 @@ class TestLayeredPos(SimpleTestCase):
                 self.assertLessEqual(len(xs), 2, "X varies too much within a layer")
 
         sorted_layers = sorted(layer_to_x)
-        xs_in_order = [sorted(list(layer_to_x[L]))[0] for L in sorted_layers]
+        xs_in_order = [sorted(layer_to_x[L])[0] for L in sorted_layers]
         self.assertEqual(xs_in_order, sorted(xs_in_order), "X should increase by layer")
 
     def test_cycle_graph_bfs_layering_does_not_crash(self):
@@ -123,7 +123,7 @@ class TestLayeredPos(SimpleTestCase):
         for n in graph:
             self.assertEqual(len(pos[n]), 2)
             # finite numbers
-            self.assertTrue(all(map(lambda v: isinstance(v, (int, float)), pos[n])))
+            self.assertTrue(all(isinstance(v, int | float) for v in pos[n]))
 
     def test_position_shape_and_types(self):
         """
@@ -134,9 +134,9 @@ class TestLayeredPos(SimpleTestCase):
         reporting_data = ReportingNetworkData(title="Dummy", graph=graph)
         pos = layered_pos(reporting_data, align="horizontal")
         self.assertIsInstance(pos, dict)
-        for n, p in pos.items():
+        for p in pos.values():
             self.assertEqual(len(p), 2)
-            self.assertTrue(all(isinstance(c, (int, float)) for c in p))
+            self.assertTrue(all(isinstance(c, int | float) for c in p))
 
     def test_position_groups(self):
         """

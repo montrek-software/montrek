@@ -1,11 +1,13 @@
 import datetime
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from baseclasses.dataclasses.view_classes import TabElement
+from baseclasses.forms import MontrekCreateForm
 from baseclasses.pages import MontrekPage
+from baseclasses.repositories.montrek_repository import MontrekRepository
 from django import forms
 from django.utils import timezone
 from reporting.constants import ReportingPlotType
@@ -175,7 +177,7 @@ class MockData:
     field_a: str
     field_b: int
     field_c: float
-    field_d: datetime.datetime | datetime.date | timezone.datetime
+    field_d: datetime.datetime | datetime.date
     field_e: Decimal
     _meta: MockMeta = MockMeta()
 
@@ -247,7 +249,7 @@ class MockRepository:
                 Decimal(1),
             ),
             MockData("b", 2, 2.0, datetime.datetime(2024, 7, 13), Decimal(2.2)),
-            MockData("c", 3, 3.0, timezone.datetime(2024, 7, 13), Decimal(3)),
+            MockData("c", 3, 3.0, datetime.datetime(2024, 7, 13), Decimal(3)),
         )
 
     def set_order_fields(self, value):
@@ -310,13 +312,13 @@ class MockEmptyRepository(MockRepository):
 
 
 class MockMontrekTableManager(MontrekTableManager):
-    repository_class = MockRepository
+    repository_class = cast(type[MontrekRepository], MockRepository)
     table_title = "Mock Table"
 
     @property
     def table_elements(
         self,
-    ) -> tuple[te.TableElement]:
+    ) -> tuple[te.TableElement, ...]:
         return (
             te.StringTableElement(attr="field_a", name="Field A"),
             MockIntTableElement(attr="field_b", name="Field B"),
@@ -341,7 +343,7 @@ class MockMontrekTableManager(MontrekTableManager):
 
 
 class MockEmptyMontrekTableManager(MockMontrekTableManager):
-    repository_class = MockEmptyRepository
+    repository_class = cast(type[MontrekRepository], MockEmptyRepository)
 
 
 class MockRepositoryFilterFieldsManager(MockMontrekTableManager):
@@ -361,7 +363,7 @@ class MockFilterFieldsTableManager(MockMontrekTableManager):
     @property
     def table_elements(
         self,
-    ) -> tuple[te.TableElement]:
+    ) -> tuple[te.TableElement, ...]:
         return (
             te.StringTableElement(attr="field_a", name="Field A"),
             te.IntTableElement(attr="field_b", name="Field B"),
@@ -391,12 +393,12 @@ class MockFilterFieldsTableManager(MockMontrekTableManager):
 
 
 class MockMontrekDetailsManager(MontrekDetailsManager):
-    repository_class = MockRepository
+    repository_class = cast(type[MontrekRepository], MockRepository)
 
     @property
     def table_elements(
         self,
-    ) -> tuple[te.TableElement]:
+    ) -> tuple[te.TableElement, ...]:
         return (
             te.StringTableElement(attr="field_a", name="Field A"),
             te.IntTableElement(attr="field_b", name="Field B"),
@@ -426,7 +428,7 @@ class MockMontrekDetailsManager5Cols(MockMontrekDetailsManager):
 
 
 class MockHtmlMontrekTableManager(MockMontrekTableManager):
-    repository_class = MockHtmlRepository
+    repository_class = cast(type[MontrekRepository], MockHtmlRepository)
 
 
 class MockCountingTableElementsManager(MockMontrekTableManager):
@@ -441,13 +443,13 @@ class MockCountingTableElementsManager(MockMontrekTableManager):
         super().__init__(session_data)
 
     @property
-    def table_elements(self) -> tuple[te.TableElement]:
+    def table_elements(self) -> tuple[te.TableElement, ...]:
         self.table_elements_reads += 1
-        return MockMontrekTableManager.table_elements.fget(self)
+        return super().table_elements
 
 
 class MockLongMontrekTableManager(MockMontrekTableManager):
-    repository_class = MockLongRepository
+    repository_class = cast(type[MontrekRepository], MockLongRepository)
 
 
 class MockLongMontrekTableManager2(MockMontrekTableManager):
@@ -465,12 +467,12 @@ class MockHttpResponse:
 
 
 class MockMontrekDataFrameTableManager(MontrekDataFrameTableManager):
-    repository_class = MockLongRepository
+    repository_class = cast(type[MontrekRepository], MockLongRepository)
 
     @property
     def table_elements(
         self,
-    ) -> tuple[te.TableElement]:
+    ) -> tuple[te.TableElement, ...]:
         return (
             te.StringTableElement(attr="field_a", name="Field_A"),
             te.IntTableElement(attr="field_b", name="Field B"),
@@ -517,7 +519,7 @@ class MockFieldForm:
 
 class MockMontrekReportFieldEditView(MontrekReportFieldEditView):
     manager_class = MockMontrekTableManager
-    form_class = MockFieldForm
+    form_class = cast(type[MontrekCreateForm], MockFieldForm)
 
 
 class MockMontrekReportFieldEditViewValidationError(MockMontrekReportFieldEditView):

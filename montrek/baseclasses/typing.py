@@ -1,10 +1,12 @@
 import datetime
 from typing import Any, ClassVar, Protocol
 
+from django.db.models import QuerySet
 from reporting.dataclasses.table_elements import TableElement
 
 SessionDataType = dict[str, Any]
-TableElementsType = list[TableElement] | tuple[TableElement] | list | tuple
+TableElementsType = list[TableElement] | tuple[TableElement, ...] | list | tuple
+TableDataType = QuerySet | list[Any]
 
 
 class ModelInstanceProtocol(Protocol):

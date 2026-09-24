@@ -1,6 +1,7 @@
 import os
 import tempfile
 from dataclasses import dataclass
+from typing import Any
 from unittest.mock import Mock, patch
 from django.conf import settings
 
@@ -46,10 +47,10 @@ class MockIntObject:
 
 
 class ReportingElementTestCase(TestCase):
-    reporting_element_class = None
+    reporting_element_class: type[ReportingElement] | None = None
     expected_html = ""
     expected_latex = ""
-    expected_json = {}
+    expected_json: dict[str, Any] = {}
 
     def get_call_parameters(self) -> dict:
         return {}
@@ -57,6 +58,8 @@ class ReportingElementTestCase(TestCase):
     def setUp(self) -> None:
         if self.__class__.__name__ == "ReportingElementTestCase":
             return
+        if self.reporting_element_class is None:
+            raise ValueError("reporting_element_class must be set")
         self.reporting_element = self.reporting_element_class(
             **self.get_call_parameters()
         )

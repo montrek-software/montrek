@@ -1,7 +1,6 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
-from baseclasses.typing import TableElementsType
-from django.db.models import QuerySet
+from baseclasses.typing import TableDataType, TableElementsType
 from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses import table_elements as te
 
@@ -11,7 +10,7 @@ class LatexTableConverter:
         self,
         table_title: str,
         table_elements: TableElementsType,
-        table: QuerySet | dict,
+        table: TableDataType,
         rows_per_page: int = 25,
     ) -> None:
         self.table_title = table_title
@@ -78,7 +77,10 @@ class LatexTableConverter:
                 if isinstance(table_element, te.LinkTableElement):
                     continue
                 self.add_to_column_sizer(table_element, query_object, col_idx)
-                table_str += table_element.get_attribute(query_object, "latex")
+                # The latex tag always renders a string.
+                table_str += cast(
+                    str, table_element.get_attribute(query_object, "latex")
+                )
                 col_idx += 1
             table_str = table_str[:-2] + "\\\\\n\\hline\n"
             if (i + 1) % self.rows_per_page == 0 and (i + 1) != table_len:

@@ -15,8 +15,6 @@ from django.http import HttpResponse
 
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 
-ExcelOutput = HttpResponse | BytesIO | str
-
 
 class ExcelSheetProtocol(Protocol):
     def get_excel_frame(self) -> pd.DataFrame: ...
@@ -30,7 +28,11 @@ class ExcelSheetProtocol(Protocol):
     ) -> None: ...
 
 
-def write_excel_workbook(
+def write_excel_workbook[ExcelOutput: (
+    HttpResponse,
+    BytesIO,
+    str,
+)](
     output: ExcelOutput,
     sheets: Mapping[str, ExcelSheetProtocol],
     show_table_titles: bool = False,
@@ -68,7 +70,11 @@ class ExcelSheetMixin:
     excel_header: bool = True
     table_title: str = ""
 
-    def to_excel(
+    def to_excel[ExcelOutput: (
+        HttpResponse,
+        BytesIO,
+        str,
+    )](
         self,
         output: ExcelOutput,
         sheet_name: str = "Montrek Data",

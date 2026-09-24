@@ -1,5 +1,6 @@
 import os
 from datetime import date
+from typing import cast
 
 from django.conf import settings
 from django.forms import DateField, DateInput, Form
@@ -28,7 +29,7 @@ class MontrekReportForm(Form):
             return file.read()
 
     def _get_template_path(self) -> str:
-        for template_dir in settings.TEMPLATES[0]["DIRS"]:
+        for template_dir in cast(list[str], settings.TEMPLATES[0]["DIRS"]):
             potential_path = os.path.join(
                 settings.BASE_DIR,
                 template_dir,

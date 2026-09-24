@@ -13,7 +13,7 @@ class MockQueryElement:
 
 
 class DummyTableElement(te.StringTableElement):
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         return f"{getattr(obj, self.attr)} & "
 
     def get_value_len(self, obj: Any) -> int:
@@ -21,7 +21,7 @@ class DummyTableElement(te.StringTableElement):
 
 
 class DummyLinkElement(te.LinkTableElement):
-    def get_attribute(self, obj: Any, tag: str) -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str:
         return "should not appear & "
 
     def get_value_len(self, obj: Any) -> int:
