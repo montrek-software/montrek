@@ -2,7 +2,7 @@ from typing import Any
 from baseclasses.managers.montrek_manager import MontrekManager
 
 from process_pipeline.managers.process_pipeline_processor_abc import (
-    PipelineProcessorABC,
+    PipelineProcessorProtocol,
 )
 from process_pipeline.repositories.pipeline_registry_repositories import (
     PipelineRegistryRepositoryABC,
@@ -18,7 +18,7 @@ TASK_SCHEDULED_MESSAGE = (
 
 class MontrekPipelineManagerABC(MontrekManager):
     # ---- required: subclass must set ----
-    processor_class: type[PipelineProcessorABC]
+    processor_class: type[PipelineProcessorProtocol]
     registry_repository_class: type[PipelineRegistryRepositoryABC]
     pipeline_task_class: type[MontrekPipelineTask]
     status_field_name: str  # "upload_status" / "import_status" / "process_status"
@@ -47,7 +47,7 @@ class MontrekPipelineManagerABC(MontrekManager):
         super().__init__(session_data=session_data)
         self.registry_repository = self.registry_repository_class(session_data)
         self.registry: Any = None
-        self.processor: PipelineProcessorABC | None = None
+        self.processor: PipelineProcessorProtocol | None = None
         self.message: str = ""
         self.pipeline_data: dict[str, Any] = {}
 
@@ -103,7 +103,7 @@ class MontrekPipelineManagerABC(MontrekManager):
             if not self._apply_step("post_check"):
                 return False
             self._on_pipeline_success()
-            self._set_status("processed", self.processor.message)
+            self._set_status("processed", self._get_processor().message)
             return True
         except self.caught_errors as e:
             message = f"ERROR ({type(e).__name__}): {e}"
@@ -121,9 +121,15 @@ class MontrekPipelineManagerABC(MontrekManager):
 
     # ---- internal ----
 
+    def _get_processor(self) -> PipelineProcessorProtocol:
+        if self.processor is None:
+            raise RuntimeError("Processor is only available while processing")
+        return self.processor
+
     def _apply_step(self, step: str) -> bool:
-        if not getattr(self.processor, step)():
-            self._set_status("failed", self.processor.message)
+        processor = self._get_processor()
+        if not getattr(processor, step)():
+            self._set_status("failed", processor.message)
             return False
         return True
 
@@ -138,7 +144,7 @@ class MontrekPipelineManagerABC(MontrekManager):
 
     def _build_processor_if_not_exists(
         self, pipeline_data: dict[str, Any]
-    ) -> PipelineProcessorABC:
+    ) -> PipelineProcessorProtocol:
         processor = self.processor
         if processor is None:
             processor = self._build_processor(pipeline_data)
@@ -147,7 +153,7 @@ class MontrekPipelineManagerABC(MontrekManager):
 
     @staticmethod
     def _set_pipeline_data(
-        processor: PipelineProcessorABC, pipeline_data: dict[str, Any]
+        processor: PipelineProcessorProtocol, pipeline_data: dict[str, Any]
     ) -> None:
         # Not every processor inherits PipelineProcessorABC — a number of them are
         # plain duck-typed classes. Those simply do not receive the selection.
@@ -176,12 +182,15 @@ class MontrekPipelineManagerABC(MontrekManager):
 
     # ---- must override ----
 
-    def _init_registry(self, **kwargs) -> int:
+    # ``*args: Any, **kwargs: Any`` lets subclasses name the arguments they need.
+    def _init_registry(self, *args: Any, **kwargs: Any) -> int:
         raise NotImplementedError(
             f"Implement _init_registry in {self.__class__.__name__}"
         )
 
-    def _build_processor(self, pipeline_data: dict[str, Any]) -> PipelineProcessorABC:
+    def _build_processor(
+        self, pipeline_data: dict[str, Any]
+    ) -> PipelineProcessorProtocol:
         raise NotImplementedError(
             f"Implement _build_processor in {self.__class__.__name__}"
         )

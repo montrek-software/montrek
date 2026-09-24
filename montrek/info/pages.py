@@ -12,7 +12,7 @@ DETAILS_TAB_NAME = "Download Registry"
 class InfoPage(MontrekPage):
     page_title = "Montrek Infos"
 
-    def get_tabs(self) -> tuple[TabElement]:
+    def get_tabs(self) -> tuple[TabElement, ...]:
         db_structure_tab = TabElement(
             name="DB Structure",
             link=reverse("db_structure"),

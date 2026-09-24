@@ -119,11 +119,15 @@ class MontrekPageViewMixin:
     def actions(self) -> tuple[ActionElement] | tuple:
         return ()
 
+    def get_tab(self) -> str:
+        """The tab to mark active; override when it depends on the request."""
+        return self.tab
+
     def get_page_context(self, context, **kwargs):
         kwargs.update(self.session_data)
         page = self.page_class(**kwargs)
         context["page_title"] = HtmlSanitizer().clean_html(page.page_title)
-        page.set_active_tab(self.tab)
+        page.set_active_tab(self.get_tab())
         context["tab_elements"] = page.tabs
         context["actions"] = self.actions
         context["title"] = self.title
@@ -157,7 +161,7 @@ class MontrekPageViewMixin:
 
 class MontrekViewMixin:
     manager_class: type[MontrekManager] = MontrekManagerNotImplemented
-    _manager = None
+    _manager: Any = None
     request: Any = None
     _session_data = None
 

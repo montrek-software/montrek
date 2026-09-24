@@ -1,4 +1,22 @@
-from typing import Any
+from typing import Any, Protocol
+
+
+class PipelineProcessorProtocol(Protocol):
+    """What a pipeline manager needs from its processor.
+
+    Not every processor inherits ``PipelineProcessorABC``; a number of them are
+    plain duck-typed classes, and file upload processors take the file path as
+    step argument. ``*args: Any, **kwargs: Any`` lets each keep its signature.
+    """
+
+    @property
+    def message(self) -> str: ...
+
+    def pre_check(self, *args: Any, **kwargs: Any) -> bool: ...
+
+    def process(self, *args: Any, **kwargs: Any) -> bool: ...
+
+    def post_check(self, *args: Any, **kwargs: Any) -> bool: ...
 
 
 class PipelineProcessorABC:
@@ -25,11 +43,13 @@ class PipelineProcessorABC:
     def set_pipeline_data(self, pipeline_data: dict[str, Any]) -> None:
         self._pipeline_data = dict(pipeline_data)
 
-    def pre_check(self) -> bool:
+    # Steps take ``*args, **kwargs`` so subclasses can keep their own signature
+    # (file upload processors receive the file path).
+    def pre_check(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError(f"Implement pre_check in {self.__class__.__name__}")
 
-    def process(self) -> bool:
+    def process(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError(f"Implement process in {self.__class__.__name__}")
 
-    def post_check(self) -> bool:
+    def post_check(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError(f"Implement post_check in {self.__class__.__name__}")

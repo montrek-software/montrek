@@ -1,11 +1,12 @@
 import unittest
+from typing import Any
 
 from data_import.api_import.managers.api_data_import_processor import (
     ApiDataImportProcessorBase,
 )
 from requesting.managers.request_manager import RequestJsonManager
 
-SESSION_DATA = {}
+SESSION_DATA: dict[str, Any] = {}
 ENDPOINT = "items/"
 BASE_URL = "https://api.mock.com/v1/"
 RESPONSE_DATA = {"id": 1, "name": "test"}

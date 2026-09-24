@@ -1,6 +1,7 @@
 import os
 
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404
+from django.http.response import HttpResponseBase
 from file_export.constants import ExportStatus
 
 from process_pipeline.managers.pipeline_registry_manager import (
@@ -24,7 +25,7 @@ class FileExportRegistryManagerABC(PipelineRegistryManagerABC):
     message_column_name = "Export Message"
     download_hover_text = "Download export file"
 
-    def download(self) -> HttpResponse:
+    def download(self) -> HttpResponseBase:
         pk = int(self.session_data["pk"])
         export_file = self.repository.get_export_file(pk)
         if export_file is None:

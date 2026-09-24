@@ -14,6 +14,7 @@ from file_export.tasks.file_export_task import FileExportTask
 
 class FileExportManagerABC(MontrekPipelineManagerABC):
     processor_class: type[FileExportProcessorABC]
+    processor: FileExportProcessorABC | None
     registry_repository_class: type[FileExportRegistryRepositoryABC]
     pipeline_task_class: type[MontrekPipelineTask] = FileExportTask
     status_field_name = "export_status"
@@ -36,5 +37,7 @@ class FileExportManagerABC(MontrekPipelineManagerABC):
         return self.processor_class(self.registry, self.session_data)
 
     def _on_pipeline_success(self) -> None:
+        if self.processor is None:
+            raise RuntimeError("Processor is only available while processing")
         if self.processor.result_file is not None:
             self._update_registry(export_file=self.processor.result_file)

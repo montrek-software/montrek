@@ -1,5 +1,7 @@
 import os
+from typing import cast
 
+from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.tests.mocks import MockRepository
 from django.test import TestCase
 from django.urls import reverse
@@ -16,7 +18,7 @@ class MockSidebarLinkTableElement(SidebarLinkTableElement): ...
 
 
 class MockSidebarManager(SidebarManagerABC):
-    repository_class = MockRepository
+    repository_class = cast(type[MontrekRepository], MockRepository)
     group_field = "field"
 
     def link(self) -> SidebarLinkTableElement:

@@ -1,3 +1,5 @@
+from typing import cast
+
 from django.contrib.auth import login, logout
 from django.conf import settings
 from django.shortcuts import redirect
@@ -99,7 +101,8 @@ class MontrekPasswordResetView(auth_views.PasswordResetView, MessageHandlerMixin
 
 
 class MontrekPasswordResetCompleteView(generic_views.RedirectView):
-    url = reverse_lazy("login")
+    # The lazy string resolves on first use, like a str.
+    url = cast(str, reverse_lazy("login"))
 
     def get(self, request, *args, **kwargs):
         messages.info(

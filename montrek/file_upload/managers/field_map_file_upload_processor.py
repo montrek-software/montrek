@@ -1,12 +1,11 @@
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from file_upload.managers.field_map_manager import FieldMapManagerABC
-from file_upload.models import FileUploadRegistryHubABC
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +19,10 @@ class FieldMapFileUploadProcessor:
 
     def __init__(
         self,
-        file_upload_registry_hub: FileUploadRegistryHubABC,
-        session_data: Dict[str, Any],
+        # The registry row from the repository: the hub annotated with its
+        # satellite fields such as ``file_name``.
+        file_upload_registry_hub: Any,
+        session_data: dict[str, Any],
         **kwargs,
     ):
         self.session_data = session_data
@@ -58,8 +59,8 @@ class FieldMapFileUploadProcessor:
         mapped_df = self.field_map_manager.apply_field_maps(source_df)
         if self.field_map_manager.exceptions:
             self.message = "Errors raised during field mapping:"
-            for e in self.field_map_manager.exceptions:
-                self.message += f"<br>{e.source_field, e.database_field, e.function_name, e.function_parameters, e.exception_message}".replace(
+            for exc in self.field_map_manager.exceptions:
+                self.message += f"<br>{exc.source_field, exc.database_field, exc.function_name, exc.function_parameters, exc.exception_message}".replace(
                     "{", "{{"
                 ).replace(
                     "}", "}}"
@@ -105,7 +106,7 @@ class FieldMapFileUploadProcessor:
         if unallowed_used_fields:
             self.message = (
                 "The following database fields are defined in the field map but are not in the target repository: "
-                + ", ".join(sorted(list(unallowed_used_fields)))
+                + ", ".join(sorted(unallowed_used_fields))
             )
             return False
         return True

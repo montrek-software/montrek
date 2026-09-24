@@ -5,6 +5,8 @@ Apart from ``baseclasses/apps.py`` so importing the base does not drag in the
 candidate. See ``baseclasses.access`` for what the policy does.
 """
 
+from typing import cast
+
 from django.apps import AppConfig, apps
 from django.core.exceptions import ImproperlyConfigured
 
@@ -87,7 +89,7 @@ def is_below_namespace(app_name: str, namespace: str) -> bool:
     return app_name == namespace or app_name.startswith(f"{namespace}.")
 
 
-def declaring_namespace_class(app_config) -> type | None:
+def declaring_namespace_class(app_config) -> type[MontrekAppConfig] | None:
     """The class claiming this app config's namespace.
 
     The claim sits on the base a subtree's apps share, and that base - not the
@@ -97,13 +99,17 @@ def declaring_namespace_class(app_config) -> type | None:
     if not namespace:
         return None
     klass = app_config if isinstance(app_config, type) else type(app_config)
-    return next(
-        (base for base in klass.__mro__ if NAMESPACE_ATTRIBUTE in base.__dict__),
-        None,
+    # Only MontrekAppConfig and its subclasses declare a namespace.
+    return cast(
+        type[MontrekAppConfig] | None,
+        next(
+            (base for base in klass.__mro__ if NAMESPACE_ATTRIBUTE in base.__dict__),
+            None,
+        ),
     )
 
 
-def find_namespace_base(app_name: str) -> type | None:
+def find_namespace_base(app_name: str) -> type[MontrekAppConfig] | None:
     """The app config base of the innermost namespace ``app_name`` falls into.
 
     The innermost, because ``_raise_for_nested_namespaces`` only refuses two

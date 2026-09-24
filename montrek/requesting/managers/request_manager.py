@@ -42,14 +42,15 @@ class RequestManagerABC(MontrekManager):
 class RequestJsonManager(RequestManagerABC):
     json_reader = JsonReader()
     authenticator_class: type[RequestAuthenticator] = NoAuthenticator
-    request_kwargs = {}
+    request_kwargs: dict[str, Any] = {}
     no_of_retries = 5
-    sleep_time = 2
+    sleep_time: float = 2
 
     def __init__(self, session_data: dict[str, Any]):
         super().__init__(session_data)
         self.authenticator = self.authenticator_class(session_data)
 
+    @staticmethod
     def retry_on_failure(method: Callable) -> Callable:
         """Decorator to handle retry logic."""
 
@@ -69,6 +70,7 @@ class RequestJsonManager(RequestManagerABC):
 
         return wrapper
 
+    @staticmethod
     def process_response(method: Callable) -> Callable:
         """Decorator to handle response processing and JSON extraction."""
 

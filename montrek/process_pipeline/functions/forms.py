@@ -1,8 +1,11 @@
 """Form fields for letting a user choose what a pipeline should run."""
 
+from typing import cast
+
 from django import forms
 
 from process_pipeline.functions.processor_functions import get_function_choices
+from process_pipeline.functions.processor_settings import ProcessorSettingsMixin
 
 
 class FunctionSelectionFormMixin:
@@ -14,6 +17,8 @@ class FunctionSelectionFormMixin:
     """
 
     select_widget_attrs = {"class": "form-control"}
+    # Provided by the Django form this is mixed into.
+    fields: dict[str, forms.Field]
 
     def add_function_fields(self, functions_class: type) -> None:
         self.fields["function"] = forms.ChoiceField(
@@ -32,4 +37,7 @@ class FunctionSelectionFormMixin:
         """Return the packaged settings a user may pick, empty when there are none."""
         if not getattr(functions_class, "has_settings", False):
             return []
-        return functions_class.get_settings_choices()
+        # ``has_settings`` is only set by ProcessorSettingsMixin.
+        return cast(
+            type[ProcessorSettingsMixin], functions_class
+        ).get_settings_choices()

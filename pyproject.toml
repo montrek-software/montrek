@@ -19,6 +19,7 @@ module = [
   "django_pandas.*",
   "encrypted_fields.*",
   "kombu.*",
+  "mozilla_django_oidc.*",
   "networkx.*",
   "openpyxl.*",
   "pandas.*",

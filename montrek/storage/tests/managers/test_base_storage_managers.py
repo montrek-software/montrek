@@ -6,7 +6,7 @@ class MockStorageManager(BaseStorageManager):
     def save(self, file_path: str):
         raise NotImplementedError
 
-    def load(self) -> bytes:
+    def load(self, file_name: str) -> bytes:
         raise NotImplementedError
 
     def cleanup(self):
@@ -20,4 +20,4 @@ class TestMockStorageManager(TestCase):
 
     def test_load(self):
         with self.assertRaises(NotImplementedError):
-            MockStorageManager().load()
+            MockStorageManager().load("file_name")

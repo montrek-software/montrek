@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http.response import HttpResponseBase
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from typing import Any
 from collections.abc import Mapping
@@ -66,7 +66,7 @@ class MontrekManager:
         if self._repository:
             self.messages += self.repository.messages
 
-    def download(self) -> HttpResponse:
+    def download(self) -> HttpResponseBase:
         raise NotImplementedError(
             f"Implement download method for {self.__class__.__name__}"
         )

@@ -10,11 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from __future__ import annotations
+
 import ipaddress
 import os
 import sys
 from datetime import timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
@@ -23,6 +26,9 @@ from reporting.core.reporting_colors import ReportingColors
 from montrek.configuration import config
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
+
+if TYPE_CHECKING:
+    from django_stubs_ext import StrOrPromise
 
 add_filtered_warnings()
 
@@ -248,7 +254,7 @@ MIDDLEWARE = DJANGO_MIDDLEWARE + MONTREK_MIDDLEWARE
 
 ROOT_URLCONF = "montrek.urls"
 
-TEMPLATES = [
+TEMPLATES: list[dict[str, Any]] = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": ["baseclasses/templates"],
@@ -339,7 +345,7 @@ if ENABLE_KEYCLOAK:
         "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     )
-    LOGIN_URL = "/oidc/authenticate/"
+    LOGIN_URL: StrOrPromise = "/oidc/authenticate/"
 
     KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
     OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="")

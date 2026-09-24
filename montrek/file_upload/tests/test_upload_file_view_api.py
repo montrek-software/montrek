@@ -6,6 +6,8 @@ instead of messages plus a redirect) differ. The pipeline itself is stubbed out
 here -- montrek_example covers it end to end.
 """
 
+from typing import cast
+
 from baseclasses.pages import MontrekPage
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -13,6 +15,7 @@ from baseclasses.views import REST_API_QUERY_PARAM
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import path, reverse
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.views import MontrekUploadFileView
 from montrek.urls import urlpatterns as montrek_urlpatterns
 from process_pipeline.managers.montrek_pipeline_managers import TASK_SCHEDULED_MESSAGE
@@ -76,14 +79,16 @@ class RestUploadTestView(MontrekUploadFileView):
     page_class = MockPage
     accept = ".csv"
     do_rest_upload = True
-    file_upload_manager_class = StubUploadManager
+    file_upload_manager_class = cast(type[FileUploadManagerABC], StubUploadManager)
 
     def get_success_url(self):
         return reverse("home")
 
 
 class SyncRestUploadTestView(RestUploadTestView):
-    file_upload_manager_class = StubFailingSyncUploadManager
+    file_upload_manager_class = cast(
+        type[FileUploadManagerABC], StubFailingSyncUploadManager
+    )
 
 
 class PermissionRestUploadTestView(RestUploadTestView):
@@ -125,7 +130,7 @@ class TestMontrekUploadFileViewApi(TestCase):
         payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         response = self.client.post(reverse("token_obtain_pair"), payload)
         self.assertEqual(response.status_code, 200, response.content)
-        return {"Authorization": f"Bearer {response.data['access']}"}
+        return {"Authorization": f"Bearer {response.json()['access']}"}
 
     def post_file(self, url=None, file=None, headers=None, **kwargs):
         data = {} if file is None else {"file": file}

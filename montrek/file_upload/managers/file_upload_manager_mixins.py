@@ -1,11 +1,13 @@
 import datetime
 import re
 from io import BytesIO
-from django.db.models.fields.files import ContentFile
+from typing import Any
 
 import pandas as pd
 from baseclasses.models import MontrekHubABC
+from baseclasses.typing import SessionDataType
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.utils import timezone
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
@@ -14,6 +16,11 @@ from user.repositories.user_repository import MontrekUserRepository
 
 
 class LogFileChecksMixin:
+    # Provided by the class this is mixed into; checked in ``_check_attributes``.
+    # The registry hub may also be a registry satellite that carries it as ``hub``.
+    file_upload_registry_hub: Any
+    session_data: SessionDataType
+
     def _check_attributes(self):
         if not hasattr(self, "file_upload_registry_hub"):
             raise AttributeError(
@@ -89,6 +96,8 @@ class LogFileMixin(LogFileChecksMixin):
         return log_sr
 
     def _add_log_file_link(self, file: File):
+        # The log file link is declared on each concrete registry hub.
+        hub: Any
         if isinstance(self.file_upload_registry_hub, MontrekHubABC):
             hub = self.file_upload_registry_hub
         else:
