@@ -1,3 +1,5 @@
+import datetime
+
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.subquery_builder import SubqueryBuilder
 from data_import.api_import.repositories.api_data_import_registry_repositories import (
@@ -10,7 +12,6 @@ from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
-from django.utils import timezone
 
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_b_repository import HubBRepository
@@ -32,7 +33,7 @@ class _QuerysetAwareSubqueryBuilder(SubqueryBuilder):
 
     def build(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
     ) -> Case | Value:
         if queryset is None:

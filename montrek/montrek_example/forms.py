@@ -37,7 +37,7 @@ class ExampleCCreateForm(MontrekCreateForm):
     field_order = ["field_c1_str"]
 
     class Meta:
-        exclude = []
+        exclude: list[str] = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

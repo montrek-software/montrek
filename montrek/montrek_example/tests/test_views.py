@@ -1018,8 +1018,8 @@ class TestMontrekExampleDListView(MontrekListViewTestCase):
                 with open(file_path, "w") as f:
                     f.write(csv_data)
                 with open(file_path, "rb") as f:
-                    csv_data = {"file": f, "overwrite": True}
-                    self.client.post(self.url, csv_data, follow=True)
+                    post_data = {"file": f, "overwrite": True}
+                    self.client.post(self.url, post_data, follow=True)
 
         def _assert_database_values(expected_values):
             queryset = HubDRepository().receive()
@@ -1360,7 +1360,7 @@ class TestMontrekExampleA1UploadFileViewApi(TransactionTestCase):
         payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         response = self.client.post(reverse("token_obtain_pair"), payload)
         self.assertEqual(response.status_code, 200, response.content)
-        return {"Authorization": f"Bearer {response.data['access']}"}
+        return {"Authorization": f"Bearer {response.json()['access']}"}
 
     def post_file(self, headers=None):
         with open(self.test_file_path, "rb") as file:

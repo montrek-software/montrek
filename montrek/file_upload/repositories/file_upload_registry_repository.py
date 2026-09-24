@@ -2,6 +2,7 @@ import os
 from django.contrib import messages
 from django.core.files import File
 from django.conf import settings
+from baseclasses.models import MontrekLinkABC
 from baseclasses.typing import SessionDataType
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.models import FileUploadRegistryStaticSatelliteABC
@@ -30,12 +31,12 @@ class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
         "upload_message",
     ]
     static_satellite_class = FileUploadRegistryStaticSatelliteABC
-    link_file_upload_registry_file_upload_file_class = (
-        NotImplementedLinkFileUploadRegistryFile
-    )
-    link_file_upload_registry_file_log_file_class = (
-        NotImplementedLinkFileUploadRegistryFile
-    )
+    link_file_upload_registry_file_upload_file_class: (
+        type[MontrekLinkABC] | type[NotImplementedLinkFileUploadRegistryFile]
+    ) = NotImplementedLinkFileUploadRegistryFile
+    link_file_upload_registry_file_log_file_class: (
+        type[MontrekLinkABC] | type[NotImplementedLinkFileUploadRegistryFile]
+    ) = NotImplementedLinkFileUploadRegistryFile
     default_order_fields = ("-upload_date",)
 
     def __init__(self, session_data: SessionDataType | None = None):
@@ -45,19 +46,23 @@ class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
 
     def set_annotations(self, **kwargs):
         super().set_annotations()
-        if (
-            self.link_file_upload_registry_file_log_file_class
-            is not NotImplementedLinkFileUploadRegistryFile
-        ):
+        log_file_link_class = self.link_file_upload_registry_file_log_file_class
+        if issubclass(log_file_link_class, MontrekLinkABC):
             self.add_linked_satellites_field_annotations(
                 FileUploadFileStaticSatellite,
-                self.link_file_upload_registry_file_log_file_class,
+                log_file_link_class,
                 ["file"],
             )
             self.rename_field("file", "log_file")
+        upload_file_link_class = self.link_file_upload_registry_file_upload_file_class
+        if not issubclass(upload_file_link_class, MontrekLinkABC):
+            raise NotImplementedError(
+                "FileUploadRegistryRepository class must have a "
+                "link_file_upload_registry_file_upload_file_class"
+            )
         self.add_linked_satellites_field_annotations(
             FileUploadFileStaticSatellite,
-            self.link_file_upload_registry_file_upload_file_class,
+            upload_file_link_class,
             ["file", "created_at"],
             rename_field_map={"created_at": "upload_date"},
         )

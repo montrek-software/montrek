@@ -1,5 +1,6 @@
 import datetime
 from io import BytesIO
+from typing import Any
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -712,7 +713,7 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
 class MontrekReportFieldEditViewTestCase(MontrekObjectViewBaseTestCase):
     expected_status_code = 302
     update_field = ""
-    updated_content = ""
+    updated_content: Any = ""
 
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekReportFieldEditViewTestCase"
@@ -774,11 +775,11 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
     unchanged and non-HTMX GETs are redirected to the fallback URL."""
 
     update_field = ""
-    updated_content = ""
+    updated_content: Any = ""
     # Optional: a value that fails the field's validation, used to cover the
     # validation-error path (editor stays open, no done-header). Left as None
     # by subclasses whose field can't fail validation (e.g. a plain TextField).
-    invalid_content = None
+    invalid_content: Any = None
 
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekInlineFieldEditViewTestCase"

@@ -1,5 +1,6 @@
 import datetime
 import json
+from typing import cast
 from unittest.mock import patch
 
 import numpy as np
@@ -77,10 +78,11 @@ from montrek_example.repositories.hub_d_repository import (
 )
 from montrek_example.repositories.hub_e_repository import HubERepository
 from montrek_example.tests.factories import montrek_example_factories as me_factories
+from user.models import MontrekUser
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
-MIN_DATE = timezone.make_aware(timezone.datetime.min)
-MAX_DATE = timezone.make_aware(timezone.datetime.max)
+MIN_DATE = timezone.make_aware(datetime.datetime.min)
+MAX_DATE = timezone.make_aware(datetime.datetime.max)
 
 
 class TestMontrekRepositorySatellite(TestCase):
@@ -2130,7 +2132,7 @@ class TestLinkOneToManyUpates(TestCase):
 
 class TestCreateDataWithLinks(TestCase):
     def setUp(self) -> None:
-        user = MontrekUserFactory()
+        user = cast(MontrekUser, MontrekUserFactory())
         self.session_data = {"user_id": user.id}
 
     def test_create_data_with_one_link(self):
@@ -2684,12 +2686,12 @@ class TestStaticAggFuncs(TestCase):
     def setUp(self) -> None:
         sat_d1_1 = me_factories.SatD1Factory(field_d1_int=2)
         sat_d1_2 = me_factories.SatD1Factory(field_d1_int=5)
-        sat_c1 = me_factories.SatC1Factory()
+        sat_c1 = cast(me_models.SatC1, me_factories.SatC1Factory())
         sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_1.hub_entity)
         sat_c1.hub_entity.link_hub_c_hub_d.add(sat_d1_2.hub_entity)
-        sat_a2_1 = me_factories.SatA2Factory(field_a2_float=2.5)
-        sat_a2_2 = me_factories.SatA2Factory(field_a2_float=3.0)
-        sat_a2_3 = me_factories.SatA2Factory(field_a2_float=None)
+        sat_a2_1 = cast(me_models.SatA2, me_factories.SatA2Factory(field_a2_float=2.5))
+        sat_a2_2 = cast(me_models.SatA2, me_factories.SatA2Factory(field_a2_float=3.0))
+        sat_a2_3 = cast(me_models.SatA2, me_factories.SatA2Factory(field_a2_float=None))
         sat_a2_1.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
         sat_a2_2.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
         sat_a2_3.hub_entity.link_hub_a_hub_c.add(sat_c1.hub_entity)
@@ -2739,8 +2741,10 @@ class TestTSAggFuncs(TestCase):
                 field_tsc2_float=4.5, value_date=self.test_date_2
             ),
         )
-        for sat in tsc2_sats:
-            sat.hub_value_date.hub.link_hub_c_hub_d.add(sat_d1.hub_entity)
+        for tsc2_sat in tsc2_sats:
+            sat = cast(me_models.SatTSC2, tsc2_sat)
+            hub_c = cast(me_models.HubC, sat.hub_value_date.hub)
+            hub_c.link_hub_c_hub_d.add(sat_d1.hub_entity)
 
     def test_sum(self):
         repo = HubDTSLinkAggRepositorySum()
@@ -3662,7 +3666,7 @@ class TestObjectToDict(TestCase):
 
 class TestRepositoryViewModel(TestCase):
     def setUp(self) -> None:
-        self.user = MontrekUserFactory()
+        self.user = cast(MontrekUser, MontrekUserFactory())
         self.repo = HubARepository({"user_id": self.user.id})
 
     def tearDown(self) -> None:

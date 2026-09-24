@@ -1,11 +1,17 @@
+from typing import TYPE_CHECKING
+
 from baseclasses.dataclasses.view_classes import TabElement
 from baseclasses.repositories.montrek_repository import MontrekRepository
+
+if TYPE_CHECKING:
+    # Runtime import would be circular: reporting builds on baseclasses.
+    from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 
 
 class MontrekPage:
     page_title = "page_title not set!"
     show_date_range_selector = False
-    overview_manager_class = None
+    overview_manager_class: "type[MontrekTableManagerABC] | None" = None
 
     def __init__(self, **kwargs):
         self._tabs = None

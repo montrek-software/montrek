@@ -1,5 +1,9 @@
 import logging
-from file_upload.managers.file_upload_manager import FileUploadManagerABC
+from typing import cast
+from file_upload.managers.file_upload_manager import (
+    FileUploadManagerABC,
+    FileUploadProcessorProtocol,
+)
 from file_upload.managers.file_upload_manager_mixins import LogFileMixin
 from montrek_example.managers.a_upload_table_manager import (
     HubAFileUploadRegistryManager,
@@ -39,5 +43,8 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor, LogFileMixin):
 
 
 class A1FileUploadManager(FileUploadManagerABC):
-    file_upload_processor_class = A1FileUploadProcessor
+    # Field map processors are duck-typed, not FileUploadProcessorProtocol subclasses.
+    file_upload_processor_class = cast(
+        type[FileUploadProcessorProtocol], A1FileUploadProcessor
+    )
     file_registry_manager_class = HubAFileUploadRegistryManager

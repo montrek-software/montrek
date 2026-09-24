@@ -196,7 +196,7 @@ class HubADetailsManager(MontrekDetailsManager):
     repository_class = HubARepository
 
     @property
-    def table_elements(self) -> list:
+    def table_elements(self) -> TableElementsType:
         return (
             te.StringTableElement(name="A1 String", attr="field_a1_str"),
             te.IntTableElement(name="A1 Int", attr="field_a1_int"),
@@ -210,7 +210,7 @@ class HubBManager(MontrekTableManager):
     repository_class = HubBRepository
 
     @property
-    def table_elements(self) -> list:
+    def table_elements(self) -> TableElementsType:
         return [
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
             te.DateTableElement(name="B1 Date", attr="field_b1_date"),

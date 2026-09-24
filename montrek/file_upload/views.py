@@ -26,6 +26,7 @@ from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManager,
     FileUploadRegistryManagerABC,
 )
+from baseclasses.pages import MontrekPage
 from file_upload.pages import FileUploadPage
 from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
@@ -183,8 +184,8 @@ class MontrekUploadFileView(MontrekApiViewMixin, MontrekTemplateView):
 
 
 class MontrekDownloadFileBaseView(MontrekTemplateView):
-    manager_class = FileUploadRegistryManager
-    page_class = FileUploadPage
+    manager_class: type[FileUploadRegistryManagerABC] = FileUploadRegistryManager
+    page_class: type[MontrekPage] = FileUploadPage
     get_file_method = ""
 
     def get(self, request, *args, **kwargs):
@@ -271,10 +272,10 @@ class MontrekFieldMapListView(MontrekListView):
 
 
 class FileUploadRegistryView(MontrekListView):
-    manager_class = FileUploadRegistryManager
+    manager_class: type[FileUploadRegistryManagerABC] = FileUploadRegistryManager
     title = "Uploads"
     tab = "tab_uploads"
-    page_class = FileUploadPage
+    page_class: type[MontrekPage] = FileUploadPage
 
 
 # TODO: Remove after refactor
