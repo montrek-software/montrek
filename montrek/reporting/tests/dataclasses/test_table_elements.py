@@ -1018,7 +1018,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             value="unknown",
             expected_format=(
                 '<div data-bs-toggle="tooltip" data-bs-html="true" '
-                'data-bs-title="">unknown</div>'
+                'data-bs-title="The type of the None singleton.">unknown</div>'
             ),
             expected_format_latex=" \\color{textdark} unknown &",
         )
