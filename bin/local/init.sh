@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Setup python environment
-PYTHON_VERSION=3.12.0
+PYTHON_VERSION=3.14.7
 PROJECT_NAME=$(basename "$PWD")
 ENV_NAME="$PROJECT_NAME-$PYTHON_VERSION"
 echo "$ENV_NAME" >.python-version
@@ -14,7 +14,7 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 # Define the pyenv version name and Python version
 pyenv_version_name=$ENV_NAME
-python_version=PYTHON_VERSION
+python_version=$PYTHON_VERSION
 
 # Check if the pyenv version exists
 if ! pyenv versions | grep -q "$pyenv_version_name"; then
@@ -26,8 +26,7 @@ else
 fi
 
 # Check if the pyenv version is activated
-current_pyenv_version=$(pyenv version-name)
-if [ "$current_pyenv_version" != "$pyenv_version_name" ]; then
+if [ "$(basename "${VIRTUAL_ENV:-}")" != "$pyenv_version_name" ]; then
   echo "Activating pyenv version $pyenv_version_name..."
   echo "pyenv activate $pyenv_version_name"
   pyenv activate "$pyenv_version_name"

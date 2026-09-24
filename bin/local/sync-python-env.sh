@@ -3,7 +3,7 @@ set -euo pipefail
 set -x
 
 echo "Syncing Python environment with uv..."
-uv venv
+uv venv --clear --python "$(python -c 'import sys; print(sys.executable)')"
 
 # Combine all requirements.in files into one
 temporary_requirements_file="all_requirements.in"
