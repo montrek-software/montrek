@@ -1,7 +1,6 @@
-from typing import Any, TypedDict
+from typing import TypedDict, cast
 
 from django.db.models import Q
-from django.utils.tree import Node
 
 
 class FilterType(TypedDict):
@@ -14,12 +13,13 @@ class FilterDecoder:
     def decode_dict_to_query(
         filter_dict: dict[str, FilterType | dict[str, FilterType]],
     ) -> Q:
-        q_objects = []
+        q_objects: list[Q] = []
         for key, value in filter_dict.items():
             if key.upper() == "OR":
-                q_objects.append(FilterDecoder._append_or_dict(value))
+                or_dict = cast(dict[str, FilterType], value)
+                q_objects.append(FilterDecoder._append_or_dict(or_dict))
             else:
-                query = FilterDecoder._set_query(key, value)
+                query = FilterDecoder._set_query(key, cast(FilterType, value))
                 q_objects.append(query)
         return Q(*q_objects)
 
@@ -32,6 +32,6 @@ class FilterDecoder:
         return query_or
 
     @staticmethod
-    def _set_query(key: str, FilterType) -> Node | Q:
-        q = Q((key, FilterType["filter_value"]))
-        return ~q if FilterType["filter_negate"] else q
+    def _set_query(key: str, filter_type: FilterType) -> Q:
+        q = Q((key, filter_type["filter_value"]))
+        return ~q if filter_type["filter_negate"] else q

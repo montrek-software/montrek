@@ -1,5 +1,8 @@
 import pandas as pd
-from baseclasses.dataclasses.montrek_message import MontrekMessageWarning
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessage,
+    MontrekMessageWarning,
+)
 from baseclasses.models import MontrekHubABC
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.db.db_creator import DbBatchCreator, DbCreator
@@ -17,8 +20,8 @@ class DbDataFrame:
         self.data_frame: pd.DataFrame = pd.DataFrame()
         self.db_staller = DbStaller(self.annotator)
         self.db_writer = DbWriter(self.db_staller)
-        self.messages = []
-        self.link_columns = []
+        self.messages: list[MontrekMessage] = []
+        self.link_columns: list[str] = []
 
     def create(self, data_frame: pd.DataFrame):
         if data_frame.empty:

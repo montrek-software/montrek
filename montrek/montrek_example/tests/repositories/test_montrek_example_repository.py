@@ -3045,6 +3045,8 @@ class TestMontrekManyToManyRelations(TestCase):
         repository_d = HubDRepository()
         satd_queryset = repository_d.receive()
         self.assertEqual(satd_queryset.count(), 2)
+        # Without an explicit order the indexed rows below come back in arbitrary order
+        satd_queryset = satd_queryset.order_by("field_d1_int")
         self.assertCountEqual(
             json.loads(satd_queryset[0].hub_b_id),
             [self.satb1.hub_entity_id, self.satb2.hub_entity_id],

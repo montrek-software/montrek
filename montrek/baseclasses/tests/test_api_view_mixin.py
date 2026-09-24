@@ -55,7 +55,7 @@ class TestMontrekApiViewMixinCsrf(TestCase):
         payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         response = self.client.post(reverse("token_obtain_pair"), payload)
         self.assertEqual(response.status_code, 200, response.content)
-        return {"Authorization": f"Bearer {response.data['access']}"}
+        return {"Authorization": f"Bearer {response.json()['access']}"}
 
     def get_csrf_token(self) -> str:
         self.client.get(self.url)

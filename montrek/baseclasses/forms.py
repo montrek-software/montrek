@@ -2,6 +2,7 @@ import contextlib
 import json
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+from collections.abc import Mapping
 from typing import Any
 
 from django import forms
@@ -503,6 +504,7 @@ class MontrekCreateForm(forms.ModelForm):
         link_class = getattr(self.repository.hub_class, link_name).through
         is_many_to_many = link_class.link_type == LinkTypeEnum.MANY_TO_MANY
 
+        choice_class: type[BaseMontrekChoiceField]
         if is_many_to_many:
             choice_class = MontrekModelMultipleChoiceField
             kwargs["use_checkboxes_for_many_to_many"] = use_checkboxes_for_many_to_many
@@ -547,7 +549,7 @@ class BaseMontrekChoiceField:
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any],
+        initial: Mapping[str, Any],
         queryset: QuerySet,
         display_field: str,
         separator: str,
@@ -559,7 +561,7 @@ class BaseMontrekChoiceField:
 class MontrekModelChoiceField(BaseMontrekChoiceField, forms.ModelChoiceField):
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any],
+        initial: Mapping[str, Any],
         queryset: QuerySet,
         display_field: str,
         separator: str | None,
@@ -596,7 +598,7 @@ class MontrekModelMultipleChoiceField(
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any],
+        initial: Mapping[str, Any],
         queryset: QuerySet,
         display_field: str,
         separator: str | None,
@@ -623,7 +625,7 @@ class MontrekModelCharChoiceField(BaseMontrekChoiceField, forms.CharField):
 
     @staticmethod
     def get_initial_link(
-        initial: dict[str, Any],
+        initial: Mapping[str, Any],
         queryset: QuerySet | None,
         display_field: str,
         separator: str | None = None,

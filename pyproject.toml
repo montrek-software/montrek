@@ -4,12 +4,36 @@ line-length = 88
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main"]
+# Only report errors for the files/packages passed on the command line
+# (e.g. `mypy baseclasses`); imported first-party modules are analysed silently.
+follow_imports = "silent"
+
+[[tool.mypy.overrides]]
+# Third-party packages without type hints or installed stubs.
+module = [
+  "bleach.*",
+  "celery.*",
+  "debug_toolbar.*",
+  "decouple.*",
+  "django_pandas.*",
+  "encrypted_fields.*",
+  "kombu.*",
+  "openpyxl.*",
+  "pandas.*",
+  "plotly.*",
+  "psycopg2.*",
+  "pypandoc.*",
+  "requests.*",
+  "rest_framework.*",
+  "weasyprint.*",
+]
+ignore_missing_imports = true
 
 [tool.django-stubs]
 django_settings_module = "montrek.settings"
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 88
 
 

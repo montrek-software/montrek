@@ -6,7 +6,7 @@ from enum import Enum
 from typing import cast
 from collections.abc import Iterable
 
-from baseclasses.models import MontrekLinkABC, MontrekSatelliteABC, ValueDateList
+from baseclasses.models import MontrekLinkABC, MontrekSatelliteBaseABC, ValueDateList
 from baseclasses.repositories.db.db_staller import DbStallerProtocol
 from baseclasses.repositories.db.satellite_creator import SatelliteCreator
 from baseclasses.repositories.db.typing import (
@@ -37,13 +37,13 @@ class LinkDirection(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class SatelliteKey:
-    sat_class: type[MontrekSatelliteABC]
+    sat_class: type[MontrekSatelliteBaseABC]
     hash_identifier: str
 
 
 @dataclass(frozen=True, slots=True)
 class SatelliteHubKey:
-    sat_class: type[MontrekSatelliteABC]
+    sat_class: type[MontrekSatelliteBaseABC]
     hub_id: int
 
 
@@ -90,7 +90,7 @@ class DbCreatorCache:
         self.cached_satellites: HashSatMap = {}
         self.cached_satellites_by_hub: HubSatMap = {}
         self.cached_satellites_by_hvd: dict[
-            tuple[type[MontrekSatelliteABC], int], MontrekSatelliteABC
+            tuple[type[MontrekSatelliteBaseABC], int], MontrekSatelliteBaseABC
         ] = {}
         self.cached_links: TLinkCacheType = {}
 
@@ -244,10 +244,10 @@ class DbCreatorCache:
 
         # Timeseries satellites: hash from hub_value_date.id
         for sat_class in self.db_staller.get_ts_satellite_classes():
-            hashes: list[str] = []
+            ts_hashes: list[str] = []
             for hvd in self.cached_hub_value_dates.values():
-                hashes.append(sat_class.convert_string_to_hash(str(hvd.id)))
-            sat_hashes[sat_class] = hashes
+                ts_hashes.append(sat_class.convert_string_to_hash(str(hvd.id)))
+            sat_hashes[sat_class] = ts_hashes
 
         return sat_hashes
 
@@ -261,7 +261,7 @@ class DbCreatorCache:
           - derived hub ids referenced by these satellites
           - derived hub_value_dates referenced by these satellites
         """
-        cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
+        cache: dict[SatelliteKey, MontrekSatelliteBaseABC] = {}
         derived_hub_ids: set[int] = set()
         derived_hvds: dict[HubValueDateKey, HubValueDateProtocol] = {}
         static_hub_ids_needing_hvd: set[int] = set()
@@ -322,7 +322,7 @@ class DbCreatorCache:
         satellite for this hub/hub_value_date" regardless of whether the incoming
         data's identifier fields happened to match.
         """
-        cache: dict[SatelliteKey, MontrekSatelliteABC] = {}
+        cache: dict[SatelliteKey, MontrekSatelliteBaseABC] = {}
 
         for sat_class in sat_hashes:
             sat_is_timeseries = sat_class.is_timeseries
@@ -346,13 +346,13 @@ class DbCreatorCache:
         )
 
     def _filter_satellites(
-        self, *, sat_class: type[MontrekSatelliteABC], extra_filter: Q
+        self, *, sat_class: type[MontrekSatelliteBaseABC], extra_filter: Q
     ):
         """
         Centralized validity filtering.
         """
         if sat_class.is_timeseries:
-            relate_fields = (
+            relate_fields: tuple[str, ...] = (
                 "hub_value_date",
                 "hub_value_date__value_date_list",
                 "hub_value_date__hub",
@@ -460,18 +460,18 @@ class DbCreatorCache:
     # -------------------------
 
     def get_cached_satellite(
-        self, satellite_class: type[MontrekSatelliteABC], hash_identifier: str
-    ) -> MontrekSatelliteABC | None:
+        self, satellite_class: type[MontrekSatelliteBaseABC], hash_identifier: str
+    ) -> MontrekSatelliteBaseABC | None:
         return self.cached_satellites.get((satellite_class, hash_identifier))
 
     def get_cached_satellite_by_hub(
-        self, satellite_class: type[MontrekSatelliteABC], hub_id: int
-    ) -> MontrekSatelliteABC | None:
+        self, satellite_class: type[MontrekSatelliteBaseABC], hub_id: int
+    ) -> MontrekSatelliteBaseABC | None:
         return self.cached_satellites_by_hub.get((satellite_class, hub_id))
 
     def get_cached_satellite_by_hub_value_date(
-        self, satellite_class: type[MontrekSatelliteABC], hub_value_date_id: int
-    ) -> MontrekSatelliteABC | None:
+        self, satellite_class: type[MontrekSatelliteBaseABC], hub_value_date_id: int
+    ) -> MontrekSatelliteBaseABC | None:
         return self.cached_satellites_by_hvd.get((satellite_class, hub_value_date_id))
 
     def get_cached_hub(self, hub_entity_id: int) -> MontrekHubProtocol | None:

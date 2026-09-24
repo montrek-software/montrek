@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 from baseclasses.dataclasses.montrek_message import (
@@ -17,7 +18,6 @@ from django.db.models import (
     Subquery,
 )
 from django.db.models.functions import Coalesce
-from django.utils import timezone
 
 
 class QueryBuilder:
@@ -26,8 +26,8 @@ class QueryBuilder:
         annotator: Annotator,
         session_data: dict[str, Any],
         latest_ts: bool = False,
-        session_start_date: timezone.datetime | None = None,
-        session_end_date: timezone.datetime | None = None,
+        session_start_date: datetime.datetime | None = None,
+        session_end_date: datetime.datetime | None = None,
         hub_scope_pk: int | None = None,
     ):
         self.annotator = annotator
@@ -37,12 +37,12 @@ class QueryBuilder:
         self.latest_ts = latest_ts
         self.hub_scope_pk = hub_scope_pk
         self.session_start_date = (
-            self.session_data.get("start_date", timezone.datetime.min)
+            self.session_data.get("start_date", datetime.datetime.min)
             if session_start_date is None
             else session_start_date
         )
         self.session_end_date = (
-            self.session_data.get("end_date", timezone.datetime.max)
+            self.session_data.get("end_date", datetime.datetime.max)
             if session_end_date is None
             else session_end_date
         )
@@ -60,7 +60,7 @@ class QueryBuilder:
 
     def build_queryset(
         self,
-        reference_date: timezone.datetime,
+        reference_date: datetime.datetime,
         order_fields: tuple[str, ...] = (),
         apply_filter: bool = True,
     ) -> QuerySet:
