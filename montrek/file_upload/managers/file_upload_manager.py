@@ -4,7 +4,10 @@ from typing import Any
 
 from django.conf import settings
 from django.core.files import File
-from file_upload.managers.file_upload_registry_manager import FileUploadRegistryManager
+from file_upload.managers.file_upload_registry_manager import (
+    FileUploadRegistryManager,
+    FileUploadRegistryManagerABC,
+)
 from file_upload.models import FileUploadRegistryHubABC
 from file_upload.repositories.file_upload_file_repository import (
     FileUploadFileRepository,
@@ -32,7 +35,7 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     repository_class: type[FileUploadFileRepository] = FileUploadFileRepository
 
     # ---- registry display manager (used by views) ----
-    file_registry_manager_class: type[FileUploadRegistryManager] = (
+    file_registry_manager_class: type[FileUploadRegistryManagerABC] = (
         FileUploadRegistryManager
     )
 

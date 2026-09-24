@@ -53,7 +53,7 @@ class ViewModelRepository:
         fields["hub"] = models.ForeignKey(hub_class, on_delete=models.CASCADE)
 
         attrs = {
-            "__module__": repository_name,
+            "__module__": module_name,
             "Meta": Meta,
             "reference_date": datetime.date.today(),
         }

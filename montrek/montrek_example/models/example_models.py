@@ -39,18 +39,18 @@ from file_upload.models import (
 
 
 class HubA(MontrekHubABC):
-    link_hub_a_hub_b = models.ManyToManyField(
+    link_hub_a_hub_b: models.ManyToManyField = models.ManyToManyField(
         "HubB", related_name="link_hub_b_hub_a", through="LinkHubAHubB"
     )
-    link_hub_a_hub_c = models.ManyToManyField(
+    link_hub_a_hub_c: models.ManyToManyField = models.ManyToManyField(
         "HubC", related_name="link_hub_c_hub_a", through="LinkHubAHubC"
     )
-    link_hub_a_file_upload_registry = models.ManyToManyField(
+    link_hub_a_file_upload_registry: models.ManyToManyField = models.ManyToManyField(
         "montrek_example.HubAFileUploadRegistryHub",
         related_name="link_file_upload_registry_hub_a",
         through="LinkHubAFileUploadRegistry",
     )
-    link_hub_a_api_upload_registry = models.ManyToManyField(
+    link_hub_a_api_upload_registry: models.ManyToManyField = models.ManyToManyField(
         "HubAApiUploadRegistryHub",
         related_name="link_api_upload_registry_hub_a",
         through="LinkHubAApiUploadRegistry",
@@ -58,19 +58,19 @@ class HubA(MontrekHubABC):
 
 
 class HubB(MontrekHubABC):
-    link_hub_b_hub_d = models.ManyToManyField(
+    link_hub_b_hub_d: models.ManyToManyField = models.ManyToManyField(
         "HubD", related_name="link_hub_d_hub_b", through="LinkHubBHubD"
     )
 
 
 class HubC(MontrekHubABC):
-    link_hub_c_hub_d = models.ManyToManyField(
+    link_hub_c_hub_d: models.ManyToManyField = models.ManyToManyField(
         "HubD", related_name="link_hub_d_hub_c", through="LinkHubCHubD"
     )
 
 
 class HubD(MontrekHubABC):
-    link_hub_d_hub_e = models.ManyToManyField(
+    link_hub_d_hub_e: models.ManyToManyField = models.ManyToManyField(
         "HubE", related_name="link_hub_e_hub_d", through="LinkHubDHubE"
     )
 
@@ -242,15 +242,19 @@ class LinkHubDHubE(MontrekOneToManyLinkABC):
 
 
 class HubAFileUploadRegistryHub(FileUploadRegistryHubABC):
-    link_file_upload_registry_file_upload_file = models.ManyToManyField(
-        "file_upload.FileUploadFileHub",
-        related_name="link_file_upload_file_hub_a_file_upload_registry",
-        through="LinkHubAFileUploadRegistryFileUploadFile",
+    link_file_upload_registry_file_upload_file: models.ManyToManyField = (
+        models.ManyToManyField(
+            "file_upload.FileUploadFileHub",
+            related_name="link_file_upload_file_hub_a_file_upload_registry",
+            through="LinkHubAFileUploadRegistryFileUploadFile",
+        )
     )
-    link_file_upload_registry_file_log_file = models.ManyToManyField(
-        "file_upload.FileUploadFileHub",
-        related_name="link_file_log_file_hub_a_file_upload_registry",
-        through="LinkHubAFileUploadRegistryFileLogFile",
+    link_file_upload_registry_file_log_file: models.ManyToManyField = (
+        models.ManyToManyField(
+            "file_upload.FileUploadFileHub",
+            related_name="link_file_log_file_hub_a_file_upload_registry",
+            through="LinkHubAFileUploadRegistryFileLogFile",
+        )
     )
 
 
