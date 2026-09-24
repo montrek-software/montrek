@@ -1,5 +1,6 @@
 from collections import deque
-from typing import Any, Hashable, Mapping
+from collections.abc import Hashable, Mapping
+from typing import Any
 
 import networkx as nx
 from networkx import DiGraph
@@ -25,7 +26,7 @@ def _layers_by_bfs(graph: DiGraph) -> dict[Hashable, int]:
     with isolated nodes defaulted to layer 0.
     """
     roots = [n for n in graph if graph.in_degree(n) == 0] or [next(iter(graph.nodes))]
-    layers: dict[Hashable, int] = {r: 0 for r in roots}
+    layers: dict[Hashable, int] = dict.fromkeys(roots, 0)
 
     dq: deque = deque(roots)
     while dq:

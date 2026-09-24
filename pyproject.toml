@@ -11,6 +11,7 @@ follow_imports = "silent"
 [[tool.mypy.overrides]]
 # Third-party packages without type hints or installed stubs.
 module = [
+  "_plotly_utils.*",
   "bleach.*",
   "celery.*",
   "debug_toolbar.*",
@@ -18,6 +19,7 @@ module = [
   "django_pandas.*",
   "encrypted_fields.*",
   "kombu.*",
+  "networkx.*",
   "openpyxl.*",
   "pandas.*",
   "plotly.*",

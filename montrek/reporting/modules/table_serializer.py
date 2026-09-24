@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+from typing import Any
 
 import pandas as pd
 from reporting.dataclasses import table_elements as te
@@ -32,7 +33,7 @@ class TableSerializer:
         """Check if table element should be skipped during serialization."""
         return isinstance(table_element, te.LinkTableElement)
 
-    def _serialize_element(self, table_element, query_object) -> tuple[str, any]:
+    def _serialize_element(self, table_element, query_object) -> tuple[str, Any]:
         """Extract key and serialized value from a table element."""
         raw_value = table_element.get_value(query_object)
 

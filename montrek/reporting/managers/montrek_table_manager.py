@@ -4,21 +4,21 @@ import os
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from typing import ClassVar
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
-from baseclasses.typing import SessionDataType, TableElementsType
+from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db.models import QuerySet
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic.base import HttpResponse
 from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
@@ -55,11 +55,14 @@ class MontrekTableManagerABC(
     # Set on first use by ``get_display_field_names``; class level so subclasses
     # with their own ``__init__`` signature cannot miss it.
     _table_element_field_names: dict[str, str] | None = None
+    # Set per subclass by ``MontrekTableMetaClass``.
+    download_task: ClassVar[DownloadTableTask]
+    refresh_data_task: ClassVar[RefreshDataTask]
 
     def __init__(self, session_data: SessionDataType | None = None):
         super().__init__(session_data)
         self._document_name: None | str = None
-        self._queryset: None | QuerySet = None
+        self._queryset: None | TableDataType = None
         self.is_current_compact_format: bool = self.get_is_compact_format()
         self.order_descending = False
         self.order_field: None | str = self.get_order_field()
@@ -100,10 +103,10 @@ class MontrekTableManagerABC(
         if self.order_field:
             self.repository.set_order_fields((str(self.order_field),))
 
-    def get_table(self) -> QuerySet | dict:
+    def get_table(self) -> TableDataType:
         raise NotImplementedError("Method get_table must be implemented")
 
-    def get_full_table(self) -> QuerySet | dict:
+    def get_full_table(self) -> TableDataType:
         raise NotImplementedError("Method get_full_table must be implemented")
 
     def get_df(self) -> pd.DataFrame:
@@ -217,7 +220,7 @@ class MontrekTableManagerABC(
             }
         )
 
-    def to_json(self) -> dict:
+    def to_json(self) -> list[dict]:
         serializer = TableSerializer(self.table_elements)
         return serializer.serialize_all(self.get_full_table())
 
@@ -253,7 +256,7 @@ class MontrekTableManagerABC(
         return self._download_or_mail("xlsx", self._download_excel)
 
     def _download_or_mail(
-        self, filetype: str, download_method: callable
+        self, filetype: str, download_method: Callable[[], HttpResponse]
     ) -> HttpResponse:
         if self.is_large:
             return self._handle_large_table(filetype)
@@ -383,12 +386,12 @@ class MontrekTableManager(MontrekTableManagerABC):
         paginate_by = self.session_data.get("current_paginate_by", 10)
         return max(paginate_by, 5)
 
-    def get_table(self) -> QuerySet | dict:
+    def get_table(self) -> TableDataType:
         queryset = self._get_queryset(self.get_paginated_queryset)
         self._preload_container(queryset)
         return queryset
 
-    def get_full_table(self) -> QuerySet | dict:
+    def get_full_table(self) -> QuerySet:
         self.set_order_field()
         return self.repository.receive()
 
@@ -398,7 +401,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         queryset = list(queryset)
         return self._build_df(queryset)
 
-    def _preload_container(self, queryset: QuerySet | dict) -> None:
+    def _preload_container(self, queryset: TableDataType) -> None:
         """Hook for subclasses to bulk-prefetch data before row iteration."""
 
     def _build_df(self, queryset: list) -> pd.DataFrame:
@@ -414,13 +417,13 @@ class MontrekTableManager(MontrekTableManagerABC):
             ]
         return pd.DataFrame(table_data)
 
-    def get_paginated_queryset(self) -> QuerySet:
+    def get_paginated_queryset(self) -> TableDataType:
         queryset = self.get_full_table()
         if self.is_paginated:
             return self._paginate_queryset(queryset)
         return queryset
 
-    def _paginate_queryset(self, queryset: QuerySet | dict):
+    def _paginate_queryset(self, queryset: QuerySet) -> list:
         page_number = int(self.session_data.get("page", [1])[0])
         paginate_by = self.paginate_by
         offset = (page_number - 1) * paginate_by
@@ -450,7 +453,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         cols = len(self.table_elements)
         return rows * cols
 
-    def _get_queryset(self, func: callable) -> QuerySet | dict:
+    def _get_queryset(self, func: Callable[[], TableDataType]) -> TableDataType:
         if self._queryset:
             return self._queryset
         queryset = func()
@@ -532,7 +535,7 @@ class HistoryDataTableManager(MontrekTableManagerABC):
         self.change_map = self.get_change_map()
         self.table = self.to_html()
 
-    def get_table(self) -> QuerySet | dict:
+    def get_table(self) -> TableDataType:
         return self.queryset
 
     @property
@@ -562,7 +565,7 @@ class HistoryDataTableManager(MontrekTableManagerABC):
         # Make a copy of the dataframe sorted by id in descending order (bottom to top)
         sort_col = "value_date" if is_timeseries else id_column
         sorted_df = df.sort_values(by=sort_col, ascending=False).reset_index(drop=True)
-        changes = {}
+        changes: te.ChangeMapType = {}
 
         # Iterate through rows from bottom to top (highest id to lowest)
         for i in range(len(sorted_df) - 1):

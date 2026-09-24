@@ -5,6 +5,7 @@ import shutil
 import subprocess  # nosec B404
 import uuid
 from pathlib import Path
+from typing import cast
 
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.conf import settings
@@ -186,7 +187,7 @@ class LatexReportManager:
             shutil.rmtree(workbench_path, ignore_errors=True)
 
     def _get_template_path(self) -> str | None:
-        for template_dir in settings.TEMPLATES[0]["DIRS"]:
+        for template_dir in cast(list[str], settings.TEMPLATES[0]["DIRS"]):
             potential_path = os.path.join(
                 settings.BASE_DIR, template_dir, "latex_templates", self.template_name
             )

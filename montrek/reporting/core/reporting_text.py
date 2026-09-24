@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 import mistune
@@ -34,6 +35,9 @@ class ReportingElement:
     def to_latex(self) -> str:
         html_text = self.to_html()
         return HtmlLatexConverter.convert(html_text)
+
+    def to_json(self) -> dict[str, Any]:
+        raise NotImplementedError("Method to_json must be implemented")
 
 
 class ReportingText(ReportingElement):

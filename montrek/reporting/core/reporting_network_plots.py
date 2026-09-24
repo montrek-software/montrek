@@ -2,7 +2,6 @@ import itertools
 from typing import Any
 
 import networkx as nx
-import numpy as np
 from plotly.graph_objs import Scatter
 from reporting.core.network_layouts.layouts import NetworkLayoutsFactory
 from reporting.core.network_layouts.typing import Pos
@@ -48,7 +47,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
     def get_pos(self, layout: str, reporting_data: ReportingNetworkData) -> Pos:
         return NetworkLayoutsFactory.get(layout).pos(reporting_data)
 
-    def get_edges(self, pos: dict[str, np.ndarray], graph: nx.DiGraph) -> Scatter:
+    def get_edges(self, pos: Pos, graph: nx.DiGraph) -> Scatter:
         edge_x, edge_y = [], []
         for src, dst in graph.edges():
             x0, y0 = pos[src]
@@ -64,9 +63,7 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             hoverinfo="none",
         )
 
-    def get_nodes(
-        self, pos: dict[str, np.ndarray], reporting_data: ReportingNetworkData
-    ) -> Scatter:
+    def get_nodes(self, pos: Pos, reporting_data: ReportingNetworkData) -> Scatter:
         graph = reporting_data.graph
         group_color_map = self.get_group_color_map(reporting_data.group_attr, graph)
         (
@@ -92,10 +89,9 @@ class ReportingNetworkPlot(ReportingPlotBase[ReportingNetworkData]):
             node_y.append(y)
             node_text.append(f"<b>{node}</b>")
             if reporting_data.symbol_attr:
+                symbol_map = reporting_data.symbol_map or {}
                 node_symbols.append(
-                    reporting_data.symbol_map.get(
-                        attrs.get(reporting_data.symbol_attr), "circle"
-                    )
+                    symbol_map.get(attrs.get(reporting_data.symbol_attr), "circle")
                 )
             group = attrs.get(reporting_data.group_attr)
             node_colors.append(group_color_map.get(group, "gray"))

@@ -16,11 +16,11 @@ from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
-from django.template.base import mark_safe
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.utils.safestring import mark_safe
 from encrypted_fields import EncryptedCharField
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
@@ -147,11 +147,10 @@ class TableElement:
             if isinstance(value, collections.abc.Iterable) and not isinstance(
                 value, str
             ):
-                try:
+                if isinstance(value, collections.abc.Sized):
                     return len(value) == 0
-                except TypeError:
-                    # No len() available, try to peek at the iterable
-                    return not any(True for _ in value)
+                # No len() available, try to peek at the iterable
+                return not any(True for _ in value)
         return False
 
     def get_hover_text(self, _obj: Any, _value: Any) -> str | None:
@@ -177,7 +176,7 @@ class TableElement:
 @dataclass
 class NoneTableElement(TableElement):
     name: str = "None"
-    serializer_field_class = serializers.CharField
+    serializer_field_class: ClassVar = serializers.CharField
     td_classes: ClassVar[TdClassesType] = ["text-center"]
 
     def format(self, _value: Any) -> str:
@@ -187,7 +186,7 @@ class NoneTableElement(TableElement):
 @dataclass
 class AttrTableElement(TableElement):
     attr: str
-    serializer_field_class = serializers.CharField
+    serializer_field_class: ClassVar = serializers.CharField
     obj: Any = None
 
     def get_value(self, obj: Any) -> Any:
@@ -226,8 +225,8 @@ class ExternalLinkTableElement(AttrTableElement):
 
     def get_value(self, obj: Any) -> Any:
         url = super().get_value(obj)
-        # Ensure url is string-like before attempting to parse; otherwise, return as-is.
-        if not isinstance(url, str | bytes):
+        # Only strings can be parsed as URL; return anything else as-is.
+        if not isinstance(url, str):
             return url
         if not url:
             return url
@@ -269,7 +268,7 @@ class GetDottetAttrsOrArgMixin:
 
 @dataclass  # noqa
 class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
-    serializer_field_class = serializers.CharField
+    serializer_field_class: ClassVar = serializers.CharField
     url: str = field(default="")
     kwargs: dict = field(default_factory=dict)
     static_kwargs: dict = field(default_factory=dict)
@@ -496,7 +495,7 @@ class LinkTextTableElement(BaseLinkTableElement):
 class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     url: str = field(default="")
     static_kwargs: dict = field(default_factory=dict)
-    serializer_field_class = serializers.CharField
+    serializer_field_class: ClassVar = serializers.CharField
     text: str = field(default="")
     list_attr: str = field(default="")
     list_kwarg: str = field(default="")
@@ -601,7 +600,7 @@ class TextTableElement(StringTableElement): ...
 class ListTableElement(AttrTableElement):
     attr: str
     in_separator: str = ","
-    out_separator: str = mark_safe("<br>")
+    out_separator: str = mark_safe("<br>")  # noqa: S308  # nosec B308
     parse_as_json: bool = True
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     field_template: ClassVar[str | None] = "list"
@@ -720,7 +719,7 @@ class NumberTableElement(AttrTableElement):
 
 @dataclass
 class FloatTableElement(NumberTableElement):
-    serializer_field_class = serializers.FloatField
+    serializer_field_class: ClassVar = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
     _excel_decimal_places: ClassVar[int] = 3
@@ -734,7 +733,7 @@ class FloatTableElement(NumberTableElement):
 
 @dataclass
 class IntTableElement(NumberTableElement):
-    serializer_field_class = serializers.IntegerField
+    serializer_field_class: ClassVar = serializers.IntegerField
     attr: str
     numerical_type: type = int
     shortener: NumberShortenerABC = NoShortening()
@@ -747,7 +746,7 @@ class IntTableElement(NumberTableElement):
 
 @dataclass
 class PercentTableElement(NumberTableElement):
-    serializer_field_class = serializers.FloatField
+    serializer_field_class: ClassVar = serializers.FloatField
     attr: str
 
     @property
@@ -770,7 +769,7 @@ class PercentTableElement(NumberTableElement):
 
 @dataclass
 class ProgressBarTableElement(NumberTableElement):
-    serializer_field_class = serializers.FloatField
+    serializer_field_class: ClassVar = serializers.FloatField
     attr: str
     td_classes: ClassVar[TdClassesType] = ["text-center"]
     th_classes: ClassVar[TdClassesType | None] = ["text-center"]
@@ -831,11 +830,11 @@ class DateTableBaseElement(AttrTableElement):
 
 
 class DateTableElement(DateTableBaseElement):
-    serializer_field_class = serializers.DateField
+    serializer_field_class: ClassVar = serializers.DateField
 
 
 class DateTimeTableElement(DateTableBaseElement):
-    serializer_field_class = serializers.DateTimeField
+    serializer_field_class: ClassVar = serializers.DateTimeField
 
     @property
     def date_format(self) -> str:
@@ -850,7 +849,7 @@ class DateGermanTableElement(DateTableBaseElement):
 
 @dataclass
 class DateYearTableElement(DateTableBaseElement):
-    serializer_field_class = serializers.DateField
+    serializer_field_class: ClassVar = serializers.DateField
 
     @property
     def date_format(self) -> str:
@@ -859,7 +858,7 @@ class DateYearTableElement(DateTableBaseElement):
 
 @dataclass
 class BooleanTableElement(AttrTableElement):
-    serializer_field_class = serializers.BooleanField
+    serializer_field_class: ClassVar = serializers.BooleanField
     attr: str
     td_classes: ClassVar[TdClassesType] = ["text-center"]
     field_template: ClassVar[str | None] = "bool"
@@ -872,7 +871,7 @@ class BooleanTableElement(AttrTableElement):
 
 @dataclass
 class MoneyTableElement(NumberTableElement):
-    serializer_field_class = serializers.FloatField
+    serializer_field_class: ClassVar = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
     field_template: ClassVar[str | None] = "money"
@@ -932,14 +931,11 @@ class ImageTableElement(AttrTableElement):
         response = requests.get(value, timeout=10)
         if response.status_code != 200:
             return f"Image not found: {value} &"
-        temp_file = tempfile.NamedTemporaryFile(
+        with tempfile.NamedTemporaryFile(
             delete=False, suffix="." + value.split(".")[-1]
-        )
-        temp_file.write(response.content)
-        temp_file_path = temp_file.name
-        temp_file.close()
-        value = temp_file_path
-        return _return_string(value)
+        ) as temp_file:
+            temp_file.write(response.content)
+        return _return_string(temp_file.name)
 
 
 @dataclass
@@ -948,7 +944,7 @@ class MethodNameTableElement(AttrTableElement):
     field_template: ClassVar[str | None] = "method_name"
 
     def get_field_context_data(self, value: Any, _obj: Any) -> dict[str, Any]:
-        func = getattr(self.class_, value, None)
+        func: Any = getattr(self.class_, value, None)
         # Strip all decorator functions to get the to the original method.
         while hasattr(func, "__wrapped__"):
             func = func.__wrapped__
@@ -967,7 +963,7 @@ class HistoryChangeState(Enum):
 class HistoryStringTableElement(StringTableElement):
     change_map: ChangeMapType = field(default_factory=dict)
 
-    def get_attribute(self, obj: Any, tag: str = "html") -> str:
+    def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
         self.change_format = self._get_change_format(obj)
         return super().get_attribute(obj, tag)
 

@@ -29,7 +29,7 @@ def _element_to_latex(element, font_scale: float) -> str:
 
 class ReportGridElements:
     def __init__(self, no_of_rows: int, no_of_cols: int):
-        self.report_grid_elements_container = []
+        self.report_grid_elements_container: list[list[ReportElementProtocol]] = []
         self.no_of_cols = no_of_cols
         self.no_of_rows = no_of_rows
         for _ in range(no_of_rows):

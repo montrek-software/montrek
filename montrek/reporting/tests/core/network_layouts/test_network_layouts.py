@@ -1,5 +1,4 @@
 import math
-from typing import Dict, Tuple
 
 import networkx as nx
 from django.test import SimpleTestCase
@@ -31,7 +30,7 @@ def make_small_digraph() -> nx.DiGraph:
     return G
 
 
-def span(pos: Dict[str, Tuple[float, float]]) -> Tuple[float, float]:
+def span(pos: dict[str, tuple[float, float]]) -> tuple[float, float]:
     xs = [xy[0] for xy in pos.values()]
     ys = [xy[1] for xy in pos.values()]
     return (max(xs) - min(xs), max(ys) - min(ys))

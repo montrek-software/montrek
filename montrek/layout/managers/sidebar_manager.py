@@ -23,7 +23,7 @@ class SidebarManagerABC(MontrekTableManagerABC):
     def link(self) -> SidebarLinkTableElement:
         raise NotImplementedError("Method 'link' has to be implemented")
 
-    def get_full_table(self) -> QuerySet | dict:
+    def get_full_table(self) -> QuerySet:
         self.set_order_field()
         return self.repository.receive()
 

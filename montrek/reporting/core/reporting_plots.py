@@ -2,7 +2,7 @@ import base64
 import hashlib
 import json
 import math
-from typing import Any, Generic, TypeVar
+from typing import Any
 import uuid
 from _plotly_utils.utils import PlotlyJSONEncoder
 from django.template.loader import render_to_string
@@ -14,10 +14,8 @@ from reporting.constants import ReportingPlotType
 from reporting.core.gold_plotly_theme import gold_axis, gold_color_palette, gold_layout
 from reporting.core.reporting_data import ReportingData, ReportingDataBase
 
-TData = TypeVar("TData", bound=ReportingDataBase)
 
-
-class ReportingPlotBase(Generic[TData]):
+class ReportingPlotBase[TData: ReportingDataBase]:
     def __init__(self, width: float = 1):
         self.width = width
 

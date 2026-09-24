@@ -14,11 +14,12 @@ class HasFormInvalid(Protocol):
 
 
 class HasSessionData(Protocol):
-    session_data: SessionDataType
+    @property
+    def session_data(self) -> SessionDataType: ...
 
 
 class ViewFormMixin(HasFormInvalid, HasSessionData):
-    report_form_class = NoMontrekReportForm
+    report_form_class: type[MontrekReportForm] = NoMontrekReportForm
     _report_form: MontrekReportForm | None = None
 
     @property
