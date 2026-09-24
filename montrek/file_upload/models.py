@@ -58,15 +58,19 @@ class FileUploadRegistryStaticSatelliteABC(PipelineRegistrySatelliteABC):
 
 
 class FileUploadRegistryHub(FileUploadRegistryHubABC):
-    link_file_upload_registry_file_upload_file = models.ManyToManyField(
-        "file_upload.FileUploadFileHub",
-        related_name="link_file_upload_file_file_upload_registry",
-        through="LinkFileUploadRegistryFileUploadFile",
+    link_file_upload_registry_file_upload_file: models.ManyToManyField = (
+        models.ManyToManyField(
+            "file_upload.FileUploadFileHub",
+            related_name="link_file_upload_file_file_upload_registry",
+            through="LinkFileUploadRegistryFileUploadFile",
+        )
     )
-    link_file_upload_registry_file_log_file = models.ManyToManyField(
-        "file_upload.FileUploadFileHub",
-        related_name="link_log_file_file_upload_registry",
-        through="LinkFileUploadRegistryFileLogFile",
+    link_file_upload_registry_file_log_file: models.ManyToManyField = (
+        models.ManyToManyField(
+            "file_upload.FileUploadFileHub",
+            related_name="link_log_file_file_upload_registry",
+            through="LinkFileUploadRegistryFileLogFile",
+        )
     )
 
 

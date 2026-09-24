@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from django.conf import settings
 from django.core.files import File
@@ -17,11 +17,28 @@ from process_pipeline.managers.montrek_pipeline_managers import (
 )
 from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
+    PipelineProcessorProtocol,
 )
 from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 
+class FileUploadProcessorInterface(PipelineProcessorProtocol, Protocol):
+    """What a file upload manager needs from its processor.
+
+    Structural, so duck-typed processors such as field map processors fit too.
+    """
+
+    def __init__(
+        self,
+        file_upload_registry_hub: FileUploadRegistryHubABC,
+        session_data: dict[str, Any],
+        **kwargs,
+    ): ...
+
+
 class FileUploadProcessorProtocol(PipelineProcessorABC):
+    """Base class for file upload processors (despite the name, not a Protocol)."""
+
     def __init__(
         self,
         file_upload_registry_hub: FileUploadRegistryHubABC,
@@ -40,8 +57,8 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     )
 
     # ---- pipeline config ----
-    processor_class: type[FileUploadProcessorProtocol]
-    file_upload_processor_class: type[FileUploadProcessorProtocol]
+    processor_class: type[FileUploadProcessorInterface]
+    file_upload_processor_class: type[FileUploadProcessorInterface]
     do_process_file_async: bool
     pipeline_task_class: type[MontrekPipelineTask] = MontrekPipelineTask
     registry_repository_class = FileUploadRegistryManager.repository_class
@@ -73,6 +90,8 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     # ---- pipeline hooks ----
 
     def _init_registry(self, file: File, **kwargs) -> int:
+        if file.name is None:
+            raise ValueError("Uploaded file has no name")
         file_name = Path(file.name).name
         init_registry_data = {
             "file_name": file_name,
@@ -87,15 +106,18 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
         init_registry_data.update(self.additional_registry_data())
         return self.registry_repository.std_create_object(init_registry_data).pk
 
-    def _build_processor(self, pipeline_data: dict[str, Any]) -> PipelineProcessorABC:
+    def _build_processor(
+        self, pipeline_data: dict[str, Any]
+    ) -> PipelineProcessorProtocol:
         self.file_path = os.path.join(settings.MEDIA_ROOT, self.registry.file)
         return self.processor_class(self.registry, self.session_data)
 
     def _apply_step(self, step: str) -> bool:
         # Existing processors pass file_path to each step.
         # Remove once all processors are migrated to no-argument steps.
-        if not getattr(self.processor, step)(self.file_path):
-            self._set_status("failed", self.processor.message)
+        processor = self._get_processor()
+        if not getattr(processor, step)(self.file_path):
+            self._set_status("failed", processor.message)
             return False
         return True
 

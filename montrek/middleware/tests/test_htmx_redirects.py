@@ -11,12 +11,14 @@ the button, and the message explaining the denial went in there with it.
 only the failure paths disagreed.
 """
 
+from typing import Any, cast
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory, TestCase
 from django.views import View
 
@@ -26,9 +28,14 @@ from middleware import (
     MontrekErrorMiddleware,
     PermissionErrorMiddleware,
 )
+from user.models import MontrekUser
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
-HTMX_HEADERS = {"HTTP_HX_REQUEST": "true"}
+HTMX_HEADERS: dict[str, Any] = {"HTTP_HX_REQUEST": "true"}
+
+
+def _get_response(_request: HttpRequest) -> HttpResponse:
+    return HttpResponse()
 
 
 class MockView(View):
@@ -39,11 +46,11 @@ class MockView(View):
 class HtmxRedirectTestCase(TestCase):
     def build_request(self, htmx: bool):
         request = RequestFactory().get("/test/", **(HTMX_HEADERS if htmx else {}))
-        SessionMiddleware(lambda _: None).process_request(request)
-        MessageMiddleware(lambda _: None).process_request(request)
+        SessionMiddleware(_get_response).process_request(request)
+        MessageMiddleware(_get_response).process_request(request)
         # The factory, not a fixed address: one test builds two requests and
         # the email is unique.
-        request.user = MontrekUserFactory()
+        request.user = cast(MontrekUser, MontrekUserFactory())
         return request
 
     def assert_navigates(self, response):

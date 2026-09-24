@@ -18,7 +18,7 @@ class MontrekPage:
         self._overview = None
         self.kwargs = kwargs
 
-    def get_tabs(self) -> list | tuple[TabElement]:
+    def get_tabs(self) -> list | tuple[TabElement, ...]:
         raise NotImplementedError("MontrekPage needs get_tabs method!")
 
     def get_overview(self) -> str:

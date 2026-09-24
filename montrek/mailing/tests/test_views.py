@@ -1,8 +1,11 @@
+from typing import cast
+
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.core import mail
 from mailing import views
 from mailing.forms import MailingSendForm
+from mailing.managers.mailing_manager import MailingManager
 from mailing.tests.factories.mailing_factories import MailSatelliteFactory
 from testing.test_cases import view_test_cases as vtc
 
@@ -22,7 +25,7 @@ class MockManager(MontrekManager):
 
 
 class MockSendMailView(views.SendMailView):
-    manager_class = MockManager
+    manager_class = cast(type[MailingManager], MockManager)
 
 
 class TestSendMailView(vtc.MontrekViewTestCase):

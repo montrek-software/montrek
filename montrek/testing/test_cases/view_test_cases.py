@@ -1,6 +1,6 @@
 import datetime
 from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -10,6 +10,7 @@ from baseclasses.views import (
     REST_API_QUERY_PARAM,
     MontrekDeleteView,
     MontrekPermissionRequiredMixin,
+    MontrekViewMixin,
 )
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Permission
@@ -23,8 +24,10 @@ from django.views import View
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import get_missing_permission_message
+from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 from testing.decorators.mock_external_get import mock_external_get__report_image
 from testing.decorators.mock_plotly_image_write import mock_plotly_write_dummy_png
+from user.models import MontrekUser
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 TEST_USER_PASSWORD = "S3cret!123"  # nosec B105 #noqa S105 : test-only password
@@ -34,13 +37,24 @@ class NotImplementedView(View):
     pass
 
 
-class RestApiTestCaseMixin:
+if TYPE_CHECKING:
+    # Lets mypy see the TestCase API the mixins below use; at runtime they
+    # stay plain mixins.
+    _TestCaseBase = TestCase
+else:
+    _TestCaseBase = object
+
+
+class RestApiTestCaseMixin(_TestCaseBase):
+    # Set by the test case this is mixed into.
+    user: MontrekUser
+
     def get_headers(self) -> dict[str, str]:
         get_token_url = reverse("token_obtain_pair")
         payload = {"email": self.user.email, "password": TEST_USER_PASSWORD}
         resp = self.client.post(get_token_url, payload)
         self.assertEqual(resp.status_code, 200, resp.content)
-        access = resp.data["access"]
+        access = resp.json()["access"]
         return {"Authorization": f"Bearer {access}"}
 
     def rest_api_view_test(self):
@@ -254,10 +268,13 @@ class MontrekViewTestCase(TestCase):
         ``user.managers.user_group_manager`` creates them under.
         """
         if namespaced_codename == UNCONFIGURED_PERMISSION:
+            access_kind = cast(
+                type[MontrekPermissionRequiredMixin], self.view_class
+            ).access_kind
             raise AssertionError(
                 f"{self.view_class.__name__} resolves to the unconfigured "
                 f"permission: its app is restricted but maps no permission to "
-                f"access kind '{self.view_class.access_kind.value}'. The "
+                f"access kind '{access_kind.value}'. The "
                 f"montrek.E004 check reports the same thing at startup."
             )
         app_label, _, codename = namespaced_codename.partition(".")
@@ -333,7 +350,7 @@ class MontrekListViewTestCase(
     MontrekViewTestCase, RestApiTestCaseMixin, PdfTestCaseMixin
 ):
     expected_no_of_rows: int = 0
-    expected_columns = []
+    expected_columns: list[str] = []
 
     def _is_base_test_class(self):
         return self.__class__.__name__ == "MontrekListViewTestCase"
@@ -431,13 +448,25 @@ class MontrekCreateUpdateViewTestCase(MontrekObjectViewBaseTestCase):
 
 
 class GetObjectLastMixin:
-    def _get_object(self) -> QuerySet:
+    if TYPE_CHECKING:
+
+        def receive(self) -> QuerySet: ...
+
+    # A repository row: the hub annotated with its satellite fields.
+    def _get_object(self) -> Any:
         std_query = self.receive()
         return std_query.last()
 
 
 class GetObjectPkMixin:
-    def _get_object(self) -> QuerySet:
+    if TYPE_CHECKING:
+
+        def receive(self) -> QuerySet: ...
+
+        def url_kwargs(self) -> dict: ...
+
+    # A repository row: the hub annotated with its satellite fields.
+    def _get_object(self) -> Any:
         std_query = self.receive()
         return std_query.get(pk=self.url_kwargs()["pk"])
 
@@ -616,9 +645,10 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
         self.assertEqual(return_json, expected_json)
 
     def manager_json(self) -> list:
-        view = self.view_class()
+        view = cast(MontrekViewMixin, self.view_class())
         view._session_data = None
-        manager = view.manager_class({})
+        # REST list views are backed by table managers.
+        manager = cast(MontrekTableManagerABC, view.manager_class({}))
         return manager.to_json()
 
     def expected_json(self) -> list | None:
@@ -677,6 +707,8 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     @property
     def mail_success_url(self) -> str:
         last_mail = MailingRepository({}).receive().last()
+        if last_mail is None:
+            self.fail("No mail was sent")
         mail_kwargs = {"pk": last_mail.pk}
         report_manager = self.view.manager
         mail_kwargs.update(report_manager.get_mail_kwargs())

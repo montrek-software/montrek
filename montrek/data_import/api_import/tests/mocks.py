@@ -1,4 +1,7 @@
+from typing import cast
+
 from data_import.api_import.managers.api_data_import_manager import ApiDataImportManager
+from data_import.api_import.models import ApiRegistrySatellite
 from data_import.api_import.managers.api_data_import_processor import (
     ApiDataImportProcessorBase,
 )
@@ -33,7 +36,8 @@ class MockApiDataImportProcessor(ApiDataImportProcessorBase):
 
 
 class MockApiRegistryRepository(ApiDataImportRegistryRepository):
-    registry_satellite = TestApiRegistrySatellite
+    # Test registry stand-in with the same fields as ApiRegistrySatellite.
+    registry_satellite = cast(type[ApiRegistrySatellite], TestApiRegistrySatellite)
     hub_class = TestRegistryHub
 
 

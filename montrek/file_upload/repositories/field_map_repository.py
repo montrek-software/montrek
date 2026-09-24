@@ -6,7 +6,7 @@ from file_upload.models import (
     FieldMapStaticSatellite,
     FieldMapStaticSatelliteABC,
 )
-from django.db.models import Q, F
+from django.db.models import F, Q, QuerySet
 
 
 class FieldMapRepositoryABC(MontrekRepository):
@@ -35,18 +35,18 @@ class FieldMapRepositoryABC(MontrekRepository):
         )
 
     def get_source_field(self, database_field: str) -> str | None:
-        objs = self.receive().filter(database_field=database_field)
-        if len(objs) == 0:
+        obj = self.receive().filter(database_field=database_field).first()
+        if obj is None:
             return None
-        return objs.first().source_field
+        return obj.source_field
 
-    def get_all_source_fields(self) -> list[str]:
+    def get_all_source_fields(self) -> QuerySet:
         return self.receive().values_list("source_field", flat=True).distinct()
 
-    def get_all_database_fields(self) -> list[str]:
+    def get_all_database_fields(self) -> QuerySet:
         return self.receive().values_list("database_field", flat=True).distinct()
 
-    def get_all_intermediate_fields(self) -> list[str]:
+    def get_all_intermediate_fields(self) -> QuerySet:
         source_fields = self.get_all_source_fields()
         intermediate_fields = (
             self.receive()

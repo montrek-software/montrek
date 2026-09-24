@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
@@ -27,13 +29,13 @@ class MontrekUserManager(BaseUserManager):
 
 
 class MontrekUser(AbstractUser):
-    username = None
+    username = None  # type: ignore[assignment]  # removes AbstractUser.username (documented Django pattern)
     email = models.EmailField(("email address"), unique=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    objects = MontrekUserManager()
+    objects: ClassVar[MontrekUserManager] = MontrekUserManager()  # type: ignore[assignment]  # email based, replaces the username based UserManager
 
     def __str__(self):
         return self.email

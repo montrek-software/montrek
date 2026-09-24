@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import MagicMock
 
 from baseclasses.pages import MontrekPage
@@ -5,6 +6,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import HttpRequest, HttpResponse
+from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from file_upload.repositories.file_upload_registry_repository import (
@@ -43,9 +46,13 @@ class MockFileUploadManager(FileUploadRegistryRepositoryABC):
     file_upload_processor_class = MockFileUploadProcessor
 
 
+def _get_response(_request: HttpRequest) -> HttpResponse:
+    return HttpResponse()
+
+
 class MockFileUploadView(MontrekUploadFileView):
     page_class = MockPage
-    file_upload_manager_class = MockFileUploadManager
+    file_upload_manager_class = cast(type[FileUploadManagerABC], MockFileUploadManager)
 
     def __init__(self, url: str):
         super().__init__()
@@ -54,10 +61,10 @@ class MockFileUploadView(MontrekUploadFileView):
     def add_mock_request(self, url: str):
         self.request = RequestFactory().get(url)
         self.request.user = AnonymousUser()
-        session_middleware = SessionMiddleware(lambda request: None)
+        session_middleware = SessionMiddleware(_get_response)
         session_middleware.process_request(self.request)
         self.request.session.save()
-        message_middleware = MessageMiddleware(lambda request: None)
+        message_middleware = MessageMiddleware(_get_response)
         message_middleware.process_request(self.request)
 
 

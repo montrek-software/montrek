@@ -1,6 +1,7 @@
 import os
 from unittest import mock
-from django.core.files.uploadedfile import SimpleUploadedFile, tempfile
+import tempfile
+
 from django.test import TestCase
 from django.core import mail
 from smtplib import SMTPException

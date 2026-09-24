@@ -65,7 +65,7 @@ class MockFileSatellite:
         return excel_file.name
 
 
-class TestExcelLogFileMixin(TestCase, LogFileTestMixin):
+class TestExcelLogFileMixin(LogFileTestMixin, TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
         self.client.force_login(self.user)

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any
 from urllib.parse import urlparse
 from django.forms import Form
 
@@ -15,6 +15,7 @@ from baseclasses.views import (
     MontrekUpdateView,
 )
 from django.contrib import messages
+from django.core.files import File
 from django.contrib.auth.views import redirect_to_login
 from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -166,15 +167,15 @@ class MontrekUploadFileView(MontrekApiViewMixin, MontrekTemplateView):
         """
         return {}
 
-    def get_file(self, form: Form) -> str:
+    def get_file(self, form: Form) -> File | None:
         return form.cleaned_data["file"]
 
-    def get_file_type_error(self, file: TextIO | None) -> str | None:
+    def get_file_type_error(self, file: File | None) -> str | None:
         """Return why the file is not acceptable, or None if it is."""
         if file is None:
             return NO_FILE_ATTACHED_MESSAGE
         expected_file_types = [e.lstrip(".").upper() for e in self.accept.split(",")]
-        actual_file_type = file.name.split(".")[-1].upper()
+        actual_file_type = str(file.name).split(".")[-1].upper()
         if actual_file_type not in expected_file_types:
             return f"File type {actual_file_type} not allowed"
         return None
@@ -285,14 +286,18 @@ class MontrekUploadView(FileUploadRegistryView):
 
 class RevokeFileUploadTask(MontrekRedirectView):
     @property
-    def manager_class(self) -> type[FileUploadRegistryManagerABC]:
+    def manager(self) -> FileUploadRegistryManagerABC:
+        # The registry to revoke in belongs to the view the user came from.
+        if self._manager is None:
+            self._manager = self._get_previous_manager_class()(self.session_data)
+        return self._manager
+
+    def _get_previous_manager_class(self) -> type[FileUploadRegistryManagerABC]:
         previous_url = self.get_previous_url()
         previous_match = resolve(urlparse(previous_url).path)
-        try:
-            view_class = previous_match.func.view_class
-            return view_class.manager_class
-        except AttributeError:
-            return FileUploadRegistryManager
+        # Only class based views carry ``view_class``.
+        view_class = getattr(previous_match.func, "view_class", None)
+        return getattr(view_class, "manager_class", FileUploadRegistryManager)
 
     def get_redirect_url(self, *args, **kwargs) -> str:
         task_id = self.session_data.get("task_id")

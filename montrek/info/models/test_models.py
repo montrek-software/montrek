@@ -18,7 +18,7 @@ class TestHubA(MontrekHubABC):
     class Meta:
         managed = False
 
-    link_test_hub_a_test_hub_b = models.ManyToManyField(
+    link_test_hub_a_test_hub_b: models.ManyToManyField = models.ManyToManyField(
         to="TestHubB",
         through="LinkTestHubATestHubB",
         related_name="link_test_hub_b_test_hub_a",

@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import math
 from collections import defaultdict
+
+from typing import TYPE_CHECKING
 
 from django import forms
 from django.apps import apps as django_apps
 from reporting.forms import MontrekReportForm
+
+if TYPE_CHECKING:
+    from django_stubs_ext import StrOrPromise
 
 
 def get_group_key(app_config):
@@ -16,7 +23,7 @@ def get_group_key(app_config):
 
 def get_app_choices(
     include_contrib=False, only_first_party=True
-) -> list[tuple[str, list[str]]]:
+) -> list[tuple[str, list[tuple[str, StrOrPromise]]]]:
     groups = defaultdict(list)
 
     for cfg in sorted(django_apps.get_app_configs(), key=lambda c: c.name):
@@ -34,8 +41,7 @@ def get_app_choices(
 
 def _split_into_columns(items, n_cols=2):
     """Split a list into n contiguous, near-equal columns."""
-    if n_cols < 1:
-        n_cols = 1
+    n_cols = max(n_cols, 1)
     length = len(items)
     per = math.ceil(length / n_cols)
     return [items[i * per : (i + 1) * per] for i in range(n_cols)]

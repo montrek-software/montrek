@@ -34,34 +34,32 @@ class InfoDbStructureManager:
         container_dict = {}
         for model in all_models:
             app = model._meta.app_label
-            if self.included_apps:
-                if app not in self.included_apps:
-                    continue
+            if self.included_apps and app not in self.included_apps:
+                continue
             model_name = model.__name__
             db_table_name = model._meta.db_table
             if app not in container_dict:
                 container_dict[app] = DbStructureContainer()
-            model_inst = model()
             structure_kwargs = {
                 "model_name": model_name,
                 "db_table_name": db_table_name,
                 "app": app,
             }
-            if isinstance(model_inst, MontrekHubABC):
+            if issubclass(model, MontrekHubABC):
                 container_dict[app].hubs.append(DbStructureHub(**structure_kwargs))
-            elif isinstance(model_inst, HubValueDate):
+            elif issubclass(model, HubValueDate):
                 hub = self._get_related_field_name(model.hub)
                 hub_db = self._get_related_db_name(model.hub)
                 container_dict[app].hub_value_dates.append(
                     DbStructureHubValueDate(**structure_kwargs, hub=hub, hub_db=hub_db)
                 )
-            elif isinstance(model_inst, MontrekSatelliteABC):
+            elif issubclass(model, MontrekSatelliteABC):
                 hub = self._get_related_field_name(model.hub_entity)
                 hub_db = self._get_related_db_name(model.hub_entity)
                 container_dict[app].sats.append(
                     DbStructureSatellite(**structure_kwargs, hub=hub, hub_db=hub_db)
                 )
-            elif isinstance(model_inst, MontrekTimeSeriesSatelliteABC):
+            elif issubclass(model, MontrekTimeSeriesSatelliteABC):
                 hub_value_date = self._get_related_field_name(model.hub_value_date)
                 hub_value_date_db = self._get_related_db_name(model.hub_value_date)
                 container_dict[app].ts_sats.append(
@@ -71,7 +69,7 @@ class InfoDbStructureManager:
                         hub_value_date_db=hub_value_date_db,
                     )
                 )
-            elif isinstance(model_inst, MontrekLinkABC):
+            elif issubclass(model, MontrekLinkABC):
                 hub_in = self._get_related_field_name(model.hub_in)
                 hub_out = self._get_related_field_name(model.hub_out)
                 hub_in_db = self._get_related_db_name(model.hub_in)
@@ -91,8 +89,14 @@ class InfoDbStructureManager:
     def get_db_structure_df(
         self, container: dict[str, DbStructureContainer]
     ) -> pd.DataFrame:
-        df_data = {"app": [], "type": [], "name": [], "db_table_name": [], "link": []}
-        for app in container.keys():
+        df_data: dict[str, list[str]] = {
+            "app": [],
+            "type": [],
+            "name": [],
+            "db_table_name": [],
+            "link": [],
+        }
+        for app in container:
             for hub in container[app].hubs:
                 df_data["app"].append(app)
                 df_data["name"].append(hub.model_name)
@@ -111,12 +115,12 @@ class InfoDbStructureManager:
                 df_data["db_table_name"].append(sat.db_table_name)
                 df_data["type"].append("Satellite")
                 df_data["link"].append(f"Hub: {sat.hub}")
-            for sat in container[app].ts_sats:
+            for ts_sat in container[app].ts_sats:
                 df_data["app"].append(app)
-                df_data["name"].append(sat.model_name)
-                df_data["db_table_name"].append(sat.db_table_name)
+                df_data["name"].append(ts_sat.model_name)
+                df_data["db_table_name"].append(ts_sat.db_table_name)
                 df_data["type"].append("TS Satellite")
-                df_data["link"].append(f"Hub Value Date: {sat.hub_value_date}")
+                df_data["link"].append(f"Hub Value Date: {ts_sat.hub_value_date}")
             for link in container[app].links:
                 df_data["app"].append(app)
                 df_data["name"].append(link.model_name)
@@ -131,15 +135,15 @@ class InfoDbStructureManager:
         self, container: dict[str, DbStructureContainer]
     ) -> str:
         description_str = ""
-        for app in container.keys():
+        for app in container:
             for hub in container[app].hubs:
                 description_str += str(hub)
             for hub_vd in container[app].hub_value_dates:
                 description_str += str(hub_vd)
             for sat in container[app].sats:
                 description_str += str(sat)
-            for sat in container[app].ts_sats:
-                description_str += str(sat)
+            for ts_sat in container[app].ts_sats:
+                description_str += str(ts_sat)
             for link in container[app].links:
                 description_str += str(link)
         return description_str

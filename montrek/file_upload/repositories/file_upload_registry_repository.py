@@ -1,4 +1,5 @@
 import os
+from typing import cast
 from django.contrib import messages
 from django.core.files import File
 from django.conf import settings
@@ -12,6 +13,9 @@ from file_upload.models import (
     FileUploadRegistryStaticSatellite,
     LinkFileUploadRegistryFileUploadFile,
     LinkFileUploadRegistryFileLogFile,
+)
+from process_pipeline.models.pipeline_registry_sat_models import (
+    PipelineRegistrySatelliteABC,
 )
 from process_pipeline.repositories.pipeline_registry_repositories import (
     PipelineRegistryRepositoryABC,
@@ -41,7 +45,10 @@ class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
 
     def __init__(self, session_data: SessionDataType | None = None):
         self._setup_checks()
-        self.registry_satellite = self.static_satellite_class
+        # _setup_checks guarantees a concrete satellite class here.
+        self.registry_satellite = cast(
+            type[PipelineRegistrySatelliteABC], self.static_satellite_class
+        )
         super().__init__(session_data=session_data)
 
     def set_annotations(self, **kwargs):

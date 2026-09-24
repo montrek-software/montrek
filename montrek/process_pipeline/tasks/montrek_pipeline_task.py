@@ -50,6 +50,8 @@ class MontrekPipelineTask(MontrekTask):
     ) -> None:
         if self.do_send_mail is False:
             return
+        if self.manager is None:
+            raise RuntimeError("Result mail can only be sent after running the task")
         self.mailing_manager_class(session_data=session_data).send_montrek_mail(
             ",".join(str(r.email) for r in self.recipients(session_data)),
             self._get_subject(result),

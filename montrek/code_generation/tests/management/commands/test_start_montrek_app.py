@@ -119,7 +119,8 @@ class StartMontrekAppTestCaseBase(TestCase):
         spec = importlib.util.spec_from_file_location(
             f"generated_app_config_{config_cls_name}", module_path
         )
-        self.assertIsNotNone(spec, f"could not load a module from {module_path}")
+        if spec is None or spec.loader is None:
+            self.fail(f"could not load a module from {module_path}")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return getattr(module, config_cls_name)

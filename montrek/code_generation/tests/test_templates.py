@@ -80,7 +80,8 @@ class TestTemplatesBindEveryNameTheyUse(TestCase):
 
     def _undefined_names(self, rendered: str) -> list[str]:
         ruff_path = shutil.which("ruff")
-        self.assertIsNotNone(ruff_path, "ruff is needed to check the rendered output")
+        if ruff_path is None:
+            self.fail("ruff is needed to check the rendered output")
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "rendered.py"
             path.write_text(rendered)

@@ -3,7 +3,7 @@ from django.contrib.auth import forms as auth_forms, get_user_model
 
 
 class MontrekUserCreationForm(auth_forms.BaseUserCreationForm):
-    class Meta(auth_forms.BaseUserCreationForm.Meta):
+    class Meta(auth_forms.BaseUserCreationForm.Meta):  # type: ignore[name-defined]  # django-stubs does not declare the form's Meta
         model = get_user_model()
         fields = ("email",)
         field_classes = {"email": forms.EmailField}
