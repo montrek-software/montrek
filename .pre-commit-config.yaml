@@ -25,6 +25,19 @@ repos:
     rev: 1.7.5
     hooks:
       - id: bandit
+  # Runs the project's own mypy (language: system): the django-stubs plugin
+  # imports the settings and needs every app dependency installed, which an
+  # isolated pre-commit environment would not have. Checks the whole project,
+  # since a change can break the types of files that import it; mypy's cache
+  # keeps this to a few seconds.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: bash -c 'cd montrek && mypy .'
+        language: system
+        types: [python]
+        pass_filenames: false
   # bandit finds insecure code; gitleaks finds committed credentials. .env is
   # gitignored, but a `git add -f` or a new *.env variant should still be caught
   # before it reaches a remote.
