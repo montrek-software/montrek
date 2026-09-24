@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim
 # Create a user and group (with no password, home dir, and no shell access)
 RUN addgroup --system appgroup && \
   adduser --system --ingroup appgroup --home /home/appuser appuser

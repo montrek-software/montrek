@@ -82,7 +82,7 @@ mypy .                                   # Type check
 pre-commit run --all-files               # Run all pre-commit hooks manually
 ```
 
-Pre-commit hooks run automatically on `git commit` and include: ruff, black, djlint (templates), bandit (security), plus standard checks (trailing whitespace, YAML, debug statements).
+Pre-commit hooks run automatically on `git commit` and include: ruff, black, djlint (templates), bandit (security), mypy (whole project, using the local environment), plus standard checks (trailing whitespace, YAML, debug statements).
 
 Make sure that the produced code is ruff and sonarcube compliant
 
