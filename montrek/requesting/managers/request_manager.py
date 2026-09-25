@@ -100,7 +100,7 @@ class RequestJsonManager(RequestManagerABC):
 
     @retry_on_failure
     @process_response
-    def get_response(self, endpoint: str) -> requests.models.Response:
+    def get_response(self, endpoint: str) -> dict | list:
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = self.get_headers()
         return self.get_request(endpoint_url, headers)
