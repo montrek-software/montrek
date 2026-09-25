@@ -49,7 +49,13 @@ from baseclasses import utils
 from baseclasses.access import AccessKind, permissions_for_view
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from baseclasses.dataclasses.view_classes import ActionElement
-from baseclasses.forms import DateRangeForm, FilterForm, MontrekCreateForm
+from baseclasses.forms import (
+    DateRangeForm,
+    FilterForm,
+    LocalizedText,
+    LocalizedTexts,
+    MontrekCreateForm,
+)
 from baseclasses.managers.montrek_manager import (
     MontrekManager,
     MontrekManagerNotImplemented,
@@ -1142,6 +1148,13 @@ class MontrekInlineFieldEditView(
     value.
     """
 
+    class Captions(LocalizedTexts):
+        """Editor captions, in the language configured via LANGUAGE_CODE."""
+
+        SAVE = LocalizedText("Save", "Speichern")
+        CANCEL = LocalizedText("Cancel", "Abbrechen")
+        SAVING = LocalizedText("Saving…", "Wird gespeichert…")
+
     access_kind = AccessKind.UPDATE
     form_class = MontrekCreateForm
     field_name: str = ""
@@ -1239,6 +1252,7 @@ class MontrekInlineFieldEditView(
                 "field": form[self.field_name],
                 "post_url": self.session_data["request_path"],
                 "error_message": error_message,
+                "captions": self.Captions.texts,
             },
         )
         if not include_data_row:

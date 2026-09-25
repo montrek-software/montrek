@@ -869,6 +869,18 @@ class MontrekInlineFieldEditViewTestCase(MontrekViewTestCase):
             any(row.get("id", "").startswith("inline-edit-") for row in rows)
         )
 
+    def test_save_shows_progress_indicator_on_editor_row(self):
+        if self._is_base_test_class():
+            return
+        # While the save is in flight htmx puts .htmx-request on the editor
+        # row (hx-indicator), which reveals the status and locks the editor.
+        soup = BeautifulSoup(self.response.content.decode(), "html.parser")
+        editor_row = soup.find("tr", class_="mt-inline-edit")
+        self.assertIsNotNone(editor_row)
+        save_button = editor_row.find("button", attrs={"value": "save"})
+        self.assertEqual(save_button["hx-indicator"], f"#{editor_row['id']}")
+        self.assertIsNotNone(editor_row.find(class_="mt-inline-edit-status"))
+
     def test_post_save_updates_field_and_returns_row(self):
         if self._is_base_test_class():
             return

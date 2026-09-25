@@ -109,7 +109,7 @@ class RequestJsonManager(RequestManagerABC):
     @process_response
     def post_response(
         self, endpoint: str, data: dict, json: dict | None = None
-    ) -> dict | list | pd.DataFrame:
+    ) -> requests.models.Response:
         if json is None:
             json = {}
         endpoint_url = self.get_endpoint_url(endpoint)
