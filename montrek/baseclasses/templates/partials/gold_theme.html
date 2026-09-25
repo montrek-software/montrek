@@ -701,6 +701,39 @@
     pointer-events: none;
   }
 
+  /* Inline field editor: while a save is in flight (hx-indicator puts
+     .htmx-request on the editor row) show a status, lock the editor and
+     dim the data row above it. */
+
+  .mt-inline-edit .mt-inline-edit-status {
+    display: none;
+    color: var(--mt-secondary);
+  }
+
+  .mt-inline-edit.htmx-request .mt-inline-edit-status {
+    display: inline-flex;
+  }
+
+  .mt-inline-edit.htmx-request button,
+  .mt-inline-edit.htmx-request textarea,
+  .mt-inline-edit.htmx-request input,
+  .mt-inline-edit.htmx-request select {
+    pointer-events: none;
+  }
+
+  .mt-inline-edit.htmx-request .form-label,
+  .mt-inline-edit.htmx-request textarea,
+  .mt-inline-edit.htmx-request input,
+  .mt-inline-edit.htmx-request select,
+  .mt-inline-edit.htmx-request button {
+    opacity: 0.55;
+  }
+
+  tr:has(+ .mt-inline-edit.htmx-request) {
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+  }
+
   /* =========================================================
      TOOLTIPS
      ========================================================== */

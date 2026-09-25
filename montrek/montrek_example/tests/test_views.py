@@ -437,6 +437,32 @@ class TestMontrekExampleAInlineFieldEditView(MontrekInlineFieldEditViewTestCase)
         )
         self.assertIn(self.updated_content, response.content.decode())
 
+    def _editor_captions(self) -> tuple[str, str, str]:
+        """(save tooltip, cancel tooltip, saving status) of the opened editor."""
+        response = self.client.get(self.url, HTTP_HX_REQUEST="true")
+        soup = BeautifulSoup(response.content.decode(), "html.parser")
+        save_button = soup.find("button", attrs={"value": "save"})
+        cancel_button = soup.find("button", attrs={"value": "cancel"})
+        status = soup.find(class_="mt-inline-edit-status")
+        self.assertIsNotNone(save_button)
+        self.assertIsNotNone(cancel_button)
+        self.assertIsNotNone(status)
+        return (
+            str(cast(Tag, save_button)["title"]),
+            str(cast(Tag, cancel_button)["title"]),
+            cast(Tag, status).get_text(strip=True),
+        )
+
+    @override_settings(LANGUAGE_CODE="de")
+    def test_editor_captions_in_german(self):
+        self.assertEqual(
+            self._editor_captions(), ("Speichern", "Abbrechen", "Wird gespeichert…")
+        )
+
+    @override_settings(LANGUAGE_CODE="en-us")
+    def test_editor_captions_in_english(self):
+        self.assertEqual(self._editor_captions(), ("Save", "Cancel", "Saving…"))
+
 
 class TestMontrekExampleADownloadView(MontrekDownloadViewTestCase):
     viewname = "montrek_example_a_download"

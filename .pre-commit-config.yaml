@@ -29,12 +29,14 @@ repos:
   # imports the settings and needs every app dependency installed, which an
   # isolated pre-commit environment would not have. Checks the whole project,
   # since a change can break the types of files that import it; mypy's cache
-  # keeps this to a few seconds.
+  # keeps this to a few seconds. The mt_* extension apps are separate git
+  # repositories nested in montrek/, so they are excluded here; core imports of
+  # them are still followed silently (follow_imports = "silent").
   - repo: local
     hooks:
       - id: mypy
         name: mypy
-        entry: bash -c 'cd montrek && mypy .'
+        entry: bash -c "cd montrek && mypy . --exclude '^mt_[^/]+/'"
         language: system
         types: [python]
         pass_filenames: false

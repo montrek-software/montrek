@@ -32,6 +32,19 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# The mt_* extension apps are separate git repositories nested in montrek/.
+# The pre-commit hook excludes them from discovery, but the django-stubs plugin
+# still loads their models (they are installed apps), so silence them here.
+module = [
+  "mt_accounting.*",
+  "mt_competo.*",
+  "mt_economic_common.*",
+  "mt_llm.*",
+  "mt_tools.*",
+]
+ignore_errors = true
+
 [tool.django-stubs]
 django_settings_module = "montrek.settings"
 

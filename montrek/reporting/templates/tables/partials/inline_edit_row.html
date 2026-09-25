@@ -11,11 +11,15 @@ render_edit_row), so include_data_row is false and only the editor is re-rendere
 
 No <form> element: the whole table already lives inside a GET form (see
 tables/base_table.html), so the buttons collect the editor's inputs via hx-include.
+
+While a save is in flight, hx-indicator puts .htmx-request on this editor row:
+gold_theme.html then shows the "saving" status, locks the editor and
+dims the data row above. htmx drops the class again if the request fails.
 {% endcomment %}
 {% if include_data_row %}
   {% include "tables/partials/table_row.html" with cells=cells %}
 {% endif %}
-<tr id="{{ edit_row_id }}">
+<tr id="{{ edit_row_id }}" class="mt-inline-edit">
   <td colspan="{{ colspan }}">
     {% csrf_token %}
     {% if error_message %}<div class="alert alert-danger p-1 mb-1">{{ error_message }}</div>{% endif %}
@@ -30,8 +34,9 @@ tables/base_table.html), so the buttons collect the editor's inputs via hx-inclu
               class="btn-custom p-1"
               name="action"
               value="save"
-              title="Speichern"
+              title="{{ captions.save }}"
               hx-post="{{ post_url }}"
+              hx-indicator="#{{ edit_row_id }}"
               hx-include="closest tr"
               hx-target="previous tr"
               hx-swap="outerHTML"
@@ -39,17 +44,24 @@ tables/base_table.html), so the buttons collect the editor's inputs via hx-inclu
         <span class="bi bi-floppy mt-prominent-icon"></span>
       </button>
       <button type="button"
-              class="btn-custom p-1"
+              class="btn-custom p-1 mt-htmx-link"
               name="action"
               value="cancel"
-              title="Abbrechen"
+              title="{{ captions.cancel }}"
               hx-post="{{ post_url }}"
               hx-include="closest tr"
               hx-target="previous tr"
               hx-swap="outerHTML"
               hx-on::after-request="if(event.detail.successful && event.detail.xhr.getResponseHeader('HX-Inline-Edit-Done')){this.closest('tr').remove()}">
         <span class="bi bi-x-lg mt-prominent-icon"></span>
+        <output class="spinner-border spinner-border-sm htmx-indicator" aria-live="polite">
+          <span class="visually-hidden">Loading...</span>
+        </output>
       </button>
+      <output class="mt-inline-edit-status align-items-center gap-2" aria-live="polite">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span>{{ captions.saving }}</span>
+      </output>
     </div>
   </td>
 </tr>

@@ -100,7 +100,7 @@ class RequestJsonManager(RequestManagerABC):
 
     @retry_on_failure
     @process_response
-    def get_response(self, endpoint: str) -> dict | list:
+    def get_response(self, endpoint: str) -> requests.models.Response:
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = self.get_headers()
         return self.get_request(endpoint_url, headers)
@@ -109,7 +109,7 @@ class RequestJsonManager(RequestManagerABC):
     @process_response
     def post_response(
         self, endpoint: str, data: dict, json: dict | None = None
-    ) -> dict | list | pd.DataFrame:
+    ) -> requests.models.Response:
         if json is None:
             json = {}
         endpoint_url = self.get_endpoint_url(endpoint)
