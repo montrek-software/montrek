@@ -192,7 +192,7 @@ class MontrekRepository:
         self,
         queryset: QuerySet,
         link_class: type[MontrekLinkABC],
-        hub: MontrekHubABC,
+        hub: MontrekHubABC | int,
         *,
         reversed_link: bool = False,
     ) -> QuerySet:
@@ -210,7 +210,7 @@ class MontrekRepository:
             queryset:      A queryset produced by receive().
             link_class:    The link model connecting this repository's hub to
                            the target hub (e.g. LinkOrderCustomer).
-            hub:           The target hub instance to filter by.
+            hub:           The target hub instance, or its pk, to filter by.
             reversed_link: True when this hub sits on hub_out and the target hub
                            is on hub_in (mirrors the reversed_link flag used in
                            add_linked_satellites_field_annotations).

@@ -18,10 +18,11 @@ if [[ -f /montrek/nginx/certs/fullchain.crt ]]; then
 fi
 
 # Paths the app writes at startup: collectstatic into the static volume, uv
-# into the venv and requirements.txt, uploads at runtime. While the privilege
-# drop was broken every service ran as root and left these root-owned, so on
-# the first correctly-dropped boot they are unwritable. Repaired only when the
-# ownership is actually wrong, so a healthy boot does no work.
+# into the venv and requirements.txt, uploads and the reporting workbench at
+# runtime. While the privilege drop was broken every service ran as root and
+# left these root-owned, so on the first correctly-dropped boot they are
+# unwritable. Repaired only when the ownership is actually wrong, so a healthy
+# boot does no work.
 # Fixes only the entries whose ownership is actually wrong. Checking just the
 # top-level directory is not enough: .venv is 1000-owned but has root-owned
 # children (.lock, share/, include/) from the root-era boots, so a top-level
@@ -61,4 +62,6 @@ if [[ -n "${PUID:-}" && -n "${PGID:-}" && "$PUID" != "0" ]]; then
   repair_owner /montrek/.venv
   repair_owner /montrek/requirements.txt
   repair_owner /montrek/montrek/uploads
+  # WORKBENCH_PATH: LaTeX builds, plot PNGs and downloaded report images.
+  repair_owner /montrek/montrek/reporting/.workbench
 fi
