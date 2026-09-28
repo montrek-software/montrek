@@ -103,3 +103,31 @@ class HubDTSLinkAggRepositoryWithLinkHubValueDateFilter(MontrekRepository):
                 "value_date_list__value_date": self.session_data.get("prev_value_date")
             },
         )
+
+
+class HubDLinkedHubCCountRepository(MontrekRepository):
+    """Counts the HubC hubs linked to each HubD row: all of them, those with a
+    value date matching the row's own, and those at a pinned value date."""
+
+    hub_class = me_models.HubD
+
+    def set_annotations(self):
+        # A timeseries satellite keeps the dated HubD rows in the queryset.
+        self.add_satellite_fields_annotations(me_models.SatTSD2, ["field_tsd2_int"])
+        self.add_linked_hub_count(
+            me_models.LinkHubCHubD, "hub_c_count", reversed_link=True
+        )
+        self.add_linked_hub_count(
+            me_models.LinkHubCHubD,
+            "hub_c_count_per_value_date",
+            reversed_link=True,
+            per_value_date=True,
+        )
+        self.add_linked_hub_count(
+            me_models.LinkHubCHubD,
+            "hub_c_count_at_value_date",
+            reversed_link=True,
+            value_date_filter={
+                "value_date_list__value_date": self.session_data.get("count_date")
+            },
+        )

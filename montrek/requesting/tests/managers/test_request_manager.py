@@ -182,7 +182,8 @@ class MockRequestNoConnectionManager(RequestJsonManager):
 class TestRequestNoRequestManager(TestCase):
     def test_no_request_manager(self):
         manager = MockRequestNoConnectionManager({})
-        manager.get_response("json")
+        response = manager.get_response("json")
+        self.assertEqual(response, {})
         self.assertEqual(manager.status_code, 0)
         self.assertEqual(
             manager.message,

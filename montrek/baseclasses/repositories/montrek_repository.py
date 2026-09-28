@@ -25,6 +25,7 @@ from baseclasses.repositories.query_builder import QueryBuilder
 from baseclasses.repositories.subquery_builder import (
     AnnotationContext,
     CrossSatelliteFilter,
+    LinkedHubCountSubqueryBuilder,
     LinkedHubIdSubqueryBuilder,
     LinkedHubJsonField,
     LinkedHubPairedJsonSubqueryBuilder,
@@ -610,6 +611,31 @@ class MontrekRepository:
             null=True, blank=True
         )
         self.annotator._field_names_in_order.append(output_name)
+
+    def add_linked_hub_count(
+        self,
+        link_class: type[MontrekLinkABC],
+        output_name: str,
+        *,
+        reversed_link: bool = False,
+        value_date_filter: dict[str, Any] | None = None,
+        per_value_date: bool = False,
+    ):
+        """Annotate output_name with the number of hubs linked via link_class.
+
+        See ``LinkedHubCountSubqueryBuilder`` for the value date options.
+        """
+        if link_class not in self.annotator.get_link_classes():
+            self.annotator.annotated_link_classes.append(link_class)
+        self.add_annotation(
+            output_name,
+            LinkedHubCountSubqueryBuilder(
+                link_class,
+                reversed_link,
+                value_date_filter=value_date_filter,
+                per_value_date=per_value_date,
+            ),
+        )
 
     def add_linked_hub_paired_json_annotation(
         self,
