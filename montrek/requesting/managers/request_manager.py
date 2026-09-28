@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from functools import wraps
 from time import sleep
-from typing import Any, Concatenate, ParamSpec, TypeVar
+from typing import Any, Concatenate, ParamSpec
 from collections.abc import Callable
 
 import pandas as pd
@@ -14,7 +14,6 @@ from requesting.managers.authenticator_managers import (
 
 
 P = ParamSpec("P")
-R = TypeVar("R")
 JsonResponse = dict[Any, Any] | list[Any]
 
 
@@ -57,12 +56,12 @@ class RequestJsonManager(RequestManagerABC):
 
     @staticmethod
     def retry_on_failure(
-        method: Callable[Concatenate[Any, P], R],
-    ) -> Callable[Concatenate[Any, P], R | None]:
+        method: Callable[Concatenate[Any, P], JsonResponse],
+    ) -> Callable[Concatenate[Any, P], JsonResponse]:
         """Decorator to handle retry logic."""
 
         @wraps(method)
-        def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> R | None:
+        def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> JsonResponse:
             for _ in range(self.no_of_retries):
                 try:
                     return method(self, *args, **kwargs)
@@ -73,7 +72,7 @@ class RequestJsonManager(RequestManagerABC):
                     sleep(self.sleep_time)
             self.message = f"No request made after {self.no_of_retries} attempts"
             self.status_code = 0
-            return None
+            return {}
 
         return wrapper
 
@@ -107,6 +106,9 @@ class RequestJsonManager(RequestManagerABC):
 
         return wrapper
 
+    # The decorated request methods are annotated with what their bodies
+    # return; process_response turns that Response into the parsed JSON
+    # (dict | list) callers receive, and retry_on_failure keeps that type.
     @retry_on_failure
     @process_response
     def get_response(self, endpoint: str) -> requests.models.Response:

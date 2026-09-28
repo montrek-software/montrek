@@ -625,6 +625,8 @@ class MontrekRepository:
 
         See ``LinkedHubCountSubqueryBuilder`` for the value date options.
         """
+        if link_class not in self.annotator.get_link_classes():
+            self.annotator.annotated_link_classes.append(link_class)
         self.add_annotation(
             output_name,
             LinkedHubCountSubqueryBuilder(

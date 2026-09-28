@@ -2848,6 +2848,14 @@ class TestLinkedHubCount(TestCase):
         self.assertEqual(row.hub_c_count, 0)
         self.assertEqual(row.hub_c_count_per_value_date, 0)
 
+    def test_link_class_is_registered_for_the_history(self):
+        repository = HubDLinkedHubCCountRepository()
+        self.assertEqual(
+            repository.annotator.get_link_classes().count(me_models.LinkHubCHubD), 1
+        )
+        history = repository.get_history_queryset(self.hvd_1.pk)
+        self.assertEqual(history["LinkHubCHubD"].count(), 4)
+
     def test_value_date_options_are_mutually_exclusive(self):
         with self.assertRaises(ValueError):
             LinkedHubCountSubqueryBuilder(
