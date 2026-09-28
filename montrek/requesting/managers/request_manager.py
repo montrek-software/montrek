@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from functools import wraps
 from time import sleep
-from typing import Any
+from typing import Any, Concatenate, ParamSpec, TypeVar
 from collections.abc import Callable
 
 import pandas as pd
@@ -11,6 +11,11 @@ from requesting.managers.authenticator_managers import (
     NoAuthenticator,
     RequestAuthenticator,
 )
+
+
+P = ParamSpec("P")
+R = TypeVar("R")
+JsonResponse = dict[Any, Any] | list[Any]
 
 
 class JsonReader:
@@ -51,11 +56,13 @@ class RequestJsonManager(RequestManagerABC):
         self.authenticator = self.authenticator_class(session_data)
 
     @staticmethod
-    def retry_on_failure(method: Callable) -> Callable:
+    def retry_on_failure(
+        method: Callable[Concatenate[Any, P], R],
+    ) -> Callable[Concatenate[Any, P], R | None]:
         """Decorator to handle retry logic."""
 
         @wraps(method)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> R | None:
             for _ in range(self.no_of_retries):
                 try:
                     return method(self, *args, **kwargs)
@@ -71,11 +78,13 @@ class RequestJsonManager(RequestManagerABC):
         return wrapper
 
     @staticmethod
-    def process_response(method: Callable) -> Callable:
+    def process_response(
+        method: Callable[Concatenate[Any, P], requests.models.Response | None],
+    ) -> Callable[Concatenate[Any, P], JsonResponse]:
         """Decorator to handle response processing and JSON extraction."""
 
         @wraps(method)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Any, *args: P.args, **kwargs: P.kwargs) -> JsonResponse:
             request = method(self, *args, **kwargs)
             if request is None:
                 return {}
@@ -100,7 +109,7 @@ class RequestJsonManager(RequestManagerABC):
 
     @retry_on_failure
     @process_response
-    def get_response(self, endpoint: str) -> dict | list:
+    def get_response(self, endpoint: str) -> requests.models.Response:
         endpoint_url = self.get_endpoint_url(endpoint)
         headers = self.get_headers()
         return self.get_request(endpoint_url, headers)

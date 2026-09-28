@@ -9,6 +9,7 @@ from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
+    LinkedHubCountSubqueryBuilder,
     PreviousTSValueSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     TSRelativeChangeSubqueryBuilder,
@@ -72,6 +73,7 @@ from montrek_example.repositories.hub_c_repository import (
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
     HubDRepositoryReversedParentLink,
+    HubDLinkedHubCCountRepository,
     HubDRepositoryTSReverseLink,
     HubDTSLinkAggRepositorySum,
     HubDTSLinkAggRepositoryWithLinkHubValueDateFilter,
@@ -2785,6 +2787,75 @@ class TestTSAggFuncs(TestCase):
         test_query = repo.receive()
         entry = test_query.get()
         self.assertAlmostEqual(entry.prev_field_tsc2_float_sum, 6.0)
+
+
+class TestLinkedHubCount(TestCase):
+    def setUp(self) -> None:
+        self.test_date_1 = "2026-04-20"
+        self.test_date_2 = "2026-04-21"
+        self.hub_d = me_factories.SatD1Factory().hub_entity
+        self.hvd_1 = me_factories.DHubValueDateFactory(
+            hub=self.hub_d, value_date=self.test_date_1
+        )
+        self.hvd_2 = me_factories.DHubValueDateFactory(
+            hub=self.hub_d, value_date=self.test_date_2
+        )
+        # At both value dates, with a satellite at the first one only.
+        sat_tsc2 = cast(
+            me_models.SatTSC2, me_factories.SatTSC2Factory(value_date=self.test_date_1)
+        )
+        hub_c_both_dates = sat_tsc2.hub_value_date.hub
+        me_factories.CHubValueDateFactory(
+            hub=hub_c_both_dates, value_date=self.test_date_2
+        )
+        # At the first value date, without any satellite.
+        hub_c_first_date = me_factories.CHubValueDateFactory(
+            value_date=self.test_date_1
+        ).hub
+        # Linked, but without any dated hub value date.
+        hub_c_undated = me_factories.HubCFactory()
+        for hub_c in (hub_c_both_dates, hub_c_first_date, hub_c_undated):
+            me_factories.LinkHubCHubDFactory(hub_in=hub_c, hub_out=self.hub_d)
+        me_factories.LinkHubCHubDFactory(
+            hub_in=me_factories.CHubValueDateFactory(value_date=self.test_date_1).hub,
+            hub_out=self.hub_d,
+            state_date_end=montrek_time(2020, 1, 1),
+        )
+        me_factories.CHubValueDateFactory(value_date=self.test_date_1)
+
+    def test_counts_all_validly_linked_hubs(self):
+        queryset = HubDLinkedHubCCountRepository().receive()
+        self.assertEqual(queryset.get(pk=self.hvd_1.pk).hub_c_count, 3)
+        self.assertEqual(queryset.get(pk=self.hvd_2.pk).hub_c_count, 3)
+
+    def test_per_value_date_counts_at_the_rows_value_date(self):
+        queryset = HubDLinkedHubCCountRepository().receive()
+        self.assertEqual(queryset.get(pk=self.hvd_1.pk).hub_c_count_per_value_date, 2)
+        self.assertEqual(queryset.get(pk=self.hvd_2.pk).hub_c_count_per_value_date, 1)
+
+    def test_value_date_filter_pins_the_value_date(self):
+        queryset = HubDLinkedHubCCountRepository(
+            {"count_date": self.test_date_1}
+        ).receive()
+        self.assertEqual(queryset.get(pk=self.hvd_1.pk).hub_c_count_at_value_date, 2)
+        self.assertEqual(queryset.get(pk=self.hvd_2.pk).hub_c_count_at_value_date, 2)
+
+    def test_hub_without_links_counts_zero(self):
+        hvd = me_factories.DHubValueDateFactory(
+            hub=me_factories.SatD1Factory().hub_entity, value_date=self.test_date_1
+        )
+        row = HubDLinkedHubCCountRepository().receive().get(pk=hvd.pk)
+        self.assertEqual(row.hub_c_count, 0)
+        self.assertEqual(row.hub_c_count_per_value_date, 0)
+
+    def test_value_date_options_are_mutually_exclusive(self):
+        with self.assertRaises(ValueError):
+            LinkedHubCountSubqueryBuilder(
+                me_models.LinkHubCHubD,
+                reversed_link=True,
+                value_date_filter={"value_date_list__value_date": self.test_date_1},
+                per_value_date=True,
+            )
 
 
 class TestStaticAggFuncsAll(TestCase):

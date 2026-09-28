@@ -692,6 +692,78 @@ class LinkedHubIdSubqueryBuilder(
         return Subquery(agg_qs)
 
 
+class LinkedHubCountSubqueryBuilder(SubqueryBuilder):
+    """Annotates how many hubs are linked to the outer row's hub via link_class.
+
+    Counts from the link table, so a linked hub is counted whether or not it
+    has any satellite - unlike add_linked_satellites_field_annotations with
+    agg_func="count", which only sees the hubs that carry the counted
+    satellite. reversed_link follows LinkedHubIdSubqueryBuilder: False counts
+    the hub_out side, True counts the hub_in side.
+
+    By default every validly linked hub is counted. To count only the linked
+    hubs that have a hub value date at a certain value date, pass either
+    ``value_date_filter`` (lookups relative to the linked hub's HubValueDate,
+    e.g. ``{"value_date_list__value_date": some_date}``) or
+    ``per_value_date=True`` (the value date of the outer row).
+    """
+
+    field_type = models.IntegerField(null=True, blank=True)
+
+    def __init__(
+        self,
+        link_class: type[MontrekLinkABC],
+        reversed_link: bool = False,
+        *,
+        value_date_filter: dict[str, Any] | None = None,
+        per_value_date: bool = False,
+    ):
+        if value_date_filter and per_value_date:
+            raise ValueError(
+                "'value_date_filter' and 'per_value_date' are mutually exclusive"
+            )
+        self.link_class = link_class
+        self.outer_field = "hub_out" if reversed_link else "hub_in"
+        self.counted_field = "hub_in" if reversed_link else "hub_out"
+        self.value_date_filter = value_date_filter
+        self.per_value_date = per_value_date
+
+    def build(
+        self,
+        reference_date: datetime.datetime,
+        queryset: QuerySet | None = None,
+    ) -> Subquery:
+        filters: dict[str, Any] = {
+            self.outer_field: OuterRef("hub"),
+            "state_date_start__lte": reference_date,
+            "state_date_end__gt": reference_date,
+            f"{self.counted_field}__state_date_start__lte": reference_date,
+            f"{self.counted_field}__state_date_end__gt": reference_date,
+        }
+        hub_value_date_path = f"{self.counted_field}__hub_value_date"
+        if self.value_date_filter:
+            for lookup, value in self.value_date_filter.items():
+                filters[f"{hub_value_date_path}__{lookup}"] = value
+        elif self.per_value_date:
+            filters[f"{hub_value_date_path}__value_date_list"] = OuterRef(
+                "value_date_list"
+            )
+        # DISTINCT: joining the hub value dates must not count a hub twice.
+        count_qs = (
+            self.link_class.objects.filter(**filters)
+            .annotate(
+                _linked_hub_count=Func(
+                    F(f"{self.counted_field}_id"),
+                    function="COUNT",
+                    template="%(function)s(DISTINCT %(expressions)s)",
+                    output_field=IntegerField(),
+                )
+            )
+            .values("_linked_hub_count")
+        )
+        return Subquery(count_qs, output_field=IntegerField())
+
+
 class LinkedSatelliteSubqueryBuilderBase(
     SatelliteSubqueryBuilderABC, MultipleLinksCheckMixin, AggregationMixin
 ):
