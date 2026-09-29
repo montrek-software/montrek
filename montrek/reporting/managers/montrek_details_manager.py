@@ -147,7 +147,9 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
         return self.to_html()
 
     def to_latex(self) -> str:
-        latex_str = ""
+        # The column minipages are inline boxes: without a paragraph of their
+        # own, consecutive details blocks share a line and overflow the page.
+        latex_str = "\\par\\noindent\n"
         minipage_width = 0.98 / self.table_cols
         for i in range(self.table_cols):
             latex_str += f"\\begin{{minipage}}[t]{{{minipage_width}\\textwidth}}\n"
@@ -175,6 +177,7 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
 
             latex_str += "\\end{tabularx}\n\\end{table}\n"
             latex_str += "\\end{minipage}"
+        latex_str += "\\par\n"
         return latex_str
 
     def to_json(self) -> dict:
