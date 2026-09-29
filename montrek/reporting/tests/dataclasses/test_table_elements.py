@@ -1047,7 +1047,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2" class="fw-bold">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3" class="fw-bold">c</a></div>  </div>',
-            expected_format_latex=" \\color{textdark} a,b,c &",
+            expected_format_latex=" \\color{textdark} a, b, c &",
             expected_hover_text="hover_text",
         )
 
@@ -1075,7 +1075,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2" class="fw-bold">b</a></div>  </div>',
-            expected_format_latex=" \\color{textdark} a,b &",
+            expected_format_latex=" \\color{textdark} a, b &",
             expected_hover_text="hover_text",
         )
 
@@ -1110,7 +1110,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 '      <div><a id="id__fake_url_3_123" href="/fake_url/3/123" class="fw-bold">c</a></div>'
                 "  </div>"
             ),
-            expected_format_latex=" \\color{textdark} a,b,c &",
+            expected_format_latex=" \\color{textdark} a, b, c &",
             expected_hover_text="hover_text",
         )
 
@@ -1138,7 +1138,7 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             table_element=test_element,
             test_obj=obj,
             expected_format='<div style="max-height: 300px; overflow-y: auto;">      <div><a id="id__fake_url_1" href="/fake_url/1" class="fw-bold">a</a></div>      <div><a id="id__fake_url_2" href="/fake_url/2" class="fw-bold">b</a></div>      <div><a id="id__fake_url_3" href="/fake_url/3" class="fw-bold">c</a></div>  </div>',
-            expected_format_latex=" \\color{textdark} a,b,c &",
+            expected_format_latex=" \\color{textdark} a, b, c &",
             expected_hover_text="hover_text",
         )
 

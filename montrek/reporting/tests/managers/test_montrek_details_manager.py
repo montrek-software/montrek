@@ -90,6 +90,14 @@ class TestMontrekDetailsManager(TestCase):
         if not re.search(pattern, text, flags=re.DOTALL):
             self.fail(msg or f"Pattern not found:\n{pattern}\n\nin text:\n{text}")
 
+    def test_to_latex_is_its_own_paragraph(self):
+        latex = MockMontrekDetailsManager().to_latex()
+        # Consecutive details blocks must not end up on one line.
+        self.assertTrue(latex.startswith("\\par\\noindent"))
+        self.assertTrue(latex.rstrip().endswith("\\par"))
+        # The columns of one block still sit side by side.
+        self.assertIn("\\end{minipage}\\begin{minipage}", latex)
+
     def test_to_latex(self):
         latex = MockMontrekDetailsManager().to_latex()
         # --- High-level structure ---
