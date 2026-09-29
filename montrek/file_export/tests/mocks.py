@@ -120,7 +120,7 @@ class MockPdfReportManagerError(MockPdfReportManager):
 
 
 class MockReportPdfProcessor(MontrekReportPdfProcessor):
-    report_manager = MockPdfReportManager
+    report_manager_class = MockPdfReportManager
     report_name = "Mock Report"
 
     def pre_check(self) -> bool:
@@ -131,8 +131,8 @@ class MockReportPdfProcessor(MontrekReportPdfProcessor):
 
 
 class MockReportPdfProcessorBrokenLatex(MockReportPdfProcessor):
-    report_manager = MockPdfReportManagerBrokenLatex
+    report_manager_class = MockPdfReportManagerBrokenLatex
 
 
 class MockReportPdfProcessorError(MockReportPdfProcessor):
-    report_manager = MockPdfReportManagerError
+    report_manager_class = MockPdfReportManagerError

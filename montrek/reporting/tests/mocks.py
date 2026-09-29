@@ -94,6 +94,9 @@ class MockReportElement:
     def to_latex(self):
         return "latex"
 
+    def to_json(self):
+        return {}
+
 
 class MockReportElementError:
     def to_html(self):
@@ -101,6 +104,9 @@ class MockReportElementError:
 
     def to_latex(self):
         raise ValueError("This fails!")
+
+    def to_json(self):
+        return {}
 
 
 class MockReportElementWithPdfHtml:
@@ -115,6 +121,9 @@ class MockReportElementWithPdfHtml:
     def to_latex(self):
         return "latex"
 
+    def to_json(self):
+        return {}
+
 
 class MockReportElementPdfHtmlError:
     """Element whose to_pdf_html() raises."""
@@ -127,6 +136,9 @@ class MockReportElementPdfHtmlError:
 
     def to_latex(self):
         return "latex"
+
+    def to_json(self):
+        return {}
 
 
 class MockLatexReportManagerNoTemplate(LatexReportManager):

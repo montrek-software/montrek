@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class MontrekReportPdfProcessor(FileExportProcessorABC):
-    report_manager: type[MontrekReportManager]
+    report_manager_class: type[MontrekReportManager]
     report_name: str
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
@@ -20,7 +20,9 @@ class MontrekReportPdfProcessor(FileExportProcessorABC):
         # Checked at class definition: a missing attribute would otherwise
         # only surface mid-export, inside process()'s own error handling.
         missing = [
-            attr for attr in ("report_manager", "report_name") if not hasattr(cls, attr)
+            attr
+            for attr in ("report_manager_class", "report_name")
+            if not hasattr(cls, attr)
         ]
         if missing:
             raise TypeError(f"{cls.__name__} must define {', '.join(missing)}")
@@ -46,7 +48,7 @@ class MontrekReportPdfProcessor(FileExportProcessorABC):
         return True
 
     def get_report_manager(self) -> MontrekReportManager:
-        return self.report_manager(self.session_data)
+        return self.report_manager_class(self.session_data)
 
     def _log_compile_errors(self, report_manager: MontrekReportManager) -> None:
         # compile_report() leaves the xelatex output on the report manager's

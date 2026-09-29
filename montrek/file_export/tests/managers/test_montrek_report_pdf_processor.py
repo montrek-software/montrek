@@ -48,7 +48,7 @@ class TestMontrekReportPdfProcessorGetReportManager(TestCase):
 
 class TestMontrekReportPdfProcessorSubclassCheck(TestCase):
     def test_subclass_without_report_manager_and_name_is_rejected(self):
-        with self.assertRaisesRegex(TypeError, "report_manager, report_name"):
+        with self.assertRaisesRegex(TypeError, "report_manager_class, report_name"):
 
             class IncompleteProcessor(MontrekReportPdfProcessor):
                 pass
@@ -57,4 +57,4 @@ class TestMontrekReportPdfProcessorSubclassCheck(TestCase):
         with self.assertRaisesRegex(TypeError, "must define report_name$"):
 
             class IncompleteProcessor(MontrekReportPdfProcessor):
-                report_manager = MockPdfReportManager
+                report_manager_class = MockPdfReportManager
