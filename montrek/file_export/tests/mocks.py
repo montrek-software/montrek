@@ -4,6 +4,9 @@ from django.core.files.base import ContentFile
 
 from file_export.managers.file_export_manager import FileExportManagerABC
 from file_export.managers.file_export_processor_abc import FileExportProcessorABC
+from file_export.managers.montrek_report_pdf_processor import MontrekReportPdfProcessor
+from reporting.core.reporting_text import ReportingText
+from reporting.managers.montrek_report_manager import MontrekReportManager
 
 
 # ---- processors ----
@@ -90,3 +93,46 @@ class MockFileExportManagerFailPostCheck(MockFileExportManager):
 
 class MockFileExportManagerNoFile(MockFileExportManager):
     processor_class = MockFileExportProcessorNoFile
+
+
+# ---- report PDF processors ----
+
+
+class MockPdfReportManager(MontrekReportManager):
+    document_name = "mock_pdf_report"
+    document_title = "Mock PDF Report"
+
+    def collect_report_elements(self) -> None:
+        self.append_report_element(ReportingText("Mock report content"))
+
+
+class MockPdfReportManagerBrokenLatex(MockPdfReportManager):
+    """The base template opens with the content, so an undefined control
+    sequence halts xelatex before any page is shipped: no PDF is written."""
+
+    def to_latex(self) -> str:
+        return "\\undefinedcontrolsequence"
+
+
+class MockPdfReportManagerError(MockPdfReportManager):
+    def collect_report_elements(self) -> None:
+        raise ValueError("Report data could not be collected")
+
+
+class MockReportPdfProcessor(MontrekReportPdfProcessor):
+    report_manager_class = MockPdfReportManager
+    report_name = "Mock Report"
+
+    def pre_check(self) -> bool:
+        return True
+
+    def post_check(self) -> bool:
+        return True
+
+
+class MockReportPdfProcessorBrokenLatex(MockReportPdfProcessor):
+    report_manager_class = MockPdfReportManagerBrokenLatex
+
+
+class MockReportPdfProcessorError(MockReportPdfProcessor):
+    report_manager_class = MockPdfReportManagerError
