@@ -1628,7 +1628,7 @@ class TestMontrekRepositoryLinks(TestCase):
         self.huba2 = me_factories.HubAFactory()
         me_factories.AHubValueDateFactory(hub=self.huba2, value_date=None)
         self.hubc1 = me_factories.HubCFactory()
-        hubc2 = me_factories.HubCFactory()
+        self.hubc2 = hubc2 = me_factories.HubCFactory()
 
         me_factories.SatA1Factory(
             hub_entity=self.huba1,
@@ -1689,30 +1689,27 @@ class TestMontrekRepositoryLinks(TestCase):
         self.assertEqual(qs_2.field_c1_str, "Third")
         self.assertEqual(qs_1.field_c1_str, "Second")
 
+    def assert_reversed_link_values(self, queryset):
+        # The repository sets no order, so rows are looked up by hub rather
+        # than by position: Postgres may return them in any order.
+        self.assertEqual(queryset.count(), 2)
+        self.assertEqual(
+            json.loads(queryset.get(hub_id=self.hubc1.id).field_a1_int), [5]
+        )
+        self.assertEqual(queryset.get(hub_id=self.hubc2.id).field_a1_int, None)
+
     def test_link_reversed(self):
         repository = HubCRepository2()
         repository.reference_date = montrek_time(2023, 7, 8)
-        queryset = repository.receive()
-        self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
-        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assert_reversed_link_values(repository.receive())
         repository.reference_date = montrek_time(2023, 7, 15)
-        queryset = repository.receive()
-        self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
-        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assert_reversed_link_values(repository.receive())
 
     def test_link_reversed__session_data(self):
         repository = HubCRepository2({"reference_date": "2023-07-08"})
-        queryset = repository.receive()
-        self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
-        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assert_reversed_link_values(repository.receive())
         repository = HubCRepository2({"reference_date": ["2023-07-15"]})
-        queryset = repository.receive()
-        self.assertEqual(queryset.count(), 2)
-        self.assertEqual(json.loads(queryset[0].field_a1_int), [5])
-        self.assertEqual(queryset[1].field_a1_int, None)
+        self.assert_reversed_link_values(repository.receive())
 
     def test_link_reversed_ts(self):
         sat_tsc2 = me_factories.SatTSC2Factory(
