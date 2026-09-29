@@ -124,11 +124,16 @@ class LatexReportManager:
 
     def compile_report(self) -> str | None:
         report_str = self.generate_report()
-        workbench_path = settings.WORKBENCH_PATH / str(uuid.uuid4())
+        compile_id = str(uuid.uuid4())
+        workbench_path = settings.WORKBENCH_PATH / compile_id
         workbench_path.mkdir(parents=True, exist_ok=True)
 
-        output_dir = Path(settings.MEDIA_ROOT) / "latex"
-        output_dir.mkdir(parents=True, exist_ok=True)
+        # One directory per compile: document_name is not unique (two runs of
+        # the same report on the same day share it), and callers read the file
+        # back after this returns, so a shared path could hand one run the PDF
+        # a concurrent run just wrote. The file name itself stays
+        # document_name, since callers use it as the download name.
+        output_dir = Path(settings.MEDIA_ROOT) / "latex" / compile_id
 
         tex_filename = f"{self.report_manager.document_name}.tex"
         pdf_filename = f"{self.report_manager.document_name}.pdf"
@@ -180,6 +185,7 @@ class LatexReportManager:
                     stderr[-500:],
                 )
 
+            output_dir.mkdir(parents=True, exist_ok=True)
             output_pdf_path.write_bytes(pdf_file_path.read_bytes())
             return str(output_pdf_path)
 
