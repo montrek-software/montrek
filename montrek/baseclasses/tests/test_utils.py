@@ -3,6 +3,7 @@ from typing import Any
 
 from baseclasses.utils import (
     FilterCountMetaSessionDataElement,
+    FileExtensionEnum,
     FilterMetaSessionDataElement,
     IsCompactFormatMetaSessionDataElement,
     OrderFieldMetaSessionDataElement,
@@ -75,11 +76,22 @@ class TestGetContentType(TestCase):
         self.assertEqual(get_content_type("test.txt"), "text/plain")
         self.assertEqual(get_content_type("test.csv"), "text/csv")
         self.assertEqual(get_content_type("test.zip"), "application/zip")
+        self.assertEqual(get_content_type("test.xml"), "application/xml")
         self.assertEqual(get_content_type("test"), "application/octet-stream")
         self.assertEqual(
             get_content_type("test.xlsx"),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+
+    def test_get_content_type_covers_every_file_extension(self):
+        for extension in FileExtensionEnum:
+            self.assertEqual(
+                get_content_type(f"report.{extension.value.name}"),
+                extension.value.content_type,
+            )
+
+    def test_get_content_type_ignores_case(self):
+        self.assertEqual(get_content_type("REPORT.PDF"), "application/pdf")
 
 
 class MockRequest:

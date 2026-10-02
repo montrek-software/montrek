@@ -1,5 +1,6 @@
 import datetime
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
 from typing import Any
@@ -94,19 +95,33 @@ def get_date_range_dates(request) -> tuple[str, str]:
     return start_date_str, end_date_str
 
 
+@dataclass(frozen=True)
+class FileExtensionDataClass:
+    name: str
+    content_type: str
+
+
+class FileExtensionEnum(Enum):
+    PDF = FileExtensionDataClass("pdf", "application/pdf")
+    TXT = FileExtensionDataClass("txt", "text/plain")
+    CSV = FileExtensionDataClass("csv", "text/csv")
+    XLSX = FileExtensionDataClass(
+        "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    ZIP = FileExtensionDataClass("zip", "application/zip")
+    XML = FileExtensionDataClass("xml", "application/xml")
+
+
+DEFAULT_CONTENT_TYPE = "application/octet-stream"
+CONTENT_TYPES = {
+    extension.value.name: extension.value.content_type
+    for extension in FileExtensionEnum
+}
+
+
 def get_content_type(filename: str) -> str:
-    file_extension = filename.split(".")[-1]
-    if file_extension == "pdf":
-        return "application/pdf"
-    if file_extension == "txt":
-        return "text/plain"
-    if file_extension == "csv":
-        return "text/csv"
-    if file_extension == "xlsx":
-        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    if file_extension == "zip":
-        return "application/zip"
-    return "application/octet-stream"
+    file_extension = filename.split(".")[-1].lower()
+    return CONTENT_TYPES.get(file_extension, DEFAULT_CONTENT_TYPE)
 
 
 def to_date(value: Any) -> datetime.date | None:
