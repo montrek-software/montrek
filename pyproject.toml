@@ -17,6 +17,7 @@ module = [
   "debug_toolbar.*",
   "decouple.*",
   "django_pandas.*",
+  "docxtpl.*",
   "encrypted_fields.*",
   "kombu.*",
   "mozilla_django_oidc.*",
@@ -28,6 +29,8 @@ module = [
   "pypandoc.*",
   "requests.*",
   "rest_framework.*",
+  "tqdm.*",
+  "vcr.*",
   "weasyprint.*",
 ]
 ignore_missing_imports = true
