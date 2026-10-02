@@ -149,8 +149,8 @@ class Annotator:
 
     def field_projections_to_subqueries(
         self,
-    ) -> dict[str, Subquery | ExpressionWrapper]:
-        subquery_map: dict[str, Subquery | ExpressionWrapper] = {}
+    ) -> dict[str, Subquery | ExpressionWrapper | F]:
+        subquery_map: dict[str, Subquery | ExpressionWrapper | F] = {}
         for field_projection in self.field_projections:
             alias_name = field_projection.satellite_alias.alias_name
             subquery_builder = field_projection.satellite_alias.subquery_builder
@@ -161,8 +161,8 @@ class Annotator:
 
     def linked_field_projections_to_subqueries(
         self,
-    ) -> dict[str, Subquery]:
-        subquery_map = {}
+    ) -> dict[str, Subquery | F]:
+        subquery_map: dict[str, Subquery | F] = {}
         for lfp in self.linked_field_projections:
             alias_name = lfp.linked_satellite_alias.alias_name
             builder = lfp.linked_satellite_alias.subquery_builder
@@ -436,7 +436,9 @@ class Annotator:
             ):
                 return existing
 
-        base_name = f"{satellite_class.__name__.lower()}__sat"
+        # No "__" in the name: a joined satellite is referenced as
+        # F("<alias>__<field>"), which Django splits on "__".
+        base_name = f"{satellite_class.__name__.lower()}_sat"
         taken = {sa.alias_name for sa in self.satellite_aliases}
         alias_name = base_name
         counter = 0

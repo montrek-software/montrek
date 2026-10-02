@@ -25,6 +25,7 @@ from django.db.models import (
     CharField,
     F,
     ExpressionWrapper,
+    FilteredRelation,
     FloatField,
     Func,
     IntegerField,
@@ -99,7 +100,7 @@ class SubqueryBuilder:
         self,
         alias_name: str,
         field: str,
-    ) -> Subquery | ExpressionWrapper:
+    ) -> Subquery | ExpressionWrapper | F:
         """
         Build a reusable subquery or expression that can be referenced from an
         outer queryset by alias.
@@ -165,28 +166,74 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     def satellite_subquery(self, reference_date: datetime.datetime) -> Subquery:
         return Subquery(self.satellite_query(reference_date))
 
-    def build_alias(self, reference_date: datetime.datetime) -> Subquery:
-        return self.satellite_subquery(reference_date)
+    def join_relation_name(self) -> str | None:
+        """Relation from the outer HubValueDate row to the satellite, if the
+        current satellite version can be joined instead of looked up.
+
+        Joining puts every field of the satellite on one LEFT OUTER JOIN; the
+        lookup instead stores the satellite pk in an alias, which Postgres
+        cannot reference, so it is inlined again into every field's subquery.
+        ``None`` keeps the lookup.
+        """
+        return None
+
+    def build_alias(
+        self, reference_date: datetime.datetime
+    ) -> Subquery | FilteredRelation:
+        relation_name = self.join_relation_name()
+        if relation_name is None:
+            return self.satellite_subquery(reference_date)
+        return FilteredRelation(
+            relation_name,
+            condition=Q(
+                **{
+                    f"{relation_name}__state_date_start__lte": reference_date,
+                    f"{relation_name}__state_date_end__gt": reference_date,
+                }
+            ),
+        )
 
     def build_subquery(
         self,
         alias_name: str,
         field: str,
-    ) -> Subquery:
+    ) -> Subquery | F:
+        if self.join_relation_name() is not None:
+            return F(f"{alias_name}__{field}")
         sat_query = self.satellite_class.objects.filter(Q(pk=OuterRef(alias_name)))
         return Subquery(sat_query.values(field))
+
+    def _reverse_relation_name(self) -> str:
+        hub_field = cast(
+            models.ForeignKey, self.satellite_class._meta.get_field(self.lookup_field)
+        )
+        return hub_field.related_query_name()
 
 
 class SatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     lookup_field: str = "hub_entity"
     outer_ref: str = "hub_id"
 
+    def join_relation_name(self) -> str | None:
+        if self.hub_satellite_filter:
+            return None
+        return f"hub__{self._reverse_relation_name()}"
+
 
 class TSSatelliteSubqueryBuilder(SatelliteSubqueryBuilderABC):
     lookup_field: str = "hub_value_date"
     outer_ref: str = "pk"
 
-    def build_alias(self, reference_date: datetime.datetime) -> Subquery:
+    def join_relation_name(self) -> str | None:
+        # With a filter the latest matching value date of the hub is looked
+        # up, which is no plain join on the row's own HubValueDate.
+        if self.hub_satellite_filter:
+            return None
+        return self._reverse_relation_name()
+
+    def build_alias(
+        self, reference_date: datetime.datetime
+    ) -> Subquery | FilteredRelation:
         if not self.hub_satellite_filter:
             return super().build_alias(reference_date)
         return Subquery(

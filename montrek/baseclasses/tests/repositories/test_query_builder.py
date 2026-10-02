@@ -64,6 +64,58 @@ class TestQueryBuilder(TestCase):
         self.assertEqual(row.comment, "Hub comment")
         self.assertIsNone(row.value_date)
 
+    def test_query_builder__build_queryset__satellite_fields_without_subqueries(self):
+        current = TestMontrekSatelliteFactory.create(
+            test_name="Current", test_value="Value", test_text="Text"
+        )
+        TestMontrekSatelliteFactory.create(
+            hub_entity=current.hub_entity,
+            test_name="Outdated",
+            state_date_end=montrek_time(2020, 1, 1),
+        )
+        TestMontrekHubFactory.create()
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name", "test_value", "test_text"],
+            TestMontrekSatellite,
+            SatelliteSubqueryBuilder,
+        )
+
+        test_query = self.query_builder.build_queryset(self.reference_date)
+
+        # One LEFT JOIN on the current satellite version, not one subquery
+        # per field.
+        self.assertEqual(str(test_query.query).upper().count("SELECT"), 1)
+        rows = list(test_query.order_by("hub_entity_id"))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(
+            (rows[0].test_name, rows[0].test_value, rows[0].test_text),
+            ("Current", "Value", "Text"),
+        )
+        self.assertIsNone(rows[1].test_name)
+
+    def test_query_builder__build_queryset__ts_satellite_fields_share_one_join(self):
+        ts_sat = TestMontrekTimeSeriesSatelliteFactory.create(
+            test_decimal=12.5, comment="TS comment"
+        )
+
+        def select_count(fields: list[str]) -> int:
+            annotator = Annotator(TestMontrekHub)
+            annotator.subquery_builder_to_annotations(
+                fields,
+                TestMontrekTimeSeriesSatellite,
+                TSSatelliteSubqueryBuilder,
+                rename_field_map={"comment": "ts_comment"},
+            )
+            query = QueryBuilder(annotator, {}).build_queryset(self.reference_date)
+            row = query.get(pk=ts_sat.hub_value_date_id)
+            self.assertEqual(row.test_decimal, ts_sat.test_decimal)
+            return str(query.query).upper().count("SELECT")
+
+        self.assertEqual(
+            select_count(["test_decimal"]),
+            select_count(["test_decimal", "comment"]),
+        )
+
     def test_query_builder__build_queryset__hub_scope_pk_restricts_to_hub(self):
         scoped_sat = TestMontrekSatelliteFactory.create(test_name="Scoped")
         other_sat = TestMontrekSatelliteFactory.create(test_name="Other")
