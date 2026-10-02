@@ -4824,6 +4824,14 @@ class TestScalarLinkedTSSatelliteAlias(TestCase):
         self.assertIsNone(obj.field_tsc3_str)
 
 
+class TestScalarLinkedTSSatelliteJoin(TestCase):
+    def test_linked_ts_satellite_is_joined_not_subqueried(self):
+        sql = str(HubATSLinkedRepository().receive().query)
+        sat_table = me_models.SatTSC3._meta.db_table
+        self.assertIn(f'LEFT OUTER JOIN "{sat_table}"', sql)
+        self.assertNotIn(f'FROM "{sat_table}"', sql)
+
+
 class TestJsonAggLinks(TestCase):
     def setUp(self):
         self.hub_c = me_factories.HubCFactory()

@@ -5,6 +5,8 @@ from typing import Any, Protocol, cast
 from collections.abc import Callable
 
 from django.db.models.expressions import BaseExpression
+from django.core.exceptions import FieldDoesNotExist
+from django.db.models.constants import LOOKUP_SEP
 
 from baseclasses.models import (
     HubValueDate,
@@ -127,6 +129,60 @@ class SubqueryBuilder:
         )
 
 
+def state_valid_q(relation_name: str, reference_date: datetime.datetime) -> Q:
+    """Q on a joined relation keeping only rows valid at ``reference_date``."""
+    return Q(
+        **{
+            f"{relation_name}__state_date_start__lte": reference_date,
+            f"{relation_name}__state_date_end__gt": reference_date,
+        }
+    )
+
+
+def prefix_q(q: Q, prefix: str) -> Q:
+    """Copy of ``q`` with every lookup moved below the relation ``prefix``."""
+    prefixed = Q()
+    prefixed.connector = q.connector
+    prefixed.negated = q.negated
+    prefixed.children = [
+        (
+            prefix_q(child, prefix)
+            if isinstance(child, Q)
+            else _prefix_lookup(cast(tuple[str, Any], child), prefix)
+        )
+        for child in q.children
+    ]
+    return prefixed
+
+
+def _prefix_lookup(lookup: tuple[str, Any], prefix: str) -> tuple[str, Any]:
+    return (f"{prefix}__{lookup[0]}", lookup[1])
+
+
+def is_plain_column_filter(model: type[models.Model], q: Q) -> bool:
+    """Whether ``q`` only compares the model's own non-relation columns with
+    literal values.
+
+    Only such a filter fits into a FilteredRelation condition, which can
+    neither follow further relations nor resolve OuterRef.
+    """
+    for child in q.children:
+        if isinstance(child, Q):
+            if not is_plain_column_filter(model, child):
+                return False
+            continue
+        lookup, value = cast(tuple[str, Any], child)
+        if hasattr(value, "resolve_expression"):
+            return False
+        try:
+            field = model._meta.get_field(lookup.split(LOOKUP_SEP)[0])
+        except FieldDoesNotExist:
+            return False
+        if field.is_relation:
+            return False
+    return True
+
+
 class SatelliteSubqueryBuilderABC(SubqueryBuilder):
     lookup_field: str = ""
     outer_ref: str = ""
@@ -184,14 +240,15 @@ class SatelliteSubqueryBuilderABC(SubqueryBuilder):
         if relation_name is None:
             return self.satellite_subquery(reference_date)
         return FilteredRelation(
-            relation_name,
-            condition=Q(
-                **{
-                    f"{relation_name}__state_date_start__lte": reference_date,
-                    f"{relation_name}__state_date_end__gt": reference_date,
-                }
-            ),
+            relation_name, condition=state_valid_q(relation_name, reference_date)
         )
+
+    def build_aliases(
+        self, alias_name: str, reference_date: datetime.datetime
+    ) -> dict[str, Subquery | FilteredRelation]:
+        """Aliases to put on the queryset, in order; the one named
+        ``alias_name`` is what :meth:`build_subquery` reads fields from."""
+        return {alias_name: self.build_alias(reference_date)}
 
     def build_subquery(
         self,
@@ -1186,6 +1243,122 @@ class LinkedSatelliteSubqueryBuilderBase(
                 )
             return self._link_hubs_and_get_ts_subquery(hub_a, hub_b, reference_date)
         return self._link_hubs_and_get_subquery(hub_a, hub_b, reference_date)
+
+    def supports_join(self) -> bool:
+        """Whether the scalar linked satellite can be joined instead of being
+        looked up per field; mirrors :meth:`_build_scalar_alias` and
+        :meth:`_build_ts_scalar_alias`, which stay in use otherwise."""
+        if self.cross_satellite_filters or self.value_date_scope_path:
+            return False
+        if not is_plain_column_filter(self.satellite_class, self.link_satellite_filter):
+            return False
+        if not self.satellite_class.is_timeseries:
+            return True
+        # The timeseries lookup does not follow parent links.
+        if self.parent_link_classes:
+            return False
+        hub_value_date_class = self._hub_value_date_class()
+        return is_plain_column_filter(
+            hub_value_date_class, Q(**self.link_hub_value_date_filter)
+        )
+
+    def build_aliases(
+        self, alias_name: str, reference_date: datetime.datetime
+    ) -> dict[str, Subquery | FilteredRelation]:
+        if not self.supports_join():
+            return super().build_aliases(alias_name, reference_date)
+        return self._join_aliases(alias_name, reference_date)
+
+    def build_subquery(self, alias_name: str, field: str) -> Subquery | F:
+        if self.supports_join():
+            return F(f"{alias_name}__{field}")
+        return super().build_subquery(alias_name, field)
+
+    def _join_aliases(
+        self, alias_name: str, reference_date: datetime.datetime
+    ) -> dict[str, Subquery | FilteredRelation]:
+        """One LEFT OUTER JOIN per hop from the outer HubValueDate row to the
+        linked satellite, each restricted to rows valid at reference_date:
+        parent links (from the outer hub inwards), the link, and the satellite.
+        A timeseries satellite additionally goes through the linked hub and its
+        HubValueDate at the outer row's value date.
+        """
+        aliases: dict[str, Subquery | FilteredRelation] = {}
+        path = "hub"
+        for index in reversed(range(len(self.parent_link_classes))):
+            parent_link_class = self.parent_link_classes[index]
+            outer_side = "hub_out" if self.parent_link_reversed[index] else "hub_in"
+            inner_side = "hub_in" if outer_side == "hub_out" else "hub_out"
+            relation = (
+                f"{path}__{self._related_query_name(parent_link_class, outer_side)}"
+            )
+            parent_alias = f"{alias_name}_parent{index}"
+            aliases[parent_alias] = FilteredRelation(
+                relation, condition=state_valid_q(relation, reference_date)
+            )
+            path = f"{parent_alias}__{inner_side}"
+
+        relation = (
+            f"{path}__{self._related_query_name(self.link_class, self._hub_field_from)}"
+        )
+        link_alias = f"{alias_name}_link"
+        aliases[link_alias] = FilteredRelation(
+            relation, condition=state_valid_q(relation, reference_date)
+        )
+        path = f"{link_alias}__{self._hub_field_to}"
+
+        if self.satellite_class.is_timeseries:
+            hub_alias = f"{alias_name}_hub"
+            aliases[hub_alias] = FilteredRelation(
+                path, condition=state_valid_q(path, reference_date)
+            )
+            hub_value_date_class = self._hub_value_date_class()
+            relation = (
+                f"{hub_alias}__{self._related_query_name(hub_value_date_class, 'hub')}"
+            )
+            if self.link_hub_value_date_filter:
+                value_date_condition = prefix_q(
+                    Q(**self.link_hub_value_date_filter), relation
+                )
+            else:
+                value_date_condition = Q(
+                    **{f"{relation}__value_date_list": F("value_date_list")}
+                )
+            hub_value_date_alias = f"{alias_name}_hvd"
+            aliases[hub_value_date_alias] = FilteredRelation(
+                relation, condition=value_date_condition
+            )
+            path = hub_value_date_alias
+            satellite_field = "hub_value_date"
+        else:
+            satellite_field = "hub_entity"
+
+        relation = (
+            f"{path}__{self._related_query_name(self.satellite_class, satellite_field)}"
+        )
+        aliases[alias_name] = FilteredRelation(
+            relation,
+            condition=state_valid_q(relation, reference_date)
+            & prefix_q(self.link_satellite_filter, relation),
+        )
+        return aliases
+
+    def _hub_value_date_class(self) -> type[models.Model]:
+        return self._related_model(self.satellite_class, "hub_value_date")
+
+    @staticmethod
+    def _related_model(
+        model: type[models.Model], field_name: str
+    ) -> type[models.Model]:
+        """Model that ``model.field_name`` points to."""
+        return cast(type[models.Model], model._meta.get_field(field_name).related_model)
+
+    @staticmethod
+    def _related_query_name(model: type[models.Model], field_name: str) -> str:
+        """Name of the reverse relation of ``model.field_name``."""
+        return cast(
+            models.ForeignKey, model._meta.get_field(field_name)
+        ).related_query_name()
 
 
 class LinkedSatelliteSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):

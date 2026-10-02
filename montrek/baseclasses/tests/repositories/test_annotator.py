@@ -149,7 +149,7 @@ class TestAnnotator(TestCase):
         alias = annotator.satellite_aliases[0]
 
         self.assertIsInstance(alias, SatelliteAlias)
-        self.assertEqual(alias.alias_name, "staticsatellite_sat")
+        self.assertEqual(alias.alias_name, "sat_0")
         self.assertIsInstance(alias.subquery_builder, DummyScalarSubqueryBuilder)
 
         # Field projection created via build_subquery

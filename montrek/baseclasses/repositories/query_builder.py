@@ -77,12 +77,16 @@ class QueryBuilder:
             queryset = self._filter_ts_rows(queryset)
         satellite_aliases_dict: dict[str, Any] = {}
         for satellite_alias in self.annotator.satellite_aliases:
-            satellite_aliases_dict[satellite_alias.alias_name] = (
-                satellite_alias.subquery_builder.build_alias(reference_date)
+            satellite_aliases_dict.update(
+                satellite_alias.subquery_builder.build_aliases(
+                    satellite_alias.alias_name, reference_date
+                )
             )
         for linked_satellite_alias in self.annotator.linked_satellite_aliases:
-            satellite_aliases_dict[linked_satellite_alias.alias_name] = (
-                linked_satellite_alias.subquery_builder.build_alias(reference_date)
+            satellite_aliases_dict.update(
+                linked_satellite_alias.subquery_builder.build_aliases(
+                    linked_satellite_alias.alias_name, reference_date
+                )
             )
         if satellite_aliases_dict:
             queryset = queryset.alias(**satellite_aliases_dict)

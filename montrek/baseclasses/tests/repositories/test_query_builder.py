@@ -273,6 +273,61 @@ class TestQueryBuilder(TestCase):
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first().test_id, sat.test_id)
 
+    def test_query_builder__build_queryset__scalar_linked_satellite_is_joined(self):
+        reference_date = montrek_time(2023, 6, 25)
+        linked = LinkTestMontrekTestLinkFactory()
+        TestLinkSatelliteFactory(hub_entity=linked.hub_out, test_id=7)
+        filtered_out = LinkTestMontrekTestLinkFactory()
+        TestLinkSatelliteFactory(hub_entity=filtered_out.hub_out, test_id=3)
+        expired = LinkTestMontrekTestLinkFactory(
+            state_date_end=montrek_time(2023, 1, 1)
+        )
+        TestLinkSatelliteFactory(hub_entity=expired.hub_out, test_id=9)
+
+        annotator = Annotator(TestMontrekHub)
+        annotator.subquery_builder_to_annotations(
+            ["test_id", "hub_entity_id"],
+            bc_models.TestLinkSatellite,
+            LinkedSatelliteSubqueryBuilder,
+            link_class=bc_models.LinkTestMontrekTestLink,
+            agg_func="string_concat",
+            link_satellite_filter={"test_id__gte": 5},
+            rename_field_map={"hub_entity_id": "link_hub_id"},
+        )
+        queryset = QueryBuilder(annotator, {}).build_queryset(reference_date)
+
+        self.assertEqual(str(queryset.query).upper().count("SELECT"), 1)
+        values = {row.hub_id: (row.test_id, row.link_hub_id) for row in queryset}
+        self.assertEqual(
+            values,
+            {
+                linked.hub_in_id: (7, linked.hub_out_id),
+                filtered_out.hub_in_id: (None, None),
+                expired.hub_in_id: (None, None),
+            },
+        )
+
+    def test_query_builder__build_queryset__linked_filter_on_relation_keeps_subquery(
+        self,
+    ):
+        reference_date = montrek_time(2023, 6, 25)
+        link = LinkTestMontrekTestLinkFactory()
+        sat = TestLinkSatelliteFactory(hub_entity=link.hub_out, test_id=7)
+
+        annotator = Annotator(TestMontrekHub)
+        annotator.subquery_builder_to_annotations(
+            ["test_id"],
+            bc_models.TestLinkSatellite,
+            LinkedSatelliteSubqueryBuilder,
+            link_class=bc_models.LinkTestMontrekTestLink,
+            agg_func="string_concat",
+            link_satellite_filter={"hub_entity__state_date_start__lte": reference_date},
+        )
+        queryset = QueryBuilder(annotator, {}).build_queryset(reference_date)
+
+        self.assertGreater(str(queryset.query).upper().count("SELECT"), 1)
+        self.assertEqual(queryset.get().test_id, sat.test_id)
+
     def test_query_builder__build_queryset__linked_alias_shared_across_fields(self):
         reference_date = montrek_time(2023, 6, 25)
         link = LinkTestMontrekTestLinkFactory()
