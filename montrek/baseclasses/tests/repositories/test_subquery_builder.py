@@ -11,13 +11,14 @@ from baseclasses.repositories.subquery_builder import (
     SubqueryBuilder,
     get_json_agg_function,
     get_string_concat_function,
+    is_plain_column_filter,
 )
 from baseclasses.tests.factories.baseclass_factories import (
     LinkTestMontrekTestLinkFactory,
     TestLinkSatelliteFactory,
 )
 from baseclasses.utils import montrek_time
-from django.db.models import CharField, OuterRef, Subquery
+from django.db.models import CharField, OuterRef, Q, Subquery
 from django.test import TestCase
 from django.utils import timezone
 
@@ -174,3 +175,26 @@ class TestSideFunctions(TestCase):
             self.assertIsInstance(act, JsonAgg)
         with self.settings(DATABASES={"default": {"ENGINE": "unknown"}}):
             self.assertRaises(NotImplementedError, get_json_agg_function)
+
+
+class TestIsPlainColumnFilter(TestCase):
+    def test_literal_column_filter_is_plain(self):
+        self.assertTrue(
+            is_plain_column_filter(
+                bc_models.TestLinkSatellite, Q(test_id__in=[1, 2]) & ~Q(test_id=3)
+            )
+        )
+
+    def test_relation_lookup_is_not_plain(self):
+        self.assertFalse(
+            is_plain_column_filter(
+                bc_models.TestLinkSatellite, Q(hub_entity__state_date_end__gt=1)
+            )
+        )
+
+    def test_expression_nested_in_lookup_value_is_not_plain(self):
+        self.assertFalse(
+            is_plain_column_filter(
+                bc_models.TestLinkSatellite, Q(test_id__in=[1, OuterRef("hub_id")])
+            )
+        )

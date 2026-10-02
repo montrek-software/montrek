@@ -92,6 +92,10 @@ class TestCheckOverlappingVersionsCommand(TestCase):
 
         self.assertIn("No overlapping versions", out.getvalue())
 
+    def test_fails_for_unknown_app_label(self):
+        with self.assertRaisesMessage(CommandError, "Unknown app label: basclasses"):
+            call_command("check_overlapping_versions", "basclasses", stdout=StringIO())
+
     def test_fails_with_overlaps(self):
         first = TestMontrekSatelliteFactory()
         TestMontrekSatelliteFactory(hub_entity=first.hub_entity)

@@ -159,6 +159,18 @@ def _prefix_lookup(lookup: tuple[str, Any], prefix: str) -> tuple[str, Any]:
     return (f"{prefix}__{lookup[0]}", lookup[1])
 
 
+def contains_expression(value: Any) -> bool:
+    """Whether ``value`` is or holds an ORM expression, such as an OuterRef in
+    the list of an ``__in`` lookup."""
+    if hasattr(value, "resolve_expression"):
+        return True
+    if isinstance(value, dict):
+        return any(contains_expression(item) for item in value.values())
+    if isinstance(value, list | tuple | set | frozenset):
+        return any(contains_expression(item) for item in value)
+    return False
+
+
 def is_plain_column_filter(model: type[models.Model], q: Q) -> bool:
     """Whether ``q`` only compares the model's own non-relation columns with
     literal values.
@@ -172,7 +184,7 @@ def is_plain_column_filter(model: type[models.Model], q: Q) -> bool:
                 return False
             continue
         lookup, value = cast(tuple[str, Any], child)
-        if hasattr(value, "resolve_expression"):
+        if contains_expression(value):
             return False
         try:
             field = model._meta.get_field(lookup.split(LOOKUP_SEP)[0])

@@ -293,8 +293,7 @@ class TestAnnotator(TestCase):
         self.assertEqual(len(annotator.linked_satellite_aliases), 1)
         alias = annotator.linked_satellite_aliases[0]
         self.assertIsInstance(alias, LinkedSatelliteAlias)
-        self.assertIn("staticsatellite", alias.alias_name)
-        self.assertIn("dummyonetoonelink", alias.alias_name)
+        self.assertEqual(alias.alias_name, "lsat_0")
 
         # Field projection created
         self.assertEqual(len(annotator.linked_field_projections), 1)
