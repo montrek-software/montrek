@@ -16,7 +16,6 @@ from baseclasses.models import (
     MontrekSatelliteABC,
     MontrekSatelliteBaseABC,
     MontrekTimeSeriesSatelliteABC,
-    ValueDateList,
 )
 from django.conf import settings
 from django.db import models
@@ -83,7 +82,7 @@ class SubqueryBuilder:
         self,
         reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> BaseExpression:
+    ) -> BaseExpression | F:
         raise NotImplementedError(
             f"{self.__class__.__name__} must be subclassed and the build method must be implemented!"
         )
@@ -413,12 +412,11 @@ class ValueDateSubqueryBuilder(SubqueryBuilder):
         self,
         reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> Subquery:
-        return Subquery(
-            ValueDateList.objects.filter(pk=OuterRef("value_date_list")).values(
-                "value_date"
-            )
-        )
+    ) -> F:
+        # A plain column on the forward join to ValueDateList instead of a
+        # correlated subquery, so filtering and ordering on value_date stay
+        # cheap and the join is shared with the value date filters.
+        return F("value_date_list__value_date")
 
 
 class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
@@ -431,11 +429,10 @@ class HubDirectFieldSubqueryBuilder(SubqueryBuilder):
         self,
         reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> Subquery:
-        # TODO: Rearrange this with an alias
-        return Subquery(
-            self.hub_class.objects.filter(pk=OuterRef("hub")).values(self.field)
-        )
+    ) -> F:
+        # Reuses the hub join the base queryset already needs for its state
+        # date filter; every hub field is a plain column instead of a subquery.
+        return F(f"hub__{self.field}")
 
 
 class HubEntityIdSubqueryBuilder(HubDirectFieldSubqueryBuilder):

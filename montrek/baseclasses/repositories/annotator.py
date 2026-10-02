@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, cast
 from django.core.exceptions import AppRegistryNotReady
 from django.db import models
-from django.db.models import ExpressionWrapper, Field, QuerySet, Subquery
+from django.db.models import ExpressionWrapper, F, Field, QuerySet, Subquery
 from django.db.models.expressions import BaseExpression
 from baseclasses.repositories.subquery_builder import (
     LINK_AGG_FIELD_TYPE_MAP,
@@ -173,7 +173,7 @@ class Annotator:
         self,
         reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> dict[str, BaseExpression]:
+    ) -> dict[str, BaseExpression | F]:
         return {
             field: (
                 subquery_builder.build(reference_date, queryset=queryset)

@@ -28,6 +28,7 @@ from baseclasses.tests.factories.baseclass_factories import (
 )
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
 from baseclasses.utils import montrek_time
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestQueryBuilder(TestCase):
@@ -48,6 +49,20 @@ class TestQueryBuilder(TestCase):
     def test_query_builder__build_queryset__no_annotations(self):
         test_query = self.query_builder.build_queryset(self.reference_date)
         self.assertEqual(test_query.count(), 0)
+
+    def test_query_builder__build_queryset__hub_fields_without_subqueries(self):
+        user = MontrekUserFactory.create()
+        hub = TestMontrekHubFactory.create(created_by=user, comment="Hub comment")
+
+        test_query = self.query_builder.build_queryset(self.reference_date)
+
+        self.assertEqual(str(test_query.query).upper().count("SELECT"), 1)
+        row = test_query.get()
+        self.assertEqual(row.hub_entity_id, hub.pk)
+        self.assertEqual(row.created_at, hub.created_at)
+        self.assertEqual(row.created_by, user.email)
+        self.assertEqual(row.comment, "Hub comment")
+        self.assertIsNone(row.value_date)
 
     def test_query_builder__build_queryset__hub_scope_pk_restricts_to_hub(self):
         scoped_sat = TestMontrekSatelliteFactory.create(test_name="Scoped")

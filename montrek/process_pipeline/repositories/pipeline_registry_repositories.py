@@ -7,7 +7,7 @@ from process_pipeline.models.pipeline_registry_sat_models import (
 class PipelineRegistryRepositoryABC(MontrekRepository):
     registry_satellite: type[PipelineRegistrySatelliteABC]
     registry_fields: list[str]
-    default_order_fields = ("-created_at",)
+    default_order_fields: tuple[str, ...] = ("-created_at",)
 
     def set_annotations(self):
         self.add_satellite_fields_annotations(
