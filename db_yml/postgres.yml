@@ -2,7 +2,19 @@ services:
   db:
     image: postgres:16
     shm_size: 256m
-    command: postgres -c jit=off -p ${DB_PORT}
+    # Memory defaults fit a 4 GB host that also runs web + workers; on 8 GB set
+    # DB_SHARED_BUFFERS=1GB and DB_EFFECTIVE_CACHE_SIZE=3GB in .env. SSD storage.
+    command: >
+      postgres -p ${DB_PORT}
+      -c jit=off
+      -c shared_buffers=${DB_SHARED_BUFFERS:-512MB}
+      -c effective_cache_size=${DB_EFFECTIVE_CACHE_SIZE:-1536MB}
+      -c work_mem=16MB
+      -c maintenance_work_mem=128MB
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-}

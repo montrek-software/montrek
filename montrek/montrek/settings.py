@@ -300,6 +300,11 @@ DATABASES = {
         "PORT": config(
             "DB_PORT", default=3306, cast=int
         ),  # in docker setup: internal docker container port
+        # Reuse connections across requests instead of reconnecting (fork + auth)
+        # every time. Persistent connections rather than psycopg's pool, since a
+        # pool created before celery's prefork fork does not survive in children.
+        "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 if db_engine == "postgres_ext":
