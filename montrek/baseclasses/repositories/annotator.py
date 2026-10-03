@@ -1,11 +1,11 @@
 import datetime
 import inspect
-from collections.abc import Iterable
+from collections.abc import Iterable, Sized
 from dataclasses import dataclass
 from typing import Any, cast
 from django.core.exceptions import AppRegistryNotReady
 from django.db import models
-from django.db.models import ExpressionWrapper, Field, QuerySet, Subquery
+from django.db.models import ExpressionWrapper, F, Field, QuerySet, Subquery
 from django.db.models.expressions import BaseExpression
 from baseclasses.repositories.subquery_builder import (
     LINK_AGG_FIELD_TYPE_MAP,
@@ -149,8 +149,8 @@ class Annotator:
 
     def field_projections_to_subqueries(
         self,
-    ) -> dict[str, Subquery | ExpressionWrapper]:
-        subquery_map: dict[str, Subquery | ExpressionWrapper] = {}
+    ) -> dict[str, Subquery | ExpressionWrapper | F]:
+        subquery_map: dict[str, Subquery | ExpressionWrapper | F] = {}
         for field_projection in self.field_projections:
             alias_name = field_projection.satellite_alias.alias_name
             subquery_builder = field_projection.satellite_alias.subquery_builder
@@ -161,8 +161,8 @@ class Annotator:
 
     def linked_field_projections_to_subqueries(
         self,
-    ) -> dict[str, Subquery]:
-        subquery_map = {}
+    ) -> dict[str, Subquery | F]:
+        subquery_map: dict[str, Subquery | F] = {}
         for lfp in self.linked_field_projections:
             alias_name = lfp.linked_satellite_alias.alias_name
             builder = lfp.linked_satellite_alias.subquery_builder
@@ -173,7 +173,7 @@ class Annotator:
         self,
         reference_date: datetime.datetime,
         queryset: QuerySet | None = None,
-    ) -> dict[str, BaseExpression]:
+    ) -> dict[str, BaseExpression | F]:
         return {
             field: (
                 subquery_builder.build(reference_date, queryset=queryset)
@@ -363,22 +363,25 @@ class Annotator:
             ):
                 return alias
 
-        base_name = (
-            f"{satellite_class.__name__.lower()}"
-            f"__{probe_builder.link_class.__name__.lower()}__lsat"
-        )
-        existing_names = {a.alias_name for a in self.linked_satellite_aliases}
-        alias_name = base_name
-        counter = 0
-        while alias_name in existing_names:
-            counter += 1
-            alias_name = f"{base_name}_{counter}"
-
         new_alias = LinkedSatelliteAlias(
-            alias_name=alias_name, subquery_builder=probe_builder
+            alias_name=self._alias_name("lsat", self.linked_satellite_aliases),
+            subquery_builder=probe_builder,
         )
         self.linked_satellite_aliases.append(new_alias)
         return new_alias
+
+    @staticmethod
+    def _alias_name(prefix: str, existing: Sized) -> str:
+        """Short, unique name for a satellite alias.
+
+        Joined satellites use it as SQL table alias (plus suffixes for the
+        hops of a link chain), so it must stay well below Postgres' 63
+        character identifier limit, where longer names would be truncated
+        into each other. It must not contain "__" either: fields are read
+        as F("<alias>__<field>"), which Django splits on "__".
+        Aliases are never dropped, so the position keeps the name unique.
+        """
+        return f"{prefix}_{len(existing)}"
 
     def _handle_ts_sum_satellite(
         self,
@@ -436,16 +439,8 @@ class Annotator:
             ):
                 return existing
 
-        base_name = f"{satellite_class.__name__.lower()}__sat"
-        taken = {sa.alias_name for sa in self.satellite_aliases}
-        alias_name = base_name
-        counter = 0
-        while alias_name in taken:
-            counter += 1
-            alias_name = f"{base_name}_{counter}"
-
         new_alias = SatelliteAlias(
-            alias_name=alias_name,
+            alias_name=self._alias_name("sat", self.satellite_aliases),
             subquery_builder=subquery_builder(
                 satellite_class=satellite_class,
                 hub_satellite_filter=hub_satellite_filter,

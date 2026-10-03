@@ -41,7 +41,7 @@ class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
     link_file_upload_registry_file_log_file_class: (
         type[MontrekLinkABC] | type[NotImplementedLinkFileUploadRegistryFile]
     ) = NotImplementedLinkFileUploadRegistryFile
-    default_order_fields = ("-upload_date",)
+    default_order_fields: tuple[str, ...] = ("-upload_date",)
 
     def __init__(self, session_data: SessionDataType | None = None):
         self._setup_checks()

@@ -27,6 +27,7 @@ from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManager,
     FileUploadRegistryManagerABC,
 )
+from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
 from file_upload.pages import FileUploadPage
 from info.managers.download_registry_storage_managers import (
@@ -185,7 +186,9 @@ class MontrekUploadFileView(MontrekApiViewMixin, MontrekTemplateView):
 
 
 class MontrekDownloadFileBaseView(MontrekTemplateView):
-    manager_class: type[FileUploadRegistryManagerABC] = FileUploadRegistryManager
+    # Any manager works whose repository provides ``get_file_method`` and that
+    # names the download via ``document_name``.
+    manager_class: type[MontrekManager] = FileUploadRegistryManager
     page_class: type[MontrekPage] = FileUploadPage
     get_file_method = ""
 
