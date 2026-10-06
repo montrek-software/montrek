@@ -20,6 +20,10 @@ class LatexTableConverter:
             raise ValueError("rows_per_page must be >= 1")
         self.rows_per_page = rows_per_page
         self.column_sizer: dict[int, list[int]] = {}
+        # Footnote numbers run on across the whole table, so a note repeated on
+        # a later page keeps its number; each page lists the notes marked on it.
+        self._footnote_numbers: dict[str, int] = {}
+        self._page_footnotes: list[int] = []
 
     def to_latex(self) -> str:
         table_str = self.get_table_str()
@@ -64,7 +68,44 @@ class LatexTableConverter:
         return table_start_str
 
     def get_table_end_str(self) -> str:
-        return "\\end{tabularx}\n\\end{table}\n\n"
+        table_end_str = "\\end{tabularx}\n"
+        table_end_str += self.get_footnotes_str()
+        table_end_str += "\\end{table}\n\n"
+        return table_end_str
+
+    def get_footnotes_str(self) -> str:
+        """The notes marked on the current page, then start a fresh page.
+
+        Printed inside the table float, directly below the tabular, rather than
+        as page footnotes: ``\\footnote`` does not work inside a tabular, and
+        the notes belong with the table even when it floats.
+        """
+        if not self._page_footnotes:
+            return ""
+        texts = {number: text for text, number in self._footnote_numbers.items()}
+        notes = ""
+        for number in self._page_footnotes:
+            text = HtmlLatexConverter.convert(texts[number])
+            notes += f"\\montrektablenote{{{number}}}{{{text}}}"
+        self._page_footnotes = []
+        return f"\\montrektablenotes{{{notes}}}\n"
+
+    def _add_footnote_mark(self, cell_str: str, footnote: str) -> str:
+        """Put the note's number behind the cell's value.
+
+        Every element's LaTeX ends in the column separator ``&``, so the mark
+        goes right before it.
+        """
+        number = self._footnote_numbers.setdefault(
+            footnote, len(self._footnote_numbers) + 1
+        )
+        if number not in self._page_footnotes:
+            self._page_footnotes.append(number)
+        separator_idx = cell_str.rfind("&")
+        return (
+            f"{cell_str[:separator_idx].rstrip()}"
+            f"\\montrektablenotemark{{{number}}} {cell_str[separator_idx:]}"
+        )
 
     def get_table_str(self) -> str:
         table_str = ""
@@ -78,9 +119,11 @@ class LatexTableConverter:
                     continue
                 self.add_to_column_sizer(table_element, query_object, col_idx)
                 # The latex tag always renders a string.
-                table_str += cast(
-                    str, table_element.get_attribute(query_object, "latex")
-                )
+                cell_str = cast(str, table_element.get_attribute(query_object, "latex"))
+                footnote = table_element.get_footnote(query_object)
+                if footnote:
+                    cell_str = self._add_footnote_mark(cell_str, footnote)
+                table_str += cell_str
                 col_idx += 1
             table_str = table_str[:-2] + "\\\\\n\\hline\n"
             if (i + 1) % self.rows_per_page == 0 and (i + 1) != table_len:

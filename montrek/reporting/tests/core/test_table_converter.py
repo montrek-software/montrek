@@ -198,3 +198,63 @@ class TestLatexTableConverter(TestCase):
             15, {"a": 1, "b": 2}, 0
         )
         self.assertEqual(test_adj_col_size, 0)
+
+
+class TestLatexTableConverterFootnotes(TestCase):
+    def convert(self, rows: list[dict], rows_per_page: int = 25) -> str:
+        table_elements = [
+            te.StringTableElement(name="Name", attr="name"),
+            te.IntTableElement(name="Value", attr="value", footnote_attr="note"),
+        ]
+        return LatexTableConverter(
+            "Notes", table_elements, rows, rows_per_page=rows_per_page
+        ).to_latex()
+
+    def test_a_cell_with_a_note_gets_a_mark_and_the_note_is_printed_below(self):
+        latex = self.convert([{"name": "a", "value": 1, "note": "First note"}])
+        self.assertIn("1\\montrektablenotemark{1}\\\\\n", latex)
+        self.assertIn(
+            "\\end{tabularx}\n"
+            "\\montrektablenotes{\\montrektablenote{1}{First note}}\n"
+            "\\end{table}",
+            latex,
+        )
+
+    def test_rows_without_a_note_are_left_alone(self):
+        for note in (None, "", "   ", float("nan")):
+            with self.subTest(note=note):
+                latex = self.convert([{"name": "a", "value": 1, "note": note}])
+                self.assertNotIn("montrektablenote", latex)
+
+    def test_the_same_note_keeps_its_number(self):
+        latex = self.convert(
+            [
+                {"name": "a", "value": 1, "note": "Shared"},
+                {"name": "b", "value": 2, "note": "Other"},
+                {"name": "c", "value": 3, "note": "Shared"},
+            ]
+        )
+        self.assertEqual(latex.count("\\montrektablenotemark{1}"), 2)
+        self.assertIn(
+            "\\montrektablenotes{\\montrektablenote{1}{Shared}"
+            "\\montrektablenote{2}{Other}}",
+            latex,
+        )
+
+    def test_each_page_lists_only_its_own_notes_numbered_across_pages(self):
+        latex = self.convert(
+            [
+                {"name": "a", "value": 1, "note": "Page one"},
+                {"name": "b", "value": 2, "note": "Page two"},
+            ],
+            rows_per_page=1,
+        )
+        first_page, second_page = latex.split("\\newpage")
+        self.assertIn("\\montrektablenote{1}{Page one}", first_page)
+        self.assertNotIn("Page two", first_page)
+        self.assertIn("\\montrektablenote{2}{Page two}", second_page)
+        self.assertNotIn("Page one", second_page)
+
+    def test_note_text_is_escaped(self):
+        latex = self.convert([{"name": "a", "value": 1, "note": "50% & more"}])
+        self.assertIn("50\\% \\& more", latex)
