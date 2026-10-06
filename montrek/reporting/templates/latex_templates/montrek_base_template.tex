@@ -79,6 +79,14 @@
 \newcommand{\montrekdetailsheadcell}[1]{%
   \cellcolor{surfacemuted}\textcolor{textmuted}{\textbf{#1}}%
 }
+% Table notes: the converter marks a cell with \montrektablenotemark{n} and
+% prints \montrektablenotes{\montrektablenote{n}{text}...} below the table.
+\newcommand{\montrektablenotemark}[1]{\textsuperscript{\textcolor{textmuted}{#1}}}
+\newcommand{\montrektablenotes}[1]{%
+  \par\vspace{2pt}%
+  {\raggedright\scriptsize\color{textmuted}#1}%
+}
+\newcommand{\montrektablenote}[2]{\textsuperscript{#1}\,#2\par}
 
 % Progress bars
 \newcommand{\progressbar}[2]{

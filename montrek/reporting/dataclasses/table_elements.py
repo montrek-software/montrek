@@ -51,6 +51,10 @@ class TableElement:
     name: str
     attr: str = field(default="")
     hover_text: str | None = field(default=None)
+    # Field holding a note on this cell. The LaTeX table marks the cell with a
+    # number and prints the note below the table. Keyword-only so it does not
+    # shift the positional arguments of any subclass.
+    footnote_attr: str | None = field(default=None, kw_only=True)
     style_attrs: ClassVar[StyleAttrsType] = {}
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     th_classes: ClassVar[TdClassesType | None] = None
@@ -155,6 +159,23 @@ class TableElement:
 
     def get_hover_text(self, _obj: Any, _value: Any) -> str | None:
         return self.hover_text
+
+    def get_footnote(self, obj: Any) -> str | None:
+        """The note on this cell, or None when the row has none.
+
+        Read from ``footnote_attr``; override for a note that is computed
+        rather than stored. Rows from a dataframe carry NaN for a missing note,
+        so that counts as none just like an empty string.
+        """
+        if not self.footnote_attr:
+            return None
+        if isinstance(obj, dict):
+            note = obj.get(self.footnote_attr)
+        else:
+            note = getattr(obj, self.footnote_attr, None)
+        if note is None or (isinstance(note, float) and pd.isna(note)):
+            return None
+        return str(note).strip() or None
 
     def render_field_template(self, value: Any, obj: Any) -> str:
         if self.field_template is None:
