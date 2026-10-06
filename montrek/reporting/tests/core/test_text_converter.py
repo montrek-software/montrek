@@ -71,6 +71,20 @@ class TestHtmlLatexConverter(TestCase):
         expected_text = "Special characters: $<$, $>$, \\& \\& \\_"
         self.assertEqual(converted_text, expected_text)
 
+    def test_latex_syntax_characters(self):
+        test_text = "Costs $5 {a} ~ ^ \\input{x}"
+        converted_text = HtmlLatexConverter.convert(test_text)
+        expected_text = (
+            "Costs \\$5 \\{a\\} \\textasciitilde{} \\textasciicircum{} "
+            "\\textbackslash{}input\\{x\\}"
+        )
+        self.assertEqual(converted_text, expected_text)
+
+    def test_latex_syntax_characters_with_html_markup(self):
+        test_text = "<b>{x}</b> H<sub>2</sub>O"
+        converted_text = HtmlLatexConverter.convert(test_text)
+        self.assertEqual(converted_text, "\\textbf{\\{x\\}} H$_{2}$O")
+
     def test_sub_sup_script(self):
         test_text = "H<sub>2</sub>O and E = mc<sup>2</sup>"
         converted_text = HtmlLatexConverter.convert(test_text)

@@ -31,6 +31,22 @@ _LATEX_RAW_ESCAPE_RULES: tuple[tuple[str, str], ...] = tuple(
 ) + (("&", "\\&"),)
 
 
+# Characters that would otherwise let text open groups, enter math mode or run
+# TeX commands. Escaped in one regex pass, since the replacements themselves
+# contain backslashes and braces.
+_LATEX_SYNTAX_ESCAPES: dict[str, str] = {
+    "\\": "\\textbackslash{}",
+    "{": "\\{",
+    "}": "\\}",
+    "$": "\\$",
+    "~": "\\textasciitilde{}",
+    "^": "\\textasciicircum{}",
+}
+_LATEX_SYNTAX_PATTERN = re.compile(
+    "|".join(re.escape(char) for char in _LATEX_SYNTAX_ESCAPES)
+)
+
+
 class LaTeXEscaper:
     """Escape a plain-text string for safe embedding in a LaTeX document.
 
@@ -64,6 +80,8 @@ class HtmlLatexConverter:
     @staticmethod
     def convert(text: str) -> str:
         text = str(text)
+        # Before the HTML conversions, which emit LaTeX markup of their own.
+        text = HtmlLatexConverter.latex_syntax(text)
         text = HtmlLatexConverter.ignored(text)
         text = HtmlLatexConverter.tables(text)
         text = HtmlLatexConverter.ruler(text)
@@ -80,6 +98,12 @@ class HtmlLatexConverter:
         text = HtmlLatexConverter.special_characters(text)
         text = HtmlLatexConverter.sub_sup_script(text)
         return text
+
+    @staticmethod
+    def latex_syntax(text: str) -> str:
+        return _LATEX_SYNTAX_PATTERN.sub(
+            lambda match: _LATEX_SYNTAX_ESCAPES[match.group()], text
+        )
 
     @staticmethod
     def ignored(text):
