@@ -52,7 +52,8 @@ class LatexTableConverter:
             if isinstance(table_element, te.LinkTableElement):
                 continue
             column_size = column_sizes.get(col_idx, 0)
-            column_def_str += f">{{\\hsize={column_size}\\hsize}}X "
+            alignment = table_element.latex_column_alignment
+            column_def_str += f">{{{alignment}\\hsize={column_size}\\hsize}}X "
             element_header = HtmlLatexConverter.convert(table_element.name)
             element_header = " ".join(
                 [f"\\mbox{{{head}}}" for head in element_header.split(" ")]

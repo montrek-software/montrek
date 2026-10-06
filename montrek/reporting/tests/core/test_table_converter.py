@@ -68,6 +68,21 @@ class TestLatexTableConverter(TestCase):
         self.assertIn("\\montrektableheadrow", start_str)
         self.assertIn("\\montrektableheadcell{\\mbox{TestCol}}", start_str)
 
+    def test_number_columns_are_right_aligned(self):
+        converter = LatexTableConverter(
+            "Title",
+            [
+                te.StringTableElement(name="Text", attr="test_col"),
+                te.MoneyTableElement(name="Money", attr="test_col"),
+                te.IntTableElement(name="Int", attr="test_col"),
+                te.ProgressBarTableElement(name="Progress", attr="test_col"),
+            ],
+            [],
+        )
+        column_defs = converter.get_table_start_str().split("{tabularx}")[1]
+        self.assertEqual(column_defs.count("\\raggedleft\\arraybackslash"), 2)
+        self.assertTrue(column_defs.startswith("{\\textwidth}{>{\\hsize="))
+
     def test_get_table_end_str(self):
         end_str = self.latex_table_converter.get_table_end_str()
         self.assertEqual(end_str, "\\end{tabularx}\n\\end{table}\n\n")

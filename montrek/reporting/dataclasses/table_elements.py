@@ -121,6 +121,14 @@ class TableElement:
         classes = self.th_classes if self.th_classes is not None else self.td_classes
         return self.format_td_classes(classes)
 
+    @property
+    def latex_column_alignment(self) -> str:
+        """Column-spec prefix aligning the LaTeX column like the HTML header."""
+        classes = self.th_classes if self.th_classes is not None else self.td_classes
+        if "text-end" in classes:
+            return "\\raggedleft\\arraybackslash"
+        return ""
+
     def get_display_field(self, obj: Any) -> DisplayField:
         obj_value = self.get_attribute(obj, "html")
         table_element = (
