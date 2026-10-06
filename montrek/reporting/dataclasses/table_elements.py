@@ -1064,42 +1064,41 @@ class CompData:
     hover_text: str
 
 
-def _circle_icon(color: str, start: str, end: str) -> str:
+def _circle_icon(color: str, angle: int) -> str:
+    # Arrow drawn from straight segments; the default "->" tip is curved.
     return (
         f"\\tikz[baseline=-0.6ex]"
         f"{{\\fill[{color}] (0,0) circle (0.45em);"
-        f" \\draw[->,white,line width=1.2pt,xshift=0.07em] {start} -- {end};}}"
+        f" \\draw[white,line width=1.2pt,line cap=round,line join=round,"
+        f"rotate={angle}] (-0.24em,0) -- (0.24em,0)"
+        f" (0.06em,0.18em) -- (0.24em,0) -- (0.06em,-0.18em);}}"
     )
 
 
 class CompValues(Enum):
     EQUAL = CompData(
         num=0,
-        latex_val=_circle_icon("brightergreen", "(-0.22em,0)", "(0.15em,0)"),
+        latex_val=_circle_icon("brightergreen", 0),
         hover_text="=",
     )
     GREATER = CompData(
         num=1,
-        latex_val=_circle_icon(
-            "brighterorange", "(-0.17em,-0.17em)", "(0.14em,0.14em)"
-        ),
+        latex_val=_circle_icon("brighterorange", 45),
         hover_text=">",
     )
     MUCH_GREATER = CompData(
         num=2,
-        latex_val=_circle_icon("red", "(0,-0.22em)", "(0,0.15em)"),
+        latex_val=_circle_icon("red", 90),
         hover_text=">>",
     )
     LESS = CompData(
         num=-1,
-        latex_val=_circle_icon(
-            "brighterorange", "(-0.17em,0.17em)", "(0.14em,-0.14em)"
-        ),
+        latex_val=_circle_icon("brighterorange", -45),
         hover_text="<",
     )
     MUCH_LESS = CompData(
         num=-2,
-        latex_val=_circle_icon("red", "(0,0.22em)", "(0,-0.15em)"),
+        latex_val=_circle_icon("red", -90),
         hover_text="<<",
     )
     NONE = CompData(num=99, latex_val="", hover_text="Unknown")
