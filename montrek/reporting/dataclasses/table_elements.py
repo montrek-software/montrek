@@ -396,8 +396,9 @@ class LinkTableElement(BaseLinkTableElement):
         return "pencil" if self.icon == "edit" else self.icon
 
     def format_latex(self, _value):
+        # Emitted as is: convert() would escape the icon's TeX command.
         latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
-        return super().format_latex(f"\\twemoji{{{latex_icon}}}")
+        return f" \\color{{textdark}} \\twemoji{{{latex_icon}}} &"
 
 
 @dataclass
@@ -1200,8 +1201,9 @@ class IconTableElement(AttrTableElement):
         return "pencil" if self.icon == "edit" else self.icon
 
     def format_latex(self, value: str) -> str:
+        # Emitted as is: convert() would escape the icon's TeX command.
         latex_icon = self.icon_latex_map.get(value, "cross mark")
-        return super().format_latex(f"\\twemoji{{{latex_icon}}}")
+        return f" \\color{{textdark}} \\twemoji{{{latex_icon}}} &"
 
 
 class SecretStringTableElement(StringTableElement):
