@@ -215,7 +215,7 @@ class TableSerializerTestCase(TestCase):
             result["comparison"],
             {
                 "num": 0,
-                "latex_val": "\\tikz[baseline=-0.6ex]{\\fill[brightergreen] (0,0) circle (0.45em); \\draw[->,white,line width=1.2pt,xshift=0.07em] (-0.22em,0) -- (0.15em,0);}",
+                "latex_val": te.CompValues.EQUAL.value.latex_val,
                 "hover_text": "=",
             },
         )
