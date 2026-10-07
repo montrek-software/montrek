@@ -12,6 +12,7 @@ from sftp.tests.factories.sftp_connection_sat_factories import (
     TEST_OLD_PASSWORD,
     TEST_PASSPHRASE,
     TEST_PASSWORD,
+    TEST_PRIVATE_KEY,
     SftpConnectionSatelliteFactory,
     SftpCredentialSatelliteFactory,
     SftpPrivateKeyCredentialSatelliteFactory,
@@ -75,6 +76,41 @@ class TestSftpConnectionUpdateView(MontrekUpdateViewTestCase):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self._get_object().password, TEST_OLD_PASSWORD)
+
+
+class TestSftpConnectionUpdateViewPrivateKey(MontrekUpdateViewTestCase):
+    viewname = "sftp_connection_update"
+    view_class = SftpConnectionUpdateView
+
+    def build_factories(self):
+        self.sat_obj = SftpConnectionSatelliteFactory()
+        SftpPrivateKeyCredentialSatelliteFactory(
+            hub_entity=self.sat_obj.hub_entity, private_key_passphrase=TEST_PASSPHRASE
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.sat_obj.get_hub_value_date().id}
+
+    def update_data(self):
+        return {"host": "new-sftp.example.com"}
+
+    def test_secrets_are_not_rendered(self):
+        response = self.client.get(self.url)
+        self.assertNotContains(response, "OPENSSH PRIVATE KEY")
+        self.assertNotContains(response, TEST_PASSPHRASE)
+
+    def test_blank_secrets_keep_existing_ones(self):
+        data = self.creation_data()
+        data["private_key"] = ""  # nosec B105 # noqa: S105 : blank on purpose
+        data["private_key_passphrase"] = (  # nosec B105 # noqa: S105 : blank on purpose
+            ""
+        )
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 302)
+        updated = self._get_object()
+        self.assertEqual(updated.host, "new-sftp.example.com")
+        self.assertEqual(updated.private_key, TEST_PRIVATE_KEY)
+        self.assertEqual(updated.private_key_passphrase, TEST_PASSPHRASE)
 
 
 class TestSftpConnectionListView(MontrekListViewTestCase):
