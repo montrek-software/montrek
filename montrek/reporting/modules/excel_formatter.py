@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.utils import get_column_letter
 
@@ -14,6 +15,8 @@ class MontrekExcelFormatter:
     COLUMN_PADDING = 2
     BOLD_FONT_MULTIPLIER = 1.2
     NORMAL_FONT_MULTIPLIER = 1.1
+    # Excel's own default, used when settings.FONT_NAME is empty
+    DEFAULT_FONT_NAME = "Calibri"
 
     @classmethod
     def format_excel(
@@ -57,6 +60,10 @@ class MontrekExcelFormatter:
         self._apply_cell_styles(worksheet, col_formats or {}, row_offset)
         self._adjust_column_widths(worksheet, row_offset)
 
+    def _font(self, **kwargs) -> Font:
+        """Every font this formatter writes, in the configured typeface."""
+        return Font(name=settings.FONT_NAME or self.DEFAULT_FONT_NAME, **kwargs)
+
     def _get_style_objects(self):
         """Create and return all style objects needed for formatting."""
         primary_light = get_color("primary_light").lstrip("#").upper()
@@ -67,7 +74,7 @@ class MontrekExcelFormatter:
             "header_fill": PatternFill(
                 start_color=primary, end_color=primary, fill_type="solid"
             ),
-            "header_font": Font(color="FFFFFF", bold=True),
+            "header_font": self._font(color="FFFFFF", bold=True),
             "even_row_fill": PatternFill(
                 start_color=primary_light, end_color=primary_light, fill_type="solid"
             ),
@@ -75,16 +82,17 @@ class MontrekExcelFormatter:
                 start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
             ),
             "thin_border": Border(bottom=Side(style="thin", color="E0E0E0")),
-            "bold_font": Font(bold=True),
-            "negative_font": Font(color=negative),
-            "negative_bold_font": Font(bold=True, color=negative),
+            "normal_font": self._font(),
+            "bold_font": self._font(bold=True),
+            "negative_font": self._font(color=negative),
+            "negative_bold_font": self._font(bold=True, color=negative),
         }
 
     def _write_title(self, worksheet, title: str) -> None:
         """Write the table title into the header area above the data (rows 1–5)."""
         title_cell = worksheet.cell(row=2, column=1)
         title_cell.value = title
-        title_cell.font = Font(bold=True, size=14)
+        title_cell.font = self._font(bold=True, size=14)
         title_cell.alignment = Alignment(horizontal="center", vertical="center")
         worksheet.row_dimensions[2].height = 24
         num_cols = worksheet.max_column
@@ -130,12 +138,17 @@ class MontrekExcelFormatter:
     def _style_font(cls, cell, styles, *, is_bold: bool) -> None:
         """Colour negative numbers red, keeping the cell bold where requested.
 
+        Every cell gets a font, so a plain value is in the configured typeface
+        too rather than in the workbook default.
+
         Mirrors the HTML and LaTeX tables, which also render negatives in red.
         """
         if cls._is_negative_number(cell.value):
             cell.font = styles["negative_bold_font" if is_bold else "negative_font"]
         elif is_bold:
             cell.font = styles["bold_font"]
+        else:
+            cell.font = styles["normal_font"]
 
     @staticmethod
     def _is_negative_number(value) -> bool:

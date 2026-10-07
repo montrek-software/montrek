@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 class LatexReportManager:
     latex_template = "montrek_base_template.tex"
+    # Used when settings.FONT_NAME is empty
+    default_font_name = "Arial"
 
     def __init__(self, report_manager: MontrekReportManager):
         self.report_manager = report_manager
@@ -91,7 +93,12 @@ class LatexReportManager:
             "document_title": LaTeXEscaper.escape(self.report_manager.document_title),
             "footer_text": self.report_manager.footer_text,
             "colors": self.get_colors(),
+            "main_font": self.get_main_font(),
         }
+
+    def get_main_font(self) -> str:
+        font_name = LaTeXEscaper.escape(settings.FONT_NAME or self.default_font_name)
+        return f"\\setmainfont{{{font_name}}}"
 
     def get_colors(self) -> str:
         colorstr = ""

@@ -1,6 +1,6 @@
 import os
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.tests import mocks
 
@@ -20,6 +20,19 @@ class TestLatexReportManager(TestCase):
         generated_report_tex = latex_manager.generate_report()
         self.assertIn("latexlatex", generated_report_tex)
         self.assertIn("Mock Report", generated_report_tex)
+
+    @override_settings(FONT_NAME="")
+    def test_main_font_defaults_to_arial(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        generated_report_tex = LatexReportManager(manager).generate_report()
+        self.assertIn("\\setmainfont{Arial}", generated_report_tex)
+
+    @override_settings(FONT_NAME="Century Gothic")
+    def test_main_font_uses_the_configured_font_name(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        generated_report_tex = LatexReportManager(manager).generate_report()
+        self.assertIn("\\setmainfont{Century Gothic}", generated_report_tex)
+        self.assertNotIn("Arial", generated_report_tex)
 
     def test_compile_report(self):
         session_data = {}
