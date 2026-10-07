@@ -46,9 +46,10 @@ class SftpCredentialSatellite(MontrekSatelliteABC):
     auth_method = models.CharField(
         max_length=16, choices=AuthMethod.choices, default=AuthMethod.PASSWORD
     )
-    password = EncryptedCharField(blank=True, default="")
-    private_key = EncryptedTextField(blank=True, default="")
-    private_key_passphrase = EncryptedCharField(blank=True, default="")
+    # Empty values are stored as NULL by encrypted_fields, hence null=True
+    password = EncryptedCharField(null=True, blank=True)
+    private_key = EncryptedTextField(null=True, blank=True)
+    private_key_passphrase = EncryptedCharField(null=True, blank=True)
 
     identifier_fields = ["hub_entity_id"]
 

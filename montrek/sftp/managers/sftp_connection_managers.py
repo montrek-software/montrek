@@ -8,6 +8,11 @@ class CommonTableElementsMixin:
     @property
     def table_elements(self):
         return [
+            te.StringTableElement(name="Host", attr="host"),
+            te.IntTableElement(name="Port", attr="port"),
+            te.StringTableElement(name="User", attr="user"),
+            te.StringTableElement(name="Base Path", attr="base_path"),
+            te.StringTableElement(name="Auth Method", attr="auth_method"),
             te.LinkTableElement(
                 name="Edit",
                 url="sftp_connection_update",
@@ -52,4 +57,17 @@ class SftpConnectionDetailsManager(CommonTableElementsMixin, MontrekDetailsManag
             te.StringTableElement(name="hub", attr="hub_entity_id"),
         ]
         table_elements += super().table_elements
+        # Secrets are annotated onto the hub value date, where the table element
+        # cannot detect the encrypted model field, so they are masked explicitly.
+        table_elements += [
+            te.StringTableElement(
+                name="Host Key Fingerprint", attr="host_key_fingerprint"
+            ),
+            te.IntTableElement(name="Timeout (s)", attr="timeout_seconds"),
+            te.SecretStringTableElement(name="Password", attr="password"),
+            te.SecretStringTableElement(name="Private Key", attr="private_key"),
+            te.SecretStringTableElement(
+                name="Private Key Passphrase", attr="private_key_passphrase"
+            ),
+        ]
         return table_elements

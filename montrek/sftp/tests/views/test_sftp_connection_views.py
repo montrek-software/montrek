@@ -9,7 +9,10 @@ from sftp.tests.factories.sftp_connection_hub_factories import (
     SftpConnectionHubValueDateFactory,
 )
 from sftp.tests.factories.sftp_connection_sat_factories import (
+    TEST_OLD_PASSWORD,
+    TEST_PASSWORD,
     SftpConnectionSatelliteFactory,
+    SftpCredentialSatelliteFactory,
 )
 from sftp.views.sftp_connection_views import SftpConnectionCreateView
 from sftp.views.sftp_connection_views import SftpConnectionUpdateView
@@ -24,7 +27,20 @@ class TestSftpConnectionCreateView(MontrekCreateViewTestCase):
     view_class = SftpConnectionCreateView
 
     def creation_data(self):
-        return {}
+        return {
+            "host": "sftp.example.com",
+            "port": 2222,
+            "user": "alice",
+            "host_key_fingerprint": "SHA256:abc",
+            "base_path": "/upload",
+            "timeout_seconds": 60,
+            "auth_method": "password",
+            "password": TEST_PASSWORD,
+        }
+
+    def additional_assertions(self, created_object):
+        self.assertEqual(created_object.password, TEST_PASSWORD)
+        self.assertIsNone(created_object.private_key)
 
 
 class TestSftpConnectionUpdateView(MontrekUpdateViewTestCase):
@@ -33,12 +49,30 @@ class TestSftpConnectionUpdateView(MontrekUpdateViewTestCase):
 
     def build_factories(self):
         self.sat_obj = SftpConnectionSatelliteFactory()
+        self.credentials = SftpCredentialSatelliteFactory(
+            hub_entity=self.sat_obj.hub_entity, password=TEST_OLD_PASSWORD
+        )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_obj.get_hub_value_date().id}
 
     def update_data(self):
-        return {}
+        return {
+            "host": "new-sftp.example.com",
+            "port": 2022,
+            "password": "new-password",
+        }
+
+    def test_password_is_not_rendered(self):
+        response = self.client.get(self.url)
+        self.assertNotContains(response, TEST_OLD_PASSWORD)
+
+    def test_blank_password_keeps_existing_one(self):
+        data = self.creation_data()
+        data["password"] = ""  # nosec B105 # noqa: S105 : blank on purpose
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self._get_object().password, TEST_OLD_PASSWORD)
 
 
 class TestSftpConnectionListView(MontrekListViewTestCase):
@@ -48,6 +82,12 @@ class TestSftpConnectionListView(MontrekListViewTestCase):
 
     def build_factories(self):
         self.sat_obj = SftpConnectionSatelliteFactory()
+        SftpCredentialSatelliteFactory(
+            hub_entity=self.sat_obj.hub_entity, password=TEST_PASSWORD
+        )
+
+    def test_password_is_not_rendered(self):
+        self.assertNotContains(self.response, TEST_PASSWORD)
 
 
 class TestSftpConnectionDeleteView(MontrekDeleteViewTestCase):
@@ -67,10 +107,19 @@ class TestSftpConnectionDetailView(MontrekViewTestCase):
 
     def build_factories(self):
         self.hub_vd = SftpConnectionHubValueDateFactory(value_date=None)
-        SftpConnectionSatelliteFactory(hub_entity=self.hub_vd.hub)
+        SftpConnectionSatelliteFactory(
+            hub_entity=self.hub_vd.hub, host="sftp.example.com"
+        )
+        SftpCredentialSatelliteFactory(
+            hub_entity=self.hub_vd.hub, password=TEST_PASSWORD
+        )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.hub.id}
+
+    def test_settings_shown_and_password_masked(self):
+        self.assertContains(self.response, "sftp.example.com")
+        self.assertNotContains(self.response, TEST_PASSWORD)
 
 
 class TestSftpConnectionHistoryView(MontrekViewTestCase):
@@ -80,6 +129,12 @@ class TestSftpConnectionHistoryView(MontrekViewTestCase):
     def build_factories(self):
         self.hub_vd = SftpConnectionHubValueDateFactory(value_date=None)
         SftpConnectionSatelliteFactory(hub_entity=self.hub_vd.hub)
+        SftpCredentialSatelliteFactory(
+            hub_entity=self.hub_vd.hub, password=TEST_PASSWORD
+        )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.hub_vd.id}
+
+    def test_password_is_not_rendered(self):
+        self.assertNotContains(self.response, TEST_PASSWORD)
