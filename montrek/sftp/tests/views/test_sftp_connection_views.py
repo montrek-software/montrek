@@ -46,6 +46,26 @@ class TestSftpConnectionCreateView(MontrekCreateViewTestCase):
         self.assertIsNone(created_object.private_key)
 
 
+class TestSftpConnectionCreateViewInvalidCredentials(MontrekViewTestCase):
+    viewname = "sftp_connection_create"
+    view_class = SftpConnectionCreateView
+
+    def test_password_auth_without_password_is_rejected(self):
+        response = self.client.post(
+            self.url,
+            {
+                "host": "sftp.example.com",
+                "port": 22,
+                "user": "alice",
+                "timeout_seconds": 30,
+                "auth_method": "password",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Required for password authentication.")
+        self.assertFalse(self.view.manager.repository.receive().exists())
+
+
 class TestSftpConnectionUpdateView(MontrekUpdateViewTestCase):
     viewname = "sftp_connection_update"
     view_class = SftpConnectionUpdateView
