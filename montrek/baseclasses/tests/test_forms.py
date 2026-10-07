@@ -18,7 +18,7 @@ from django.forms import (
 from django.template.loader import render_to_string
 from django.test import TestCase, override_settings
 from django.utils import translation
-from encrypted_fields import EncryptedCharField
+from encrypted_fields import EncryptedCharField, EncryptedTextField
 
 from baseclasses.forms import (
     BaseMontrekChoiceField,
@@ -31,6 +31,7 @@ from baseclasses.forms import (
     MontrekModelMultipleChoiceField,
     PercentDecimalFormField,
     PercentFloatFormField,
+    SecretTextarea,
 )
 from baseclasses.templatetags.data_table_filters import filter_caption
 from montrek.utils import SystemFormatting
@@ -184,6 +185,11 @@ class MockRepository:
         ]
 
 
+class MockEncryptedTextRepository(MockRepository):
+    def std_satellite_fields(self):
+        return [EncryptedTextField(name="encrypted_text")]
+
+
 class MockCreateForm(MontrekCreateForm):
     field_order = ["field_a", "field_b"]
 
@@ -314,6 +320,46 @@ class TestEncryptedFieldBehaviour(TestCase):
         )
         result = form.clean()
         self.assertEqual(result["encrypted_field"], "")
+
+
+class TestEncryptedTextFieldBehaviour(TestCase):
+    """Multi-line secrets (EncryptedTextField, e.g. a private key) are masked like
+    EncryptedCharField, but keep a textarea so their line breaks survive."""
+
+    def test_widget_is_secret_textarea(self):
+        form = MontrekCreateForm(repository=MockEncryptedTextRepository())
+        self.assertIsInstance(form.fields["encrypted_text"].widget, SecretTextarea)
+
+    def test_value_is_not_rendered(self):
+        form = MontrekCreateForm(
+            repository=MockEncryptedTextRepository(),
+            initial={"encrypted_text": "line-1\nline-2"},
+        )
+        html = str(form["encrypted_text"])
+        self.assertIn("<textarea", html)
+        self.assertNotIn("line-1", html)
+
+    def test_widget_never_renders_submitted_value(self):
+        # A form re-rendered after a validation error must not echo the secret
+        html = SecretTextarea().render("encrypted_text", "line-1\nline-2")
+        self.assertNotIn("line-1", html)
+
+    def test_required_on_create_but_not_on_update(self):
+        form_create = MontrekCreateForm(repository=MockEncryptedTextRepository())
+        form_update = MontrekCreateForm(
+            repository=MockEncryptedTextRepository(),
+            initial={"encrypted_text": "existing_secret"},
+        )
+        self.assertTrue(form_create.fields["encrypted_text"].required)
+        self.assertFalse(form_update.fields["encrypted_text"].required)
+
+    def test_clean_restores_initial_value_when_blank_on_update(self):
+        form = _TestableCreateForm(
+            repository=MockEncryptedTextRepository(),
+            initial={"encrypted_text": "existing_secret"},
+        )
+        form.cleaned_data = {"encrypted_text": ""}
+        self.assertEqual(form.clean()["encrypted_text"], "existing_secret")
 
 
 class TestMontrekModelMultipleChoiceField(TestCase):

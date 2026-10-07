@@ -24,6 +24,7 @@ module = [
   "networkx.*",
   "openpyxl.*",
   "pandas.*",
+  "paramiko.*",
   "plotly.*",
   "psycopg2.*",
   "pypandoc.*",

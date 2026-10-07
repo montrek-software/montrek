@@ -8,10 +8,10 @@ from typing import Any
 from django import forms
 from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models import DateField, DecimalField, FloatField, QuerySet
+from django.db.models import DateField, DecimalField, FloatField, QuerySet, TextField
 from django.forms.widgets import ChoiceWidget
 from django.utils.functional import classproperty
-from encrypted_fields import EncryptedCharField
+from encrypted_fields.fields import EncryptedFieldMixin
 
 from baseclasses.models import LinkTypeEnum
 from montrek.utils import SystemFormatting
@@ -65,6 +65,15 @@ class PercentDecimalFormField(forms.DecimalField):
             except (InvalidOperation, TypeError, ValueError):
                 pass
         return super().prepare_value(value)
+
+
+class SecretTextarea(forms.Textarea):
+    """Textarea that never renders its value, the multi-line counterpart of
+    ``PasswordInput(render_value=False)``: a password input would strip the line
+    breaks of e.g. a private key."""
+
+    def format_value(self, value):
+        return None
 
 
 class PercentTextInput(forms.TextInput):
@@ -385,12 +394,17 @@ class MontrekCreateForm(forms.ModelForm):
                 form_field.help_text = self.repository.field_help_texts[field.name]
             self.fields[field.name] = form_field
 
-            if isinstance(field, EncryptedCharField):
+            if isinstance(field, EncryptedFieldMixin):
                 self._encrypted_field_names.append(field.name)
 
     def _get_form_field(self, field):
-        if isinstance(field, EncryptedCharField):
-            form_field = field.formfield(widget=forms.PasswordInput(render_value=False))
+        if isinstance(field, EncryptedFieldMixin):
+            widget = (
+                SecretTextarea()
+                if isinstance(field, TextField)
+                else forms.PasswordInput(render_value=False)
+            )
+            form_field = field.formfield(widget=widget)
             # On update an existing value is present in self.initial. Allow blank
             # so the user can leave the field untouched; clean() restores the
             # existing value in that case.
