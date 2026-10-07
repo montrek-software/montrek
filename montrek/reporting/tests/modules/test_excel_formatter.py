@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from unittest.mock import Mock
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Border, Font
@@ -168,6 +168,35 @@ class MontrekExcelFormatterTests(TestCase):
         self.excel_formatter._style_data_cell(cell, 2, styles, [])
 
         return cell
+
+    @override_settings(FONT_NAME="")
+    def test_fonts_default_to_calibri(self):
+        cell = self._style_value(1234.56)
+
+        self.assertEqual(cell.font.name, "Calibri")
+
+    @override_settings(FONT_NAME="Poppins")
+    def test_every_font_uses_the_configured_font_name(self):
+        styles = self.excel_formatter._get_style_objects()
+        fonts = [style for style in styles.values() if isinstance(style, Font)]
+
+        self.assertEqual({font.name for font in fonts}, {"Poppins"})
+
+    @override_settings(FONT_NAME="Poppins")
+    def test_plain_and_negative_cells_use_the_configured_font_name(self):
+        for value in (1234.56, -1, "text"):
+            with self.subTest(value=value):
+                self.assertEqual(self._style_value(value).font.name, "Poppins")
+
+    @override_settings(FONT_NAME="Poppins")
+    def test_title_uses_the_configured_font_name(self):
+        self.worksheet["A4"] = "Header"
+
+        self.excel_formatter.format_worksheet(
+            self.mock_writer, "Sheet1", table_title="Title"
+        )
+
+        self.assertEqual(self.worksheet["A2"].font.name, "Poppins")
 
     def test_negative_float_gets_red_font(self):
         """Negative numbers are red, mirroring the HTML and LaTeX tables."""

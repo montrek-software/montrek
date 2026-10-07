@@ -98,6 +98,23 @@ class TestWeasyPrintPdfManagerRenderHtml(TestCase):
         html = WeasyPrintPdfManager(manager)._render_html()
         self.assertIn("portrait", html)
 
+    @override_settings(FONT_NAME="")
+    def test_render_html_defaults_to_arial(self):
+        html = WeasyPrintPdfManager(MockMontrekTableManager())._render_html()
+        self.assertIn("font-family: Arial, ", html)
+
+    @override_settings(FONT_NAME="Poppins")
+    def test_render_html_leads_every_font_stack_with_configured_font(self):
+        html = WeasyPrintPdfManager(MockMontrekTableManager())._render_html()
+        stacks = [
+            line.split("font-family:")[1].strip()
+            for line in html.splitlines()
+            if "font-family:" in line
+        ]
+        self.assertEqual(len(stacks), 4)
+        for stack in stacks:
+            self.assertTrue(stack.startswith('"Poppins", Arial'), stack)
+
     @override_settings(CLIENT_LOGO_PATH="https://example.com/logo.png")
     def test_render_html_includes_client_logo_url(self):
         html = WeasyPrintPdfManager(MockMontrekTableManager())._render_html()

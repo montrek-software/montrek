@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from reporting.core import gold_plotly_theme
 from reporting.core.reporting_colors import Color, ReportingColors
@@ -83,6 +83,18 @@ class TestGoldLayout(TestCase):
         self.assertIn("Inter", layout["font"]["family"])
         self.assertEqual(layout["font"]["color"], gold_plotly_theme.TEXT_MUTED.hex)
         self.assertEqual(layout["modebar"]["activecolor"], settings.PRIMARY_COLOR)
+
+    @override_settings(FONT_NAME="")
+    def test_layout_font_defaults_to_inter_stack(self):
+        layout = gold_plotly_theme.gold_layout()
+        self.assertEqual(layout["font"]["family"], gold_plotly_theme.FONT_FAMILY)
+
+    @override_settings(FONT_NAME="Poppins")
+    def test_layout_font_leads_with_configured_font(self):
+        layout = gold_plotly_theme.gold_layout()
+        self.assertEqual(
+            layout["font"]["family"], f'"Poppins", {gold_plotly_theme.FONT_FAMILY}'
+        )
 
     def test_axis_uses_hairline_grid(self):
         axis = gold_plotly_theme.gold_axis()
