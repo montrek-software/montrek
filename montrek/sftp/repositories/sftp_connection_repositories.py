@@ -17,6 +17,7 @@ class SftpConnectionRepository(MontrekRepository):
                 "port",
                 "user",
                 "host_key_fingerprint",
+                "trusted_host",
                 "base_path",
                 "timeout_seconds",
             ],

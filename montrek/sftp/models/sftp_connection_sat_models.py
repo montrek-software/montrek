@@ -29,10 +29,12 @@ class SftpConnectionSatellite(MontrekSatelliteABC):
     )
     user = models.CharField(max_length=128)
 
-    # Required: without it a man-in-the-middle could pose as the server and
-    # receive the credentials
+    # Required unless trusted_host: without it a man-in-the-middle could pose as
+    # the server and receive the credentials
     host_key_fingerprint = models.CharField(
         max_length=128,
+        blank=True,
+        default="",
         validators=[host_key_fingerprint_validator],
         help_text=(
             "SHA256 fingerprint of the server's host key, e.g. 'SHA256:abc…'. "
@@ -40,10 +42,25 @@ class SftpConnectionSatellite(MontrekSatelliteABC):
             "'ssh-keyscan -p <port> <host> | ssh-keygen -lf -' with them."
         ),
     )
+    trusted_host = models.BooleanField(
+        default=False,
+        help_text=(
+            "Connect without a host key fingerprint. Only for test servers: "
+            "anyone who can intercept the connection can then pose as the "
+            "server and receive the credentials."
+        ),
+    )
     base_path = models.CharField(max_length=1024, blank=True, default="/")
     timeout_seconds = models.PositiveSmallIntegerField(default=30)
 
     identifier_fields = ["host", "port", "user"]
+
+    def clean(self):
+        super().clean()
+        if not self.trusted_host and not self.host_key_fingerprint:
+            raise ValidationError(
+                {"host_key_fingerprint": "Required unless the host is trusted."}
+            )
 
     def __str__(self):
         return f"{self.user}@{self.host}:{self.port}"

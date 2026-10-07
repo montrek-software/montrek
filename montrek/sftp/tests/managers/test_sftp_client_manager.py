@@ -157,7 +157,17 @@ class TestSftpClientManagerSession(SftpClientManagerTestCase):
         self.assertEqual(
             policy.expected_fingerprint, TEST_HOST_FINGERPRINT.removeprefix("SHA256:")
         )
+        self.assertFalse(policy.trusted_host)
         self.ssh.load_system_host_keys.assert_not_called()
+
+    def test_passes_trusted_host_to_policy(self):
+        self.connection.trusted_host = True
+        self.connection.host_key_fingerprint = ""
+        self.connection.save()
+        self.manager().list_dir()
+        policy = self.ssh.set_missing_host_key_policy.call_args.args[0]
+        self.assertTrue(policy.trusted_host)
+        self.assertEqual(policy.expected_fingerprint, "")
 
     def test_starts_in_base_path(self):
         with self.manager() as client:
@@ -311,6 +321,22 @@ class TestFingerprintHostKeyPolicy(TestCase):
         policy = FingerprintHostKeyPolicy("")
         with self.assertRaisesMessage(SftpError, "No host key fingerprint"):
             policy.missing_host_key(mock.Mock(), "sftp.example.com", self.key)
+
+    def test_trusted_host_without_fingerprint_is_accepted_with_warning(self):
+        policy = FingerprintHostKeyPolicy("", trusted_host=True)
+        with self.assertLogs("sftp.managers.sftp_client_manager", "WARNING") as logs:
+            policy.missing_host_key(mock.Mock(), "sftp.example.com", self.key)
+        self.assertIn("not verified", logs.output[0])
+        self.assertIn(self.key.fingerprint, logs.output[0])
+
+    def test_trusted_host_still_checks_configured_fingerprint(self):
+        other_key = paramiko.RSAKey.generate(1024)
+        policy = FingerprintHostKeyPolicy(other_key.fingerprint, trusted_host=True)
+        with self.assertRaisesMessage(SftpError, "does not match"):
+            policy.missing_host_key(mock.Mock(), "sftp.example.com", self.key)
+        FingerprintHostKeyPolicy(
+            self.key.fingerprint, trusted_host=True
+        ).missing_host_key(mock.Mock(), "sftp.example.com", self.key)
 
 
 class TestSftpClientManagerOperations(SftpClientManagerTestCase):

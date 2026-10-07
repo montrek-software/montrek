@@ -83,6 +83,7 @@ class TestSftpConnectionDetailsManager(TestCase):
         self.assertIn("sftp.example.com", html)
         self.assertIn("alice", html)
         self.assertIn(TEST_HOST_FINGERPRINT, html)
+        self.assertIn("Trusted Host", html)
         self.assertIn("45", html)
         self.assertIn("*" * len(TEST_PASSWORD), html)
         self.assertNotIn(TEST_PASSWORD, html)

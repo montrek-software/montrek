@@ -68,8 +68,12 @@ class TestSftpConnectionCreateForm(TestCase):
 
 
 class TestSftpConnectionCreateFormHostKey(TestCase):
-    def _form(self, fingerprint: str | None):
-        data = CONNECTION_DATA | {"auth_method": "password", "password": TEST_PASSWORD}
+    def _form(self, fingerprint: str | None, trusted_host: bool = False):
+        data = CONNECTION_DATA | {
+            "auth_method": "password",
+            "password": TEST_PASSWORD,
+            "trusted_host": trusted_host,
+        }
         if fingerprint is None:
             del data["host_key_fingerprint"]
         else:
@@ -105,3 +109,28 @@ class TestSftpConnectionCreateFormHostKey(TestCase):
                 form = self._form(fingerprint)
                 self.assertFalse(form.is_valid())
                 self.assertIn("SHA256 fingerprint", str(form.errors))
+
+    def test_trusted_host_needs_no_fingerprint(self):
+        for fingerprint in (None, ""):
+            with self.subTest(fingerprint=fingerprint):
+                form = self._form(fingerprint, trusted_host=True)
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertTrue(form.cleaned_data["trusted_host"])
+
+    def test_trusted_host_still_rejects_malformed_fingerprint(self):
+        form = self._form("SHA256:abc", trusted_host=True)
+        self.assertFalse(form.is_valid())
+        self.assertIn("SHA256 fingerprint", str(form.errors))
+
+    def test_missing_fingerprint_explains_trusted_host(self):
+        form = self._form(None)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["host_key_fingerprint"],
+            ["Required unless the host is trusted."],
+        )
+
+    def test_malformed_fingerprint_is_reported_once(self):
+        form = self._form("SHA256:abc")
+        self.assertFalse(form.is_valid())
+        self.assertEqual(len(form.errors["host_key_fingerprint"]), 1)

@@ -1,4 +1,5 @@
 import io
+import logging
 import stat
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager
@@ -15,6 +16,8 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.db.typing import DataDict
 from sftp.models.sftp_connection_sat_models import SftpCredentialSatellite
 from sftp.repositories.sftp_connection_repositories import SftpConnectionRepository
+
+logger = logging.getLogger(__name__)
 
 # Tried in turn: paramiko cannot detect the type of a key given as text
 PRIVATE_KEY_CLASSES: tuple[type[paramiko.PKey], ...] = (
@@ -70,16 +73,26 @@ class FingerprintHostKeyPolicy(paramiko.MissingHostKeyPolicy):
 
     No known_hosts file is loaded, so paramiko consults this policy on every
     connect, before authenticating: a server that cannot be verified never
-    receives the credentials.
+    receives the credentials. Only a trusted host may go without a fingerprint;
+    a fingerprint that is configured is checked either way.
     """
 
-    def __init__(self, expected_fingerprint: str):
+    def __init__(self, expected_fingerprint: str, trusted_host: bool = False):
         self.expected_fingerprint = _normalize_fingerprint(expected_fingerprint)
+        self.trusted_host = trusted_host
 
     def missing_host_key(
         self, client: paramiko.SSHClient, hostname: str, key: paramiko.PKey
     ) -> None:
         actual_fingerprint = key.fingerprint
+        if not self.expected_fingerprint and self.trusted_host:
+            logger.warning(
+                "Host key of trusted host %s is not verified (%s): no "
+                "fingerprint configured",
+                hostname,
+                actual_fingerprint,
+            )
+            return
         if not self.expected_fingerprint:
             raise SftpError(
                 f"No host key fingerprint is configured for {hostname}, so its "
@@ -134,7 +147,10 @@ class SftpClientManager(MontrekManager):
         credentials = self.sftp_credentials
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(
-            FingerprintHostKeyPolicy(credentials.host_key_fingerprint or "")
+            FingerprintHostKeyPolicy(
+                credentials.host_key_fingerprint or "",
+                trusted_host=bool(credentials.trusted_host),
+            )
         )
         try:
             ssh.connect(

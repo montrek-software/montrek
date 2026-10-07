@@ -2,9 +2,13 @@ from django.core.exceptions import ValidationError
 from django.db import connection
 from django.test import TestCase
 
-from sftp.models.sftp_connection_sat_models import SftpCredentialSatellite
+from sftp.models.sftp_connection_sat_models import (
+    SftpConnectionSatellite,
+    SftpCredentialSatellite,
+)
 from sftp.tests.factories.sftp_connection_hub_factories import SftpConnectionHubFactory
 from sftp.tests.factories.sftp_connection_sat_factories import (
+    TEST_HOST_FINGERPRINT,
     TEST_PASSPHRASE,
     TEST_PASSWORD,
     TEST_PRIVATE_KEY,
@@ -20,6 +24,20 @@ class TestSftpConnectionSatellite(TestCase):
             host="sftp.example.com", port=2222, user="alice"
         )
         self.assertEqual(str(connection), "alice@sftp.example.com:2222")
+
+    def test_trusted_host_defaults_to_false(self):
+        self.assertFalse(SftpConnectionSatellite().trusted_host)
+
+    def test_clean_with_fingerprint(self):
+        SftpConnectionSatellite(host_key_fingerprint=TEST_HOST_FINGERPRINT).clean()
+
+    def test_clean_requires_fingerprint_unless_trusted(self):
+        with self.assertRaises(ValidationError) as context:
+            SftpConnectionSatellite(host_key_fingerprint="").clean()
+        self.assertIn("host_key_fingerprint", context.exception.message_dict)
+
+    def test_clean_trusted_host_without_fingerprint(self):
+        SftpConnectionSatellite(host_key_fingerprint="", trusted_host=True).clean()
 
 
 class TestSftpCredentialSatellite(TestCase):

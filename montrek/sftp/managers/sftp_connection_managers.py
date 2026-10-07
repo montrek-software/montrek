@@ -63,6 +63,7 @@ class SftpConnectionDetailsManager(CommonTableElementsMixin, MontrekDetailsManag
             te.StringTableElement(
                 name="Host Key Fingerprint", attr="host_key_fingerprint"
             ),
+            te.BooleanTableElement(name="Trusted Host", attr="trusted_host"),
             te.IntTableElement(name="Timeout (s)", attr="timeout_seconds"),
             te.SecretStringTableElement(name="Password", attr="password"),
             te.SecretStringTableElement(name="Private Key", attr="private_key"),

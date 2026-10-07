@@ -47,6 +47,27 @@ class TestSftpConnectionCreateView(MontrekCreateViewTestCase):
         self.assertIsNone(created_object.private_key)
 
 
+class TestSftpConnectionCreateViewTrustedHost(MontrekCreateViewTestCase):
+    viewname = "sftp_connection_create"
+    view_class = SftpConnectionCreateView
+
+    def creation_data(self):
+        return {
+            "host": "test-sftp.local",
+            "port": 2222,
+            "user": "tester",
+            "trusted_host": True,
+            "base_path": "/",
+            "timeout_seconds": 30,
+            "auth_method": "password",
+            "password": TEST_PASSWORD,
+        }
+
+    def additional_assertions(self, created_object):
+        self.assertTrue(created_object.trusted_host)
+        self.assertEqual(created_object.host_key_fingerprint, "")
+
+
 class TestSftpConnectionCreateViewInvalidCredentials(MontrekViewTestCase):
     viewname = "sftp_connection_create"
     view_class = SftpConnectionCreateView
