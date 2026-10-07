@@ -21,7 +21,7 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
-from encrypted_fields import EncryptedCharField
+from encrypted_fields.fields import EncryptedFieldMixin
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.text_converter import HtmlLatexConverter
@@ -237,7 +237,7 @@ class AttrTableElement(TableElement):
             return getattr(obj, attr, attr)
         value = getattr(obj, attr, attr)
 
-        if isinstance(field, EncryptedCharField) and value is not None:
+        if isinstance(field, EncryptedFieldMixin) and value is not None:
             value = "*" * len(str(value))
         return value
 

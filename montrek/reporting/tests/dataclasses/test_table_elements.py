@@ -2,13 +2,16 @@ import datetime
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import wraps
+from types import SimpleNamespace
 from typing import Any, Protocol
 from unittest import mock
 from montrek.utils import SystemFormatting
 
 import reporting.dataclasses.table_elements as te
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
+from django.db import models
 from django.test import TestCase, override_settings
+from encrypted_fields import EncryptedCharField, EncryptedTextField
 from reporting.core.reporting_colors import ReportingColors
 
 
@@ -1946,3 +1949,36 @@ class TestTableElementFieldName(TestCase):
         for element in elements:
             with self.subTest(element=type(element).__name__):
                 self.assertEqual(element.field_name, "")
+
+
+class TestEncryptedFieldMasking(TestCase):
+    @staticmethod
+    def _obj_with_field(model_field, value):
+        model_field.name = "secret"
+        meta = SimpleNamespace(get_field=lambda _name: model_field)
+        return SimpleNamespace(_meta=meta, secret=value)
+
+    def test_masks_every_encrypted_field_type(self):
+        element = te.StringTableElement(name="Secret", attr="secret")
+        for model_field in (EncryptedCharField(), EncryptedTextField()):
+            with self.subTest(field=type(model_field).__name__):
+                obj = self._obj_with_field(model_field, "line-1\nline-2")
+                self.assertEqual(element.get_value(obj), "*" * 13)
+
+    def test_does_not_mask_missing_encrypted_value(self):
+        element = te.StringTableElement(name="Secret", attr="secret")
+        obj = self._obj_with_field(EncryptedTextField(), None)
+        self.assertIsNone(element.get_value(obj))
+
+    def test_does_not_mask_plain_field(self):
+        element = te.StringTableElement(name="Secret", attr="secret")
+        obj = self._obj_with_field(models.TextField(), "visible")
+        self.assertEqual(element.get_value(obj), "visible")
+
+    def test_history_element_masks_encrypted_text_field(self):
+        element = te.HistoryStringTableElement(name="Secret", attr="secret")
+        obj = self._obj_with_field(EncryptedTextField(), "private-key")
+        obj.id = 1
+        html = element.get_attribute(obj, "html")
+        self.assertNotIn("private-key", html)
+        self.assertIn("*" * len("private-key"), html)
