@@ -10,9 +10,11 @@ from sftp.tests.factories.sftp_connection_hub_factories import (
 )
 from sftp.tests.factories.sftp_connection_sat_factories import (
     TEST_OLD_PASSWORD,
+    TEST_PASSPHRASE,
     TEST_PASSWORD,
     SftpConnectionSatelliteFactory,
     SftpCredentialSatelliteFactory,
+    SftpPrivateKeyCredentialSatelliteFactory,
 )
 from sftp.views.sftp_connection_views import SftpConnectionCreateView
 from sftp.views.sftp_connection_views import SftpConnectionUpdateView
@@ -138,3 +140,22 @@ class TestSftpConnectionHistoryView(MontrekViewTestCase):
 
     def test_password_is_not_rendered(self):
         self.assertNotContains(self.response, TEST_PASSWORD)
+
+
+class TestSftpConnectionHistoryViewPrivateKey(MontrekViewTestCase):
+    viewname = "sftp_connection_history"
+    view_class = SftpConnectionHistoryView
+
+    def build_factories(self):
+        self.hub_vd = SftpConnectionHubValueDateFactory(value_date=None)
+        SftpConnectionSatelliteFactory(hub_entity=self.hub_vd.hub)
+        SftpPrivateKeyCredentialSatelliteFactory(
+            hub_entity=self.hub_vd.hub, private_key_passphrase=TEST_PASSPHRASE
+        )
+
+    def url_kwargs(self) -> dict:
+        return {"pk": self.hub_vd.id}
+
+    def test_private_key_and_passphrase_are_not_rendered(self):
+        self.assertNotContains(self.response, "OPENSSH PRIVATE KEY")
+        self.assertNotContains(self.response, TEST_PASSPHRASE)
