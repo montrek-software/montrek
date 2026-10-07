@@ -3,6 +3,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from typing import Any
 from collections.abc import Mapping
 from baseclasses.dataclasses.montrek_message import MontrekMessage
+from baseclasses.repositories.db.typing import DataDict
 
 
 class MontrekManager:
@@ -21,8 +22,8 @@ class MontrekManager:
             self._repository = self.repository_class(self.session_data)
         return self._repository
 
-    def create_object(self, **kwargs) -> Any:
-        return self.repository.create_by_dict(**kwargs)
+    def create_object(self, data: DataDict) -> Any:
+        return self.repository.create_by_dict(data)
 
     def delete_object(self, pk: int):
         object_query = self.get_object_from_pk(pk)
