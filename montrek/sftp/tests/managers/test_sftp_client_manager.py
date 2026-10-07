@@ -1,3 +1,4 @@
+import copy
 import io
 import posixpath
 import stat
@@ -40,7 +41,8 @@ class FakeSftpClient:
     """In-memory stand-in for paramiko.SFTPClient."""
 
     def __init__(self, tree: dict):
-        self.tree = tree
+        # Copied, so a test editing the tree cannot leak into other tests
+        self.tree = copy.deepcopy(tree)
         self.cwd = "/"
         self.closed = False
 
@@ -73,6 +75,10 @@ class FakeSftpClient:
         if not isinstance(self._node(path), dict):
             raise OSError(f"Not a directory: {path}")
         self.cwd = self._resolve(path)
+
+    def normalize(self, path: str) -> str:
+        self._node(path)
+        return self._resolve(path)
 
     def getcwd(self) -> str:
         return self.cwd
@@ -313,9 +319,27 @@ class TestSftpClientManagerOperations(SftpClientManagerTestCase):
         self.assertEqual(
             entries,
             [
-                SftpEntry(name="a.txt", is_dir=False, size=4, modified=modified),
-                SftpEntry(name="b.pdf", is_dir=False, size=11, modified=modified),
-                SftpEntry(name="reports", is_dir=True, size=4096, modified=modified),
+                SftpEntry(
+                    name="a.txt",
+                    path="/upload/a.txt",
+                    is_dir=False,
+                    size=4,
+                    modified=modified,
+                ),
+                SftpEntry(
+                    name="b.pdf",
+                    path="/upload/b.pdf",
+                    is_dir=False,
+                    size=11,
+                    modified=modified,
+                ),
+                SftpEntry(
+                    name="reports",
+                    path="/upload/reports",
+                    is_dir=True,
+                    size=4096,
+                    modified=modified,
+                ),
             ],
         )
 
@@ -323,9 +347,19 @@ class TestSftpClientManagerOperations(SftpClientManagerTestCase):
         attributes = paramiko.SFTPAttributes()
         attributes.filename = "unknown"
         self.assertEqual(
-            SftpEntry.from_attributes(attributes),
-            SftpEntry(name="unknown", is_dir=False, size=0, modified=None),
+            SftpEntry.from_attributes(attributes, "/"),
+            SftpEntry(
+                name="unknown", path="/unknown", is_dir=False, size=0, modified=None
+            ),
         )
+
+    def test_list_dir_entries_have_absolute_paths(self):
+        manager = self.manager()
+        self.assertEqual(
+            [entry.path for entry in manager.list_dir("reports/2025")],
+            ["/upload/reports/2025/q1.csv"],
+        )
+        self.assertEqual([entry.path for entry in manager.list_dir("/")], ["/upload"])
 
     def test_walk(self):
         walked = [
@@ -372,3 +406,63 @@ class TestSftpClientManagerOperations(SftpClientManagerTestCase):
         with self.assertRaisesMessage(SftpError, "Refusing to write outside"):
             self.manager().download_dir("/upload", self.local_dir)
         self.assertEqual(list(self.local_dir.iterdir()), [])
+
+
+class TestSftpClientManagerDownloadSftpEntry(SftpClientManagerTestCase):
+    def _entry(self, manager: SftpClientManager, path: str, name: str) -> SftpEntry:
+        return next(entry for entry in manager.list_dir(path) if entry.name == name)
+
+    def test_downloads_file_entry(self):
+        manager = self.manager()
+        entry = self._entry(manager, ".", "b.pdf")
+
+        downloaded = manager.download_sftp_entry(entry, self.local_dir)
+
+        self.assertEqual(downloaded, [self.local_dir / "b.pdf"])
+        self.assertEqual(downloaded[0].read_bytes(), b"pdf content")
+
+    def test_downloads_directory_entry_recursively(self):
+        manager = self.manager()
+        entry = self._entry(manager, ".", "reports")
+
+        downloaded = manager.download_sftp_entry(entry, self.local_dir)
+
+        base = self.local_dir / "reports"
+        self.assertEqual(
+            sorted(downloaded), [base / "2025" / "q1.csv", base / "summary.txt"]
+        )
+
+    def test_downloads_entry_listed_from_subdirectory(self):
+        manager = self.manager()
+        entry = self._entry(manager, "reports/2025", "q1.csv")
+
+        downloaded = manager.download_sftp_entry(entry, self.local_dir)
+
+        self.assertEqual(downloaded[0].read_bytes(), b"1,2,3")
+
+    def test_does_not_confuse_entries_with_same_name(self):
+        self.fake_sftp.tree["upload"]["summary.txt"] = b"other file"
+        manager = self.manager()
+        entry = self._entry(manager, "reports", "summary.txt")
+
+        downloaded = manager.download_sftp_entry(entry, self.local_dir)
+
+        self.assertEqual(downloaded[0].read_bytes(), b"sum")
+
+    def test_entry_survives_change_of_working_directory(self):
+        with self.manager() as client:
+            entry = self._entry(client, ".", "a.txt")
+            client.change_dir("reports/2025")
+
+            downloaded = client.download_sftp_entry(entry, self.local_dir)
+
+        self.assertEqual(downloaded[0].read_bytes(), b"text")
+        self.ssh.connect.assert_called_once()
+
+    def test_entry_can_be_downloaded_in_a_later_session(self):
+        entry = self._entry(self.manager(), "reports", "summary.txt")
+
+        downloaded = self.manager().download_sftp_entry(entry, self.local_dir)
+
+        self.assertEqual(downloaded[0].read_bytes(), b"sum")
+        self.assertEqual(self.ssh.connect.call_count, 2)

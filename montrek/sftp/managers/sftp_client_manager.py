@@ -36,12 +36,16 @@ class SftpError(MontrekError):
 @dataclass(frozen=True)
 class SftpEntry:
     name: str
+    # Absolute, so the entry can be downloaded from any working directory
+    path: str
     is_dir: bool
     size: int
     modified: datetime | None
 
     @classmethod
-    def from_attributes(cls, attributes: paramiko.SFTPAttributes) -> Self:
+    def from_attributes(
+        cls, attributes: paramiko.SFTPAttributes, directory: str
+    ) -> Self:
         modified = (
             datetime.fromtimestamp(attributes.st_mtime, tz=UTC)
             if attributes.st_mtime is not None
@@ -49,6 +53,7 @@ class SftpEntry:
         )
         return cls(
             name=attributes.filename,
+            path=_join(directory, attributes.filename),
             is_dir=_is_dir(attributes),
             size=attributes.st_size or 0,
             modified=modified,
@@ -158,7 +163,11 @@ class SftpClientManager(MontrekManager):
 
     def list_dir(self, path: str = ".") -> list[SftpEntry]:
         with self._client() as sftp:
-            entries = [SftpEntry.from_attributes(a) for a in sftp.listdir_attr(path)]
+            directory = sftp.normalize(path)
+            entries = [
+                SftpEntry.from_attributes(attributes, directory)
+                for attributes in sftp.listdir_attr(path)
+            ]
         return sorted(entries, key=lambda entry: entry.name)
 
     def change_dir(self, path: str) -> str:
@@ -174,6 +183,16 @@ class SftpClientManager(MontrekManager):
         """Recursively yield (dirpath, dirnames, filenames), like os.walk."""
         with self._client() as sftp:
             yield from self._walk(sftp, path)
+
+    def download_sftp_entry(
+        self,
+        sftp_entry: SftpEntry,
+        local_dir: str | Path = ".",
+    ) -> list[Path]:
+        """Download an entry returned by list_dir, recursively for a directory."""
+        if not sftp_entry.is_dir:
+            return [self.download_file(sftp_entry.path, local_dir)]
+        return self.download_dir(sftp_entry.path, local_dir)
 
     def download_file(
         self,
