@@ -1,5 +1,4 @@
 import io
-import logging
 import stat
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack, contextmanager
@@ -16,8 +15,6 @@ from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.db.typing import DataDict
 from sftp.models.sftp_connection_sat_models import SftpCredentialSatellite
 from sftp.repositories.sftp_connection_repositories import SftpConnectionRepository
-
-logger = logging.getLogger(__name__)
 
 # Tried in turn: paramiko cannot detect the type of a key given as text
 PRIVATE_KEY_CLASSES: tuple[type[paramiko.PKey], ...] = (
@@ -72,8 +69,8 @@ class FingerprintHostKeyPolicy(paramiko.MissingHostKeyPolicy):
     """Accept the server key only if it matches the stored SHA256 fingerprint.
 
     No known_hosts file is loaded, so paramiko consults this policy on every
-    connect. An empty fingerprint means the connection is configured without
-    host key verification.
+    connect, before authenticating: a server that cannot be verified never
+    receives the credentials.
     """
 
     def __init__(self, expected_fingerprint: str):
@@ -84,12 +81,10 @@ class FingerprintHostKeyPolicy(paramiko.MissingHostKeyPolicy):
     ) -> None:
         actual_fingerprint = key.fingerprint
         if not self.expected_fingerprint:
-            logger.warning(
-                "Host key of %s is not verified (%s): no fingerprint configured",
-                hostname,
-                actual_fingerprint,
+            raise SftpError(
+                f"No host key fingerprint is configured for {hostname}, so its "
+                f"identity cannot be verified (it presented {actual_fingerprint})."
             )
-            return
         if _normalize_fingerprint(actual_fingerprint) != self.expected_fingerprint:
             raise SftpError(
                 f"Host key of {hostname} does not match the configured "

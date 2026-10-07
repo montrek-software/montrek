@@ -19,6 +19,7 @@ from sftp.managers.sftp_client_manager import (
     SftpError,
 )
 from sftp.tests.factories.sftp_connection_sat_factories import (
+    TEST_HOST_FINGERPRINT,
     TEST_PASSPHRASE,
     TEST_PASSWORD,
     SftpConnectionSatelliteFactory,
@@ -107,7 +108,6 @@ class SftpClientManagerTestCase(TestCase):
             user="alice",
             base_path="/upload",
             timeout_seconds=15,
-            host_key_fingerprint="SHA256:abc",
         )
         self.credentials = SftpCredentialSatelliteFactory(
             hub_entity=self.connection.hub_entity, password=TEST_PASSWORD
@@ -154,7 +154,9 @@ class TestSftpClientManagerSession(SftpClientManagerTestCase):
         self.manager().list_dir()
         policy = self.ssh.set_missing_host_key_policy.call_args.args[0]
         self.assertIsInstance(policy, FingerprintHostKeyPolicy)
-        self.assertEqual(policy.expected_fingerprint, "abc")
+        self.assertEqual(
+            policy.expected_fingerprint, TEST_HOST_FINGERPRINT.removeprefix("SHA256:")
+        )
         self.ssh.load_system_host_keys.assert_not_called()
 
     def test_starts_in_base_path(self):
@@ -305,11 +307,10 @@ class TestFingerprintHostKeyPolicy(TestCase):
         with self.assertRaisesMessage(SftpError, "does not match"):
             policy.missing_host_key(mock.Mock(), "sftp.example.com", self.key)
 
-    def test_accepts_any_key_without_fingerprint_but_warns(self):
+    def test_refuses_unverifiable_host_without_fingerprint(self):
         policy = FingerprintHostKeyPolicy("")
-        with self.assertLogs("sftp.managers.sftp_client_manager", "WARNING") as logs:
+        with self.assertRaisesMessage(SftpError, "No host key fingerprint"):
             policy.missing_host_key(mock.Mock(), "sftp.example.com", self.key)
-        self.assertIn("not verified", logs.output[0])
 
 
 class TestSftpClientManagerOperations(SftpClientManagerTestCase):

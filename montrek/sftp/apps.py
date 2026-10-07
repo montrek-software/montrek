@@ -1,5 +1,7 @@
-from baseclasses.access import AccessPolicy
+from baseclasses.access import AccessKind, AccessPolicy
 from baseclasses.app_config import MontrekAppConfig
+
+from sftp.user_groups.constants import SftpPermissions
 
 
 class SftpConfig(MontrekAppConfig):
@@ -7,4 +9,11 @@ class SftpConfig(MontrekAppConfig):
     # MontrekAppConfig, so this has to be declared here.
     default = True
     name = "sftp"
-    access_policy = AccessPolicy.OPEN
+    # The connections carry reusable credentials, so no view is open to everybody
+    access_policy = AccessPolicy.RESTRICTED
+    access_permissions = {
+        AccessKind.VIEW: SftpPermissions.CAN_VIEW,
+        AccessKind.CREATE: SftpPermissions.CAN_CREATE,
+        AccessKind.UPDATE: SftpPermissions.CAN_UPDATE,
+        AccessKind.DELETE: SftpPermissions.CAN_DELETE,
+    }

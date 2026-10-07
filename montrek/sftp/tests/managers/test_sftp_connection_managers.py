@@ -5,6 +5,7 @@ from sftp.managers.sftp_connection_managers import (
     SftpConnectionTableManager,
 )
 from sftp.tests.factories.sftp_connection_sat_factories import (
+    TEST_HOST_FINGERPRINT,
     TEST_PASSPHRASE,
     TEST_PASSWORD,
     SftpConnectionSatelliteFactory,
@@ -70,7 +71,7 @@ class TestSftpConnectionDetailsManager(TestCase):
         connection = SftpConnectionSatelliteFactory(
             host="sftp.example.com",
             user="alice",
-            host_key_fingerprint="SHA256:abc",
+            host_key_fingerprint=TEST_HOST_FINGERPRINT,
             timeout_seconds=45,
         )
         SftpCredentialSatelliteFactory(
@@ -81,7 +82,7 @@ class TestSftpConnectionDetailsManager(TestCase):
 
         self.assertIn("sftp.example.com", html)
         self.assertIn("alice", html)
-        self.assertIn("SHA256:abc", html)
+        self.assertIn(TEST_HOST_FINGERPRINT, html)
         self.assertIn("45", html)
         self.assertIn("*" * len(TEST_PASSWORD), html)
         self.assertNotIn(TEST_PASSWORD, html)

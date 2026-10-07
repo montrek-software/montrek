@@ -9,6 +9,7 @@ from sftp.tests.factories.sftp_connection_hub_factories import (
     SftpConnectionHubValueDateFactory,
 )
 from sftp.tests.factories.sftp_connection_sat_factories import (
+    TEST_HOST_FINGERPRINT,
     TEST_OLD_PASSWORD,
     TEST_PASSPHRASE,
     TEST_PASSWORD,
@@ -34,7 +35,7 @@ class TestSftpConnectionCreateView(MontrekCreateViewTestCase):
             "host": "sftp.example.com",
             "port": 2222,
             "user": "alice",
-            "host_key_fingerprint": "SHA256:abc",
+            "host_key_fingerprint": TEST_HOST_FINGERPRINT,
             "base_path": "/upload",
             "timeout_seconds": 60,
             "auth_method": "password",

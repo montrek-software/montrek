@@ -3,6 +3,7 @@ from django.test import TestCase
 from sftp.forms.sftp_connection_forms import SftpConnectionCreateForm
 from sftp.repositories.sftp_connection_repositories import SftpConnectionRepository
 from sftp.tests.factories.sftp_connection_sat_factories import (
+    TEST_HOST_FINGERPRINT,
     TEST_PASSWORD,
     TEST_PRIVATE_KEY,
 )
@@ -11,6 +12,7 @@ CONNECTION_DATA = {
     "host": "sftp.example.com",
     "port": 22,
     "user": "alice",
+    "host_key_fingerprint": TEST_HOST_FINGERPRINT,
     "base_path": "/",
     "timeout_seconds": 30,
 }
@@ -63,3 +65,43 @@ class TestSftpConnectionCreateForm(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("private_key", form.errors)
+
+
+class TestSftpConnectionCreateFormHostKey(TestCase):
+    def _form(self, fingerprint: str | None):
+        data = CONNECTION_DATA | {"auth_method": "password", "password": TEST_PASSWORD}
+        if fingerprint is None:
+            del data["host_key_fingerprint"]
+        else:
+            data["host_key_fingerprint"] = fingerprint
+        return SftpConnectionCreateForm(
+            repository=SftpConnectionRepository(), data=data
+        )
+
+    def test_fingerprint_is_required(self):
+        for fingerprint in (None, ""):
+            with self.subTest(fingerprint=fingerprint):
+                form = self._form(fingerprint)
+                self.assertFalse(form.is_valid())
+                self.assertIn("host_key_fingerprint", form.errors)
+
+    def test_accepts_sha256_fingerprint_with_or_without_prefix(self):
+        for fingerprint in (
+            TEST_HOST_FINGERPRINT,
+            TEST_HOST_FINGERPRINT.removeprefix("SHA256:"),
+            f"{TEST_HOST_FINGERPRINT}=",
+        ):
+            with self.subTest(fingerprint=fingerprint):
+                form = self._form(fingerprint)
+                self.assertTrue(form.is_valid(), form.errors)
+
+    def test_rejects_malformed_fingerprint(self):
+        for fingerprint in (
+            "SHA256:abc",
+            "MD5:16:27:ac:a5:76:28:2d:36:63:1b:56:4d:eb:df:a6:48",
+            f"{TEST_HOST_FINGERPRINT}x",
+        ):
+            with self.subTest(fingerprint=fingerprint):
+                form = self._form(fingerprint)
+                self.assertFalse(form.is_valid())
+                self.assertIn("SHA256 fingerprint", str(form.errors))

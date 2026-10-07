@@ -19,6 +19,9 @@ TEST_PRIVATE_KEY = (
     "-----END OPENSSH PRIVATE KEY-----\n"
 )
 
+# Public data, not a secret: what a server's host key hashes to
+TEST_HOST_FINGERPRINT = "SHA256:XqPhvw9Gx9FBbCQvXZdx/BZTS5dQfeYFHW6/ie12Kp8"
+
 
 class SftpConnectionSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
@@ -28,6 +31,7 @@ class SftpConnectionSatelliteFactory(MontrekSatelliteFactory):
     host = factory.Sequence(lambda n: f"sftp{n}.example.com")
     port = 22
     user = factory.Faker("user_name")
+    host_key_fingerprint = TEST_HOST_FINGERPRINT
     base_path = "/upload"
     timeout_seconds = 30
 
