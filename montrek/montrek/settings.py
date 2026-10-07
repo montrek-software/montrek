@@ -471,8 +471,9 @@ ADMIN_MAILING_LIST = config("ADMIN_MAILING_LIST", default="")
 LOG_LEVEL = config("LOG_LEVEL", default="WARNING")
 PRIMARY_COLOR = config("PRIMARY_COLOR", default=ReportingColors.BLUE.hex)
 SECONDARY_COLOR = config("SECONDARY_COLOR", default=ReportingColors.RED.hex)
-# One font for the web frontend, Excel exports and LaTeX reports. Empty keeps
-# each output on its own default (Inter, Calibri and Arial).
+# One font for the web frontend (pages and Plotly charts), Excel exports and
+# LaTeX and WeasyPrint PDFs. Empty keeps each output on its own default (Inter,
+# Calibri and Arial).
 FONT_NAME = config("FONT_NAME", default="")
 
 # CLient Logo

@@ -24,6 +24,15 @@ SURFACE = ReportingColors.WHITE
 FONT_FAMILY = '"Inter Variable", "Inter", system-ui, "Segoe UI", Arial, sans-serif'
 
 
+def font_family() -> str:
+    """Chart text sits in SVG with its own font, so it does not inherit the
+    page's body font - settings.FONT_NAME has to lead this stack as it leads
+    the one in gold_theme.html. Static exports use the same stack."""
+    if settings.FONT_NAME:
+        return f'"{settings.FONT_NAME}", {FONT_FAMILY}'
+    return FONT_FAMILY
+
+
 def mix_colors(color: Color, other: Color, weight: float) -> Color:
     """Blend `color` into `other`, mirroring CSS color-mix(in srgb, ...)."""
     if not 0.0 <= weight <= 1.0:
@@ -57,7 +66,7 @@ def gold_layout(title: str | None = None) -> dict:
         "title_text": title,
         "title_font_color": title_color(),
         "font": {
-            "family": FONT_FAMILY,
+            "family": font_family(),
             "size": 13,
             "color": TEXT_MUTED.hex,
         },

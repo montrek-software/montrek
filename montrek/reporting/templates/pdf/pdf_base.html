@@ -25,7 +25,7 @@
       }
       @bottom-right {
         content: "Page " counter(page) " / " counter(pages);
-        font-family: Arial, sans-serif;
+        font-family: {% if font_name %}"{{ font_name }}", {% endif %}Arial, sans-serif;
         font-size: 7.5pt;
         color: #5b6573;
         vertical-align: top;
@@ -39,7 +39,7 @@
 
     /* ---- Base typography ---- */
     body {
-      font-family: Arial, "DejaVu Sans", sans-serif;
+      font-family: {% if font_name %}"{{ font_name }}", {% endif %}Arial, "DejaVu Sans", sans-serif;
       font-size: 9pt;
       line-height: 1.35;
       color: #1d2430;
@@ -61,7 +61,7 @@
     /* ---- Header running element ---- */
     .page-header-title-text {
       color: {{ primary_color }};
-      font-family: Arial, sans-serif;
+      font-family: {% if font_name %}"{{ font_name }}", {% endif %}Arial, sans-serif;
       font-size: 11pt;
       font-weight: 700;
     }
@@ -74,7 +74,7 @@
     .header-logo-img { height: 20pt; }
     .footer-logo-img { height: 11pt; vertical-align: middle; }
     .footer-brand-text {
-      font-family: Arial, sans-serif;
+      font-family: {% if font_name %}"{{ font_name }}", {% endif %}Arial, sans-serif;
       font-size: 7.5pt;
       color: #5b6573;
       vertical-align: middle;

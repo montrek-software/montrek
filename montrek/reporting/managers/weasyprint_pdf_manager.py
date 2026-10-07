@@ -42,6 +42,7 @@ class WeasyPrintPdfManager:
                 "content": content,
                 "primary_color": settings.PRIMARY_COLOR,
                 "secondary_color": settings.SECONDARY_COLOR,
+                "font_name": settings.FONT_NAME,
                 "montrek_logo_path": self._montrek_logo_path(),
                 "client_logo_src": self._client_logo_src(),
                 "page_orientation": getattr(
