@@ -59,6 +59,14 @@ class TestSftpAccess(TestCase):
             "sftp_connection_create": SftpPermissions.CAN_CREATE,
             "sftp_connection_update": SftpPermissions.CAN_UPDATE,
             "sftp_connection_delete": SftpPermissions.CAN_DELETE,
+            "sftp_import_source_list": SftpPermissions.CAN_VIEW,
+            "sftp_import_source_details": SftpPermissions.CAN_VIEW,
+            "sftp_import_source_imported_files": SftpPermissions.CAN_VIEW,
+            "sftp_import_source_history": SftpPermissions.CAN_VIEW,
+            "sftp_import_source_create": SftpPermissions.CAN_CREATE,
+            "sftp_import_source_update": SftpPermissions.CAN_UPDATE,
+            "sftp_import_source_sync": SftpPermissions.CAN_UPDATE,
+            "sftp_import_source_delete": SftpPermissions.CAN_DELETE,
         }
         for url_name, permission in expected.items():
             with self.subTest(url_name=url_name):

@@ -19,6 +19,11 @@ class SftpConnectionPage(MontrekPage):
                 html_id="tab_sftp_connection_list",
                 active="active",
             ),
+            TabElement(
+                name="Import Sources",
+                link=reverse("sftp_import_source_list"),
+                html_id="tab_sftp_import_source_list",
+            ),
         )
 
 

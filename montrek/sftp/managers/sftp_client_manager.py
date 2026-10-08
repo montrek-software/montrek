@@ -237,6 +237,23 @@ class SftpClientManager(MontrekManager):
                     )
         return downloaded
 
+    def move_file(self, remote_file: str, target_dir: str) -> str:
+        """Move a remote file into target_dir, creating it if missing.
+
+        Returns the new path. Relative target dirs resolve against the file's
+        directory, so "processed" means a sibling folder of the file. SFTP
+        cannot rename onto an existing file, so a name already taken in
+        target_dir gets a counter: a.csv, a_1.csv, a_2.csv, ...
+        """
+        source = PurePosixPath(remote_file)
+        target_base = source.parent / target_dir
+        with self._client() as sftp:
+            if not _exists(sftp, target_base):
+                sftp.mkdir(str(target_base))
+            target = _free_target(sftp, target_base, source.name)
+            sftp.rename(str(source), str(target))
+        return str(target)
+
     @contextmanager
     def _client(self) -> Iterator[paramiko.SFTPClient]:
         """Reuse the session of ``with manager:``, or open one for this call."""
@@ -299,6 +316,26 @@ class SftpClientManager(MontrekManager):
         if not target.resolve().is_relative_to(base.resolve()):
             raise SftpError(f"Refusing to write outside {base}: {target}")
         return target
+
+
+def _exists(sftp: paramiko.SFTPClient, path: PurePosixPath) -> bool:
+    try:
+        sftp.stat(str(path))
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def _free_target(
+    sftp: paramiko.SFTPClient, directory: PurePosixPath, name: str
+) -> PurePosixPath:
+    stem, suffix = PurePosixPath(name).stem, PurePosixPath(name).suffix
+    target = directory / name
+    counter = 0
+    while _exists(sftp, target):
+        counter += 1
+        target = directory / f"{stem}_{counter}{suffix}"
+    return target
 
 
 def _join(dirpath: str, name: str) -> str:

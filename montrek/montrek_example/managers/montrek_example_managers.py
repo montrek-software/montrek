@@ -85,6 +85,8 @@ class CompactHubAManager(MontrekTableManager):
 
 class ExampleIndividualTableElement(te.FloatTableElement):
     def get_value(self, obj):
+        if obj.field_a2_float is None:
+            return None
         return obj.field_a2_float * 2
 
 
