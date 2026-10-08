@@ -1,0 +1,6 @@
+{% load static custom_css %}
+{% get_custom_css as custom_css %}
+{# Client overrides: loaded last, so they win over gold_theme.html rule by rule. #}
+{% for path in custom_css %}
+  <link rel="stylesheet" href="{% static path %}" />
+{% endfor %}

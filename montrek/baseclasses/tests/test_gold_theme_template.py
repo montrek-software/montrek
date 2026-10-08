@@ -34,3 +34,20 @@ class TestGoldThemeFont(TestCase):
         self.assertTrue(
             self._body_font_family().startswith('"Poppins", "Inter Variable"')
         )
+
+
+class TestGoldThemeTokens(TestCase):
+    """Rules in the structural layer take their colors from the theme tokens,
+    so a client stylesheet overriding a token restyles them as well."""
+
+    def test_structural_layer_uses_tokens_for_primary_and_secondary(self):
+        css = render_to_string("partials/color_scheme.html")
+        rule = css.split(".form-check-input:checked {")[1].split("}")[0]
+
+        self.assertIn("var(--mt-secondary)", rule)
+
+    def test_text_on_accent_fills_uses_the_on_accent_token(self):
+        css = render_to_string("partials/gold_theme.html")
+        rule = css.split(".flatpickr-day.selected:hover {")[1].split("}")[0]
+
+        self.assertIn("var(--mt-on-accent)", rule)

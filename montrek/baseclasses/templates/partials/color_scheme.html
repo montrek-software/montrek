@@ -53,7 +53,7 @@
   }
 
   .page-link.custom {
-    background-color: #ffffff;
+    background-color: var(--mt-surface);
     padding: 0.25rem 0.6rem;
   }
 
@@ -111,12 +111,12 @@
   }
 
   .form-check-input {
-    border: 2px solid {% get_color "secondary" %};
+    border: 2px solid var(--mt-secondary);
   }
 
   .form-check-input:checked {
-    background-color: {% get_color "secondary" %};
-    border-color: {% get_color "secondary" %};
+    background-color: var(--mt-secondary);
+    border-color: var(--mt-secondary);
   }
 
   .form-check-input:focus {
@@ -160,14 +160,14 @@
   .highlight-list li::before {
     content: ">";
     font-weight: bold;
-    color: {% get_color "primary" %};
+    color: var(--mt-accent);
     margin-right: 10px;
   }
 
   .lowlight-list li::before {
     content: ">";
     font-weight: bold;
-    color: {% get_color "secondary" %};
+    color: var(--mt-secondary);
     margin-right: 10px;
   }
 
@@ -216,7 +216,7 @@
   .bar {
     position: absolute;
     height: 90%;
-    background-color: #388e3c;
+    background-color: var(--mt-success);
   }
 
   .bar-value {
@@ -225,7 +225,7 @@
     width: 100%;
     text-align: center;
     color: black;
-    border: 1px solid {% get_color "primary" %};
+    border: 1px solid var(--mt-accent);
     font-weight: bold;
   }
 

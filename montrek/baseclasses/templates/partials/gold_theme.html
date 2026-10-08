@@ -16,6 +16,10 @@
     --mt-secondary-hover: color-mix(in srgb, {% get_color "secondary" %} 85%, #000);
     --mt-secondary-tint: color-mix(in srgb, {% get_color "secondary" %} 8%, transparent);
 
+    /* Text and icons drawn on an accent / secondary fill */
+    --mt-on-accent: #ffffff;
+    --mt-on-secondary: #ffffff;
+
     --mt-bg: #f6f7f9;
     --mt-surface: #ffffff;
     --mt-surface-muted: #f1f3f5;
@@ -100,14 +104,14 @@
 
   .navbar-custom {
     background-color: var(--mt-accent);
-    color: #ffffff;
+    color: var(--mt-on-accent);
     border-bottom: none;
     box-shadow: var(--mt-shadow);
   }
 
   .navbar-custom .navbar-brand,
   .navbar-custom .navbar-brand:hover {
-    color: #ffffff;
+    color: var(--mt-on-accent);
   }
 
   .navbar-custom .nav-link {
@@ -119,7 +123,7 @@
 
   .navbar-custom .nav-link:hover,
   .navbar-custom .nav-link:focus {
-    color: #ffffff;
+    color: var(--mt-on-accent);
     background-color: rgba(255, 255, 255, 0.12);
   }
 
@@ -253,7 +257,7 @@
 
   .btn-custom:hover {
     background-color: var(--mt-secondary);
-    color: #ffffff;
+    color: var(--mt-on-secondary);
     border: 1px solid var(--mt-secondary);
   }
 
@@ -277,7 +281,7 @@
 
   .input-custom {
     background-color: var(--mt-secondary);
-    color: #ffffff;
+    color: var(--mt-on-secondary);
     border: 1px solid var(--mt-secondary);
     border-radius: var(--mt-radius-sm);
     font-weight: 500;
@@ -287,7 +291,7 @@
   .input-custom:hover {
     background-color: var(--mt-secondary-hover);
     border: 1px solid var(--mt-secondary-hover);
-    color: #ffffff;
+    color: var(--mt-on-secondary);
   }
 
   /* =========================================================
@@ -380,7 +384,7 @@
   option:checked {
     background: var(--mt-accent)
                 linear-gradient(0deg, var(--mt-accent) 0%, var(--mt-accent) 100%);
-    color: #ffffff;
+    color: var(--mt-on-accent);
   }
 
   /* =========================================================
@@ -425,7 +429,7 @@
   .flatpickr-day.selected:hover {
     background: var(--mt-accent);
     border-color: var(--mt-accent);
-    color: #ffffff;
+    color: var(--mt-on-accent);
   }
 
   /* =========================================================

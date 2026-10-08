@@ -475,6 +475,14 @@ SECONDARY_COLOR = config("SECONDARY_COLOR", default=ReportingColors.RED.hex)
 # LaTeX and WeasyPrint PDFs. Empty keeps each output on its own default (Inter,
 # Calibri and Arial).
 FONT_NAME = config("FONT_NAME", default="")
+# Client stylesheets, as comma-separated static paths, loaded after the gold
+# theme so they override it rule by rule; anything they leave alone stays gold.
+# The files live in a client app's static/ folder (see docs/custom_css.md).
+CUSTOM_CSS = [
+    path
+    for path in config("CUSTOM_CSS", default="").replace(" ", "").split(",")
+    if path
+]
 
 # CLient Logo
 CLIENT_LOGO_PATH = config(
