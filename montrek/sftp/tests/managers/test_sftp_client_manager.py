@@ -90,6 +90,18 @@ class FakeSftpClient:
         if callback:
             callback(len(content), len(content))
 
+    def stat(self, path: str) -> None:
+        self._node(path)
+
+    def mkdir(self, path: str) -> None:
+        parent, name = posixpath.split(self._resolve(path))
+        self._node(parent)[name] = {}
+
+    def rename(self, old_path: str, new_path: str) -> None:
+        old_parent, old_name = posixpath.split(self._resolve(old_path))
+        new_parent, new_name = posixpath.split(self._resolve(new_path))
+        self._node(new_parent)[new_name] = self._node(old_parent).pop(old_name)
+
     def close(self) -> None:
         self.closed = True
 
@@ -493,3 +505,21 @@ class TestSftpClientManagerDownloadSftpEntry(SftpClientManagerTestCase):
 
         self.assertEqual(downloaded[0].read_bytes(), b"sum")
         self.assertEqual(self.ssh.connect.call_count, 2)
+
+
+class TestSftpClientManagerMoveFile(SftpClientManagerTestCase):
+    def test_moves_into_new_sibling_dir(self):
+        new_path = self.manager().move_file("/upload/a.txt", "processed")
+        self.assertEqual(new_path, "/upload/processed/a.txt")
+        upload_dir = self.fake_sftp.tree["upload"]
+        self.assertNotIn("a.txt", upload_dir)
+        self.assertEqual(upload_dir["processed"], {"a.txt": b"text"})
+
+    def test_moves_into_existing_dir(self):
+        self.manager().move_file("/upload/a.txt", "reports")
+        self.assertEqual(self.fake_sftp.tree["upload"]["reports"]["a.txt"], b"text")
+
+    def test_moves_into_absolute_dir(self):
+        new_path = self.manager().move_file("/upload/b.pdf", "/upload/reports/2025")
+        self.assertEqual(new_path, "/upload/reports/2025/b.pdf")
+        self.assertIn("b.pdf", self.fake_sftp.tree["upload"]["reports"]["2025"])

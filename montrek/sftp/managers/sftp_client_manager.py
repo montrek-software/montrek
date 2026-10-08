@@ -237,6 +237,23 @@ class SftpClientManager(MontrekManager):
                     )
         return downloaded
 
+    def move_file(self, remote_file: str, target_dir: str) -> str:
+        """Move a remote file into target_dir, creating it if missing.
+
+        Returns the new path. Relative target dirs resolve against the file's
+        directory, so "processed" means a sibling folder of the file.
+        """
+        source = PurePosixPath(remote_file)
+        target_base = source.parent / target_dir
+        target = target_base / source.name
+        with self._client() as sftp:
+            try:
+                sftp.stat(str(target_base))
+            except FileNotFoundError:
+                sftp.mkdir(str(target_base))
+            sftp.rename(str(source), str(target))
+        return str(target)
+
     @contextmanager
     def _client(self) -> Iterator[paramiko.SFTPClient]:
         """Reuse the session of ``with manager:``, or open one for this call."""

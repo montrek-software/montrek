@@ -1,6 +1,7 @@
 import os
+import re
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, ClassVar, Protocol
 
 from django.conf import settings
 from django.core.files import File
@@ -19,6 +20,7 @@ from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
     PipelineProcessorProtocol,
 )
+from file_upload.unattended_uploads import register_unattended_upload
 from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 
@@ -66,6 +68,15 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     message_field_name = "upload_message"
     registry_session_key = "file_upload_registry_id"
 
+    # ---- unattended uploads (e.g. polled from an SFTP folder) ----
+    # Opt in only if the processor needs nothing a person picks per upload:
+    # what it reads from the form comes from unattended_default_parameters or
+    # the feeding source's own parameters instead.
+    allow_unattended_upload: bool = False
+    unattended_accept: tuple[str, ...] = ()
+    unattended_default_parameters: ClassVar[dict[str, Any]] = {}
+    unattended_label: str = ""
+
     def __init_subclass__(cls, **kwargs):
         # Migrate old class attribute namings to new ones
         if hasattr(cls, "file_registry_manager_class"):
@@ -77,6 +88,15 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
         if hasattr(cls, "do_process_file_async"):
             cls.do_process_async = cls.do_process_file_async
         super().__init_subclass__(**kwargs)
+        if cls.allow_unattended_upload:
+            register_unattended_upload(cls)
+
+    @classmethod
+    def unattended_upload_label(cls) -> str:
+        # "A1FileUploadManager" -> "A1 File Upload Manager"
+        return cls.unattended_label or re.sub(
+            r"(?<=[a-z0-9])(?=[A-Z])", " ", cls.__name__
+        )
 
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)

@@ -41,3 +41,8 @@ class A1FileUploadProcessor(FieldMapFileUploadProcessor, LogFileMixin):
 class A1FileUploadManager(FileUploadManagerABC):
     file_upload_processor_class = A1FileUploadProcessor
     file_registry_manager_class = HubAFileUploadRegistryManager
+    # The field map decides everything, so files can also be fed in
+    # automatically, e.g. from an SFTP import source
+    allow_unattended_upload = True
+    unattended_accept = (".csv",)
+    unattended_label = "Example A1 upload"

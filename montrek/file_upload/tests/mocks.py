@@ -102,3 +102,9 @@ class MockSeqFileUploadTask(MontrekPipelineTask):
 class MockFileUploadManagerSeq(FileUploadManagerABC):
     file_upload_processor_class = MockFileUploadProcessor
     pipeline_task_class = MockSeqFileUploadTask
+
+
+class MockUnattendedFileUploadManager(FileUploadManagerABC):
+    file_upload_processor_class = MockFileUploadProcessor
+    allow_unattended_upload = True
+    unattended_accept = (".csv", ".TXT")
