@@ -24,7 +24,7 @@ class SftpImportSourceSatellite(MontrekSatelliteABC):
         help_text="Only files matching this glob are imported, e.g. '*.csv'.",
     )
     # Dotted path of an upload manager with allow_unattended_upload, see
-    # file_upload.unattended_uploads; not a model choice, as the managers opt in
+    # file_upload.modules.unattended_upload_registry; not a model choice, as the managers opt in
     # from their own apps
     upload_type = models.CharField(max_length=255)
     pipeline_parameters = models.JSONField(

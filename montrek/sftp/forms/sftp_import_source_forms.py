@@ -1,7 +1,7 @@
 from django import forms
 
 from baseclasses.forms import MontrekCreateForm
-from file_upload.unattended_uploads import unattended_upload_choices
+from file_upload.modules.unattended_upload_registry import UnattendedUploadRegistry
 from sftp.repositories.sftp_connection_repositories import SftpConnectionRepository
 
 
@@ -33,7 +33,7 @@ class SftpImportSourceCreateForm(MontrekCreateForm):
         # Upload managers opt in with allow_unattended_upload, so the choices
         # cannot be declared on the model
         self.fields["upload_type"] = forms.ChoiceField(
-            choices=unattended_upload_choices(),
+            choices=UnattendedUploadRegistry.choices(),
             help_text="The upload pipeline new files are handed to.",
             widget=forms.Select(attrs={"class": "form-select"}),
         )

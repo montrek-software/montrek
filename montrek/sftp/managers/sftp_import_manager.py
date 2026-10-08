@@ -12,10 +12,7 @@ from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.db.typing import DataDict
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
-from file_upload.unattended_uploads import (
-    accepts_file,
-    get_unattended_upload_manager_class,
-)
+from file_upload.modules.unattended_upload_registry import UnattendedUploadRegistry
 from sftp.managers.sftp_client_manager import SftpClientManager, SftpEntry
 from sftp.models.sftp_import_source_sat_models import SftpImportSourceStatusSatellite
 from sftp.repositories.sftp_connection_repositories import SftpConnectionRepository
@@ -89,7 +86,9 @@ class SftpImportManager(MontrekManager):
         self.source = self.repository.receive().get(hub_id=self.session_data["pk"])
         result = SftpSyncResult()
         try:
-            manager_class = get_unattended_upload_manager_class(self.source.upload_type)
+            manager_class = UnattendedUploadRegistry.get_manager_class(
+                self.source.upload_type
+            )
             with SftpClientManager({"pk": self._connection_pk()}) as client:
                 self._sync_dir(client, manager_class, result)
         except SYNC_ERRORS as error:
@@ -120,7 +119,7 @@ class SftpImportManager(MontrekManager):
     def _is_candidate(
         self, entry: SftpEntry, manager_class: type[FileUploadManagerABC]
     ) -> bool:
-        if entry.is_dir or not accepts_file(
+        if entry.is_dir or not UnattendedUploadRegistry.accepts_file(
             manager_class, entry.name, self.source.file_pattern
         ):
             return False

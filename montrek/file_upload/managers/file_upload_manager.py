@@ -20,7 +20,7 @@ from process_pipeline.managers.process_pipeline_processor_abc import (
     PipelineProcessorABC,
     PipelineProcessorProtocol,
 )
-from file_upload.unattended_uploads import register_unattended_upload
+from file_upload.modules.unattended_upload_registry import UnattendedUploadRegistry
 from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
 
 
@@ -89,7 +89,7 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
             cls.do_process_async = cls.do_process_file_async
         super().__init_subclass__(**kwargs)
         if cls.allow_unattended_upload:
-            register_unattended_upload(cls)
+            UnattendedUploadRegistry.register(cls)
 
     @classmethod
     def unattended_upload_label(cls) -> str:
