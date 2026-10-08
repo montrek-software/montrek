@@ -203,6 +203,16 @@ class TestSftpImportManagerSync(SftpImportManagerTestCase):
             self.imported_paths(), ["/upload/a.csv", "/upload/a.csv", "/upload/b.txt"]
         )
 
+    def test_archives_a_replaced_file_next_to_the_first(self):
+        self.sync(self.user.pk)
+        self.fake_sftp.put_file("/upload/a.csv", b"a,b\n3,4\n5,6\n")
+        result = self.sync(self.user.pk)
+        self.assertEqual(result.imported, ["a.csv"])
+        upload_dir = self.fake_sftp.tree["upload"]
+        self.assertNotIn("a.csv", upload_dir)
+        self.assertEqual(upload_dir["processed"]["a.csv"], b"a,b\n1,2\n")
+        self.assertEqual(upload_dir["processed"]["a_1.csv"], b"a,b\n3,4\n5,6\n")
+
     def test_moves_imported_file_left_behind(self):
         self.update_source(processed_dir="")
         self.sync(self.user.pk)
@@ -240,6 +250,14 @@ class TestSftpImportManagerSync(SftpImportManagerTestCase):
         self.assertEqual(call["session_data"]["user_id"], self.user.pk)
         self.assertEqual(call["session_data"]["overwrite"], True)
         self.assertEqual(call["session_data"]["sheet"], "Data")
+
+    def test_pipeline_parameters_cannot_change_the_user(self):
+        self.update_source(pipeline_parameters={"user_id": self.superuser.pk})
+        self.sync(self.user.pk)
+        call = RecordingFileUploadManager.calls[0]
+        self.assertEqual(call["session_data"]["user_id"], self.user.pk)
+        registry = FileUploadRegistryRepository().receive().first()
+        self.assertEqual(registry.hub.created_by_id, self.user.pk)
 
     def test_runs_as_superuser_without_user(self):
         self.sync()
@@ -279,6 +297,16 @@ class TestSftpImportManagerErrors(SftpImportManagerTestCase):
         result = self.sync(self.user.pk)
         self.assertEqual(result.status, PollStatus.FAILED)
         self.assertIn("UnknownUnattendedUploadError", result.message)
+
+    def test_pipeline_parameters_must_be_an_object(self):
+        for parameters in (["overwrite"], "overwrite", 1):
+            with self.subTest(parameters=parameters):
+                self.update_source(pipeline_parameters=parameters)
+                result = self.sync(self.user.pk)
+                self.assertEqual(result.status, PollStatus.FAILED)
+                self.assertIn("must be a JSON object", result.message)
+                self.assertEqual(self.get_source().last_poll_message, result.message)
+        self.assertEqual(RecordingFileUploadManager.calls, [])
 
     def test_failing_file_is_retried_next_time(self):
         with mock.patch.object(

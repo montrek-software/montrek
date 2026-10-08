@@ -38,3 +38,18 @@ class SftpImportSourceCreateForm(MontrekCreateForm):
             widget=forms.Select(attrs={"class": "form-select"}),
         )
         self.fields["upload_type"].widget.attrs["id"] = "id_upload_type"
+
+    def clean_pipeline_parameters(self):
+        parameters = self.cleaned_data.get("pipeline_parameters")
+        if parameters in (None, ""):
+            return None
+        if not isinstance(parameters, dict):
+            raise forms.ValidationError(
+                'Enter a JSON object, e.g. {"overwrite": false}.'
+            )
+        if "user_id" in parameters:
+            raise forms.ValidationError(
+                "user_id cannot be set: uploads run as the user who triggers "
+                "them, or as superuser when scheduled."
+            )
+        return parameters

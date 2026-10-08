@@ -38,6 +38,10 @@ SYNC_ERRORS: tuple[type[Exception], ...] = (
 FILE_ERRORS: tuple[type[Exception], ...] = (*SYNC_ERRORS, ValueError, KeyError)
 
 
+class InvalidPipelineParametersError(MontrekError):
+    """A source's pipeline parameters are not a JSON object."""
+
+
 @dataclass
 class SftpSyncResult:
     imported: list[str] = field(default_factory=list)
@@ -81,6 +85,7 @@ class SftpImportManager(MontrekManager):
             self.session_data["user_id"] = UserManager().get_superuser().pk
         self.imported_file_repository = SftpImportedFileRepository(self.session_data)
         self.source: Any = None
+        self.pipeline_parameters: dict[str, Any] = {}
 
     def sync(self) -> SftpSyncResult:
         self.source = self.repository.receive().get(hub_id=self.session_data["pk"])
@@ -89,6 +94,7 @@ class SftpImportManager(MontrekManager):
             manager_class = UnattendedUploadRegistry.get_manager_class(
                 self.source.upload_type
             )
+            self.pipeline_parameters = self._get_pipeline_parameters(manager_class)
             with SftpClientManager({"pk": self._connection_pk()}) as client:
                 self._sync_dir(client, manager_class, result)
         except SYNC_ERRORS as error:
@@ -171,17 +177,14 @@ class SftpImportManager(MontrekManager):
         manager_class: type[FileUploadManagerABC],
         entry: SftpEntry,
     ) -> tuple[int | None, str]:
-        pipeline_parameters = {
-            **manager_class.unattended_default_parameters,
-            **(self.source.pipeline_parameters or {}),
-        }
-        # Processors read the upload form's values from session_data
+        # Processors read the upload form's values from session_data. The
+        # user goes last: configuration must not choose whom the upload runs as
         upload_session_data = {
+            **self.pipeline_parameters,
             "user_id": self.session_data["user_id"],
-            **pipeline_parameters,
         }
         upload_manager = manager_class(session_data=upload_session_data)
-        upload_manager.set_pipeline_data(pipeline_parameters)
+        upload_manager.set_pipeline_data(self.pipeline_parameters)
         with tempfile.TemporaryDirectory() as local_dir:
             local_path = client.download_file(entry.path, local_dir)
             with local_path.open("rb") as file:
@@ -190,6 +193,18 @@ class SftpImportManager(MontrekManager):
                 upload_manager.upload_and_process(File(file, name=entry.name))
         registry_hub_id = upload_session_data.get(upload_manager.registry_session_key)
         return registry_hub_id, upload_manager.message
+
+    def _get_pipeline_parameters(
+        self, manager_class: type[FileUploadManagerABC]
+    ) -> dict[str, Any]:
+        # Checked here as well as in the form: records may be written elsewhere
+        parameters = self.source.pipeline_parameters or {}
+        if not isinstance(parameters, dict):
+            raise InvalidPipelineParametersError(
+                "Pipeline parameters must be a JSON object, got "
+                f"{type(parameters).__name__}."
+            )
+        return {**manager_class.unattended_default_parameters, **parameters}
 
     def _move_to_processed(self, client: SftpClientManager, entry: SftpEntry) -> None:
         if not self.source.processed_dir:

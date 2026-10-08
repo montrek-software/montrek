@@ -82,6 +82,24 @@ class TestSftpImportSourceCreateView(MontrekCreateViewTestCase):
         created = SftpImportSourceRepository().receive().get(name="With parameters")
         self.assertEqual(created.pipeline_parameters, {"overwrite": False})
 
+    def test_pipeline_parameters_must_be_an_object(self):
+        for parameters in ('["overwrite"]', '"overwrite"', "1"):
+            with self.subTest(parameters=parameters):
+                data = self.creation_data()
+                data["pipeline_parameters"] = parameters
+                response = self.client.post(self.url, data)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "Enter a JSON object")
+        self.assertFalse(SftpImportSourceRepository().receive().exists())
+
+    def test_pipeline_parameters_cannot_set_user(self):
+        data = self.creation_data()
+        data["pipeline_parameters"] = '{"user_id": 1}'
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "user_id cannot be set")
+        self.assertFalse(SftpImportSourceRepository().receive().exists())
+
     def test_poll_status_is_not_editable(self):
         form = self.response.context["form"]
         self.assertNotIn("last_poll_status", form.fields)
