@@ -436,3 +436,54 @@ class TestQueryBuilderLatestTs(TestCase):
 
         self.assertEqual(hub_rows.count(), 1)
         self.assertIsNotNone(hub_rows.first().value_date)
+
+    def test_latest_row_is_chosen_per_hub(self):
+        """Each hub keeps its own latest row, not the latest date of all hubs."""
+        hub_dates = {}
+        for latest in (datetime.date(2024, 1, 20), datetime.date(2024, 1, 10)):
+            sat = TestMontrekTimeSeriesSatelliteFactory.create(
+                value_date=latest - datetime.timedelta(days=5)
+            )
+            hub = sat.hub_value_date.hub
+            hvd = TestHubValueDateFactory.create(
+                hub=hub, value_date_list=ValueDateListFactory.create(value_date=latest)
+            )
+            TestMontrekTimeSeriesSatelliteFactory.create(hub_value_date=hvd)
+            hub_dates[hub.pk] = latest
+        undated_hub = TestMontrekHubFactory.create()
+
+        rows = self._build_queryset()
+
+        self.assertEqual(
+            {row.hub_id: row.value_date for row in rows},
+            {**hub_dates, undated_hub.pk: None},
+        )
+
+    def test_hub_scope_pk_keeps_the_latest_row_of_that_hub(self):
+        sat = TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 1, 15)
+        )
+        hub = sat.hub_value_date.hub
+        hvd_new = TestHubValueDateFactory.create(
+            hub=hub,
+            value_date_list=ValueDateListFactory.create(
+                value_date=datetime.date(2024, 1, 20)
+            ),
+        )
+        TestMontrekTimeSeriesSatelliteFactory.create(hub_value_date=hvd_new)
+        TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 2, 1)
+        )
+        annotator = Annotator(TestMontrekHub)
+        annotator.subquery_builder_to_annotations(
+            ["test_decimal"], TestMontrekTimeSeriesSatellite, TSSatelliteSubqueryBuilder
+        )
+
+        rows = QueryBuilder(
+            annotator, {}, latest_ts=True, hub_scope_pk=hub.pk
+        ).build_queryset(timezone.now())
+
+        self.assertEqual(
+            [(row.hub_id, row.value_date) for row in rows],
+            [(hub.pk, datetime.date(2024, 1, 20))],
+        )
