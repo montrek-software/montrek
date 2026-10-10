@@ -112,7 +112,7 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
             )
             if not sat:
                 continue
-            return getattr(sat, id_field)
+            return str(getattr(sat, id_field))
         return super().__str__()
 
 
