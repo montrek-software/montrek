@@ -17,6 +17,13 @@ class ActionElement:
 
 
 @dataclass
+class PostActionElement(ActionElement):
+    """An action that writes, rendered as an HTMX POST button."""
+
+    method: ClassVar[str] = "post"
+
+
+@dataclass
 class StandardActionElementBase(ActionElement):
     icon = ""
 
