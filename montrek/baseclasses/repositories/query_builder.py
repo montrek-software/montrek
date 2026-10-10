@@ -9,15 +9,14 @@ from django.core.exceptions import FieldError
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
 from django.db.models import (
-    BigIntegerField,
     Exists,
     F,
     OuterRef,
     Q,
     QuerySet,
-    Subquery,
+    Window,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Rank
 
 
 class QueryBuilder:
@@ -120,7 +119,7 @@ class QueryBuilder:
 
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
         if self.latest_ts:
-            return queryset.filter(value_date_list_id=self._latest_value_date_list_id())
+            return queryset.filter(id__in=self._latest_hub_value_date_ids())
         # Use hub_id (direct FK column) instead of the hub_entity_id annotation
         # (which is itself a subquery) to avoid unnecessary nesting.
         non_null_value_date_exists = self.hub_value_date.objects.filter(
@@ -135,41 +134,31 @@ class QueryBuilder:
             )
         return filtered_query
 
-    def _latest_value_date_list_id(self) -> Coalesce:
-        """The value date list a row must sit on to be the hub's latest one.
+    def _latest_hub_value_date_ids(self) -> QuerySet:
+        """Ids of the rows that are their hub's latest one.
+
+        The latest row of a hub is its newest dated row, or its undated row if
+        it has no dated one. Ranked once over the whole table with a window
+        function instead of looked up per row by a correlated subquery, which
+        Postgres evaluates for every row of every hub before any other filter
+        applies - with a long time series that dominates the whole query.
 
         Built from the bare model so none of the annotation subqueries are
-        dragged into this inner query, and compared as ``value_date_list_id``
-        integers rather than through the ``value_date`` annotation.
-
-        A hub without any dated row has no latest one to compare against, and
-        its undated rows have to survive the filter.  Coalescing to the row's
-        own value date list makes the comparison trivially true for exactly
-        those rows.  Written as this one scalar subquery rather than as an
-        ``OR`` against a ``NOT EXISTS`` over the sibling rows: the two are
-        equivalent - a hub with a dated row never satisfies that
-        ``NOT EXISTS`` unless it is the sole dated row, which is the latest one
-        anyway - but Postgres cannot turn the ``OR`` into a semi join and
-        re-runs the whole sibling scan once per candidate row.
+        dragged into this inner query. ``RANK`` rather than ``ROW_NUMBER``
+        keeps all tied rows, as a comparison of the value dates would; the
+        null ordering is emulated by Django on databases without NULLS LAST.
         """
-        latest = (
-            self.hub_value_date.objects.filter(
-                hub_id=OuterRef("hub_id"),
-                value_date_list__value_date__isnull=False,
+        ranked = self.hub_value_date.objects.all()
+        if self.hub_scope_pk is not None:
+            ranked = ranked.filter(hub_id=self.hub_scope_pk)
+        ranked = ranked.annotate(
+            _latest_rank=Window(
+                expression=Rank(),
+                partition_by=F("hub_id"),
+                order_by=F("value_date_list__value_date").desc(nulls_last=True),
             )
-            .order_by("-value_date_list__value_date")
-            .values("value_date_list_id")[:1]
         )
-        # Both sides are typed explicitly: value_date_list_id is a BigAutoField
-        # target, so without a matching output_field the two branches count as
-        # mixed types and anything that reads the expression's output_field -
-        # an annotate(), an order_by() - raises FieldError.  A filter() alone
-        # resolves against the left-hand column and would not notice.
-        return Coalesce(
-            Subquery(latest, output_field=BigIntegerField()),
-            F("value_date_list_id"),
-            output_field=BigIntegerField(),
-        )
+        return ranked.filter(_latest_rank=1).values("id")
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():
