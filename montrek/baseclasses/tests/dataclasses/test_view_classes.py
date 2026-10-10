@@ -5,6 +5,7 @@ from baseclasses.dataclasses.view_classes import (
     DownloadActionElement,
     ListActionElement,
     PlayActionElement,
+    PostActionElement,
     RegistryActionElement,
     SettingsActionElement,
     ShowActionElement,
@@ -14,6 +15,18 @@ from baseclasses.dataclasses.view_classes import (
 )
 from django.test import TestCase
 from django.urls import reverse
+
+
+class TestPostActionElement(TestCase):
+    def test_method_is_post(self):
+        element = PostActionElement(
+            icon="refresh",
+            link="/some/action",
+            action_id="id_some_action",
+            hover_text="Run some action",
+        )
+        self.assertEqual(element.method, "post")
+        self.assertEqual(ActionElement.method, "get")
 
 
 class TestStandardActionElementBase(TestCase):
