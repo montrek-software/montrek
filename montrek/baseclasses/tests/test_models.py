@@ -11,6 +11,7 @@ from baseclasses.models import (
 )
 from baseclasses.tests.factories.baseclass_factories import (
     LinkTestMontrekTestLinkFactory,
+    TestLinkSatelliteFactory,
     TestMontrekHubFactory,
     TestMontrekSatelliteFactory,
 )
@@ -163,6 +164,16 @@ class TestSatelliteValueHash(TestCase):
             test_name="test_name_2", hub_entity=TestMontrekHubFactory()
         )
         self.assertNotEqual(test_satellite.hash_value, test_hash)
+
+
+class TestMontrekHubStr(TestCase):
+    def test_str_is_identifier_of_satellite(self):
+        satellite = TestMontrekSatelliteFactory(test_name="Hub Name")
+        self.assertEqual(str(satellite.hub_entity), "Hub Name")
+
+    def test_str_with_related_name_on_satellite(self):
+        satellite = TestLinkSatelliteFactory(test_id=42)
+        self.assertEqual(str(satellite.hub_entity), "42")
 
 
 class TestMontrekLink(TestCase):

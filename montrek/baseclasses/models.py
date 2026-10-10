@@ -95,24 +95,24 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
         return cls._meta.get_field("hub_value_date").related_model
 
     def __str__(self):
-        sat_class = None
-        related_sat_classes = [
-            r.related_model
+        related_sats = [
+            r
             for r in self._meta.related_objects
             if issubclass(r.related_model, MontrekSatelliteABC)
         ]
-        for sat_class in related_sat_classes:
-            id_field = sat_class.identifier_fields[0]
+        for related_sat in related_sats:
+            id_field = related_sat.related_model.identifier_fields[0]
             if id_field == "hub_entity_id":
                 continue
+            # The accessor honours a related_name set on the satellite's hub FK
             sat = (
-                getattr(self, sat_class.__name__.lower() + "_set")
+                getattr(self, related_sat.get_accessor_name())
                 .order_by("-state_date_end")
                 .first()
             )
             if not sat:
                 continue
-            return getattr(sat, id_field)
+            return str(getattr(sat, id_field))
         return super().__str__()
 
 
@@ -406,7 +406,10 @@ class TestLinkHub(MontrekHubABC):
 
 
 class TestLinkSatellite(MontrekSatelliteABC):
-    hub_entity = models.ForeignKey(TestLinkHub, on_delete=models.CASCADE)
+    # A custom related_name, unlike TestMontrekSatellite
+    hub_entity = models.ForeignKey(
+        TestLinkHub, on_delete=models.CASCADE, related_name="test_link_satellites"
+    )
     test_id = models.IntegerField(default=0)
     identifier_fields = ["test_id"]
 
