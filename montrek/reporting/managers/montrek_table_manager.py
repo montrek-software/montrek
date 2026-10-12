@@ -51,6 +51,10 @@ class MontrekTableManagerABC(
     has_table_elements_filter_field: bool = True
     is_large: bool = False
     latex_rows_per_page: int = 25
+    # See LatexTableConverter: cap on a cell's claim to column width, and
+    # page-breaking longtable output instead of fixed-size table floats.
+    latex_max_cell_chars: int | None = None
+    latex_long_table: bool = False
     excel_formatter_class: type[MontrekExcelFormatter] = MontrekExcelFormatter
     # Set on first use by ``get_display_field_names``; class level so subclasses
     # with their own ``__init__`` signature cannot miss it.
@@ -230,6 +234,8 @@ class MontrekTableManagerABC(
             self.table_elements,
             self.get_full_table(),
             rows_per_page=self.latex_rows_per_page,
+            max_cell_chars=self.latex_max_cell_chars,
+            long_table=self.latex_long_table,
         ).to_latex()
 
     def get_excel_frame(self) -> pd.DataFrame:

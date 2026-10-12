@@ -59,6 +59,9 @@ class TableElement:
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     th_classes: ClassVar[TdClassesType | None] = None
     field_template: ClassVar[str | None] = None
+    # Whether the LaTeX cell can wrap onto several lines. Cells that cannot
+    # (e.g. labels set in a \colorbox) need their full width in the column.
+    latex_wraps: ClassVar[bool] = True
 
     @property
     def field_name(self) -> str:
@@ -1038,6 +1041,7 @@ class ColorCodedStringTableElement(AttrTableElement):
 @dataclass
 class LabelTableElement(AttrTableElement):
     td_classes: ClassVar[TdClassesType] = ["text-center"]
+    latex_wraps: ClassVar[bool] = False
     color_codes: ColorCodesType = field(default_factory=dict)
     field_template: ClassVar[str | None] = "label"
 
