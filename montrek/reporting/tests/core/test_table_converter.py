@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -273,3 +274,71 @@ class TestLatexTableConverterFootnotes(TestCase):
     def test_note_text_is_escaped(self):
         latex = self.convert([{"name": "a", "value": 1, "note": "50% & more"}])
         self.assertIn("50\\% \\& more", latex)
+
+
+class TestLatexTableConverterCappedLongTable(TestCase):
+    def setUp(self) -> None:
+        self.table_elements = [
+            te.StringTableElement(name="Name", attr="name"),
+            te.StringTableElement(name="Liste", attr="items"),
+            te.LabelTableElement(name="Art", attr="kind"),
+        ]
+        self.table = [
+            {"name": "Kurz", "items": ", ".join(["Vertragsart"] * 60), "kind": "x"},
+            {"name": "Name", "items": "a", "kind": "Valut. Darlehen"},
+        ]
+
+    def convert(self, **kwargs) -> LatexTableConverter:
+        converter = LatexTableConverter(
+            "Titel", self.table_elements, self.table, **kwargs
+        )
+        converter.to_latex()
+        return converter
+
+    def test_uncapped_long_cell_claims_its_full_length(self):
+        converter = self.convert()
+        self.assertGreater(max(converter.column_sizer[1]), 600)
+
+    def test_capped_cell_claims_at_most_the_cap(self):
+        converter = self.convert(max_cell_chars=40)
+        self.assertEqual(max(converter.column_sizer[1]), 40)
+
+    def test_capped_cell_claims_at_least_its_longest_word(self):
+        self.table[0]["items"] = "Gebührensachverständigenausschussvorsitzender " * 3
+        converter = self.convert(max_cell_chars=10)
+        self.assertEqual(
+            max(converter.column_sizer[1]),
+            len("Gebührensachverständigenausschussvorsitzender"),
+        )
+
+    def test_unbreakable_label_claims_its_full_length_plus_padding(self):
+        converter = self.convert(max_cell_chars=5)
+        self.assertEqual(max(converter.column_sizer[2]), len("Valut. Darlehen") + 2)
+
+    def test_capped_headers_get_padding(self):
+        converter = self.convert(max_cell_chars=40)
+        self.assertEqual(converter.column_sizer[0][0], len("Name") + 2)
+
+    def test_long_table_output(self):
+        latex = LatexTableConverter(
+            "Titel",
+            self.table_elements,
+            self.table * 30,
+            rows_per_page=5,
+            long_table=True,
+        ).to_latex()
+        self.assertEqual(latex.count("\\begin{longtable}"), 1)
+        self.assertNotIn("\\newpage", latex)
+        self.assertNotIn("\\begin{table}", latex)
+        self.assertIn("\\caption*{Titel}", latex)
+        self.assertIn("\\endfirsthead", latex)
+        self.assertIn("\\endhead", latex)
+        self.assertEqual(latex.count("m{\\dimexpr(\\linewidth-6\\tabcolsep)*"), 3)
+
+    def test_long_table_column_shares_sum_to_the_line(self):
+        latex = LatexTableConverter(
+            "", self.table_elements, self.table, long_table=True
+        ).to_latex()
+        shares = re.findall(r"\\tabcolsep\)\*(\d+)/10000", latex)
+        self.assertAlmostEqual(sum(int(share) for share in shares), 10000, delta=3)
+        self.assertNotIn("\\caption", latex)
