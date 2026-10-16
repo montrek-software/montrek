@@ -1982,3 +1982,27 @@ class TestEncryptedFieldMasking(TestCase):
         html = element.get_attribute(obj, "html")
         self.assertNotIn("private-key", html)
         self.assertIn("*" * len("private-key"), html)
+
+
+class TestHistoryStringTableElementStyling(TestCase):
+    def _display_field(self, change_map: te.ChangeMapType):
+        element = te.HistoryStringTableElement(
+            name="Field", attr="field", change_map=change_map
+        )
+        obj = SimpleNamespace(id=1, field="value")
+        return element.get_display_field(obj)
+
+    def test_unchanged_value_keeps_theme_text_colour(self):
+        field = self._display_field({})
+        self.assertEqual(field.style_attrs_str, "")
+        self.assertEqual(field.td_classes_str, "")
+
+    def test_changed_values_use_theme_classes(self):
+        for state, colour_class in (
+            (te.HistoryChangeState.OLD, "text-danger"),
+            (te.HistoryChangeState.NEW, "text-success"),
+        ):
+            with self.subTest(state=state):
+                field = self._display_field({1: {"field": state}})
+                self.assertEqual(field.style_attrs_str, "")
+                self.assertEqual(field.td_classes_str, f"fw-bold {colour_class}")
