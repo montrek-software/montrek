@@ -1000,18 +1000,13 @@ class HistoryStringTableElement(StringTableElement):
         self.change_format = self._get_change_format(obj)
         return super().get_attribute(obj, tag)
 
-    def get_style_attrs(self, _value: Any, _obj: Any) -> StyleAttrsType:
-        if self.change_format == HistoryChangeState.OLD:
-            color = ReportingColors.RED.hex
-        elif self.change_format == HistoryChangeState.NEW:
-            color = ReportingColors.DARK_GREEN.hex
-        else:
-            color = ReportingColors.BLACK.hex
-        return {"color": color}
-
     def get_td_classes(self, _value: Any, _obj: Any) -> TdClassesType:
-        if self.change_format in (HistoryChangeState.OLD, HistoryChangeState.NEW):
-            return ["fw-bold"]
+        # Theme classes instead of inline colours, so the history stays
+        # readable on dark themes; unchanged values keep the text colour.
+        if self.change_format == HistoryChangeState.OLD:
+            return ["fw-bold", "text-danger"]
+        if self.change_format == HistoryChangeState.NEW:
+            return ["fw-bold", "text-success"]
         return []
 
     def _get_change_format(self, obj: Any):
