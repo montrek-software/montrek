@@ -50,10 +50,12 @@ resp = requests.post(
     f"{REALM_URL}/protocol/openid-connect/token",
     data={  # form-encoded, not JSON
         "grant_type": "password",
+        "scope": "openid",  # required, montrek validates via userinfo
         "client_id": "<client-id>",
         "client_secret": "<client-secret>",  # only for confidential clients
         "username": "user@example.com",
         "password": "...",
+        "totp": "123456",  # current OTP code, if the user has OTP configured
     },
     timeout=10,
 )
@@ -64,8 +66,15 @@ Requirements in Keycloak:
 
 - The client needs **"Direct access grants"** enabled for the password grant.
   Use a client for API scripts rather than the web app's client.
-- For automated jobs without a person, use `grant_type=client_credentials` on a
-  client with a service account.
+- Request `scope=openid` and keep `email` among the client's default scopes:
+  montrek looks up the user by the email Keycloak's userinfo endpoint returns.
+- If the user has OTP (2FA) configured, send the current code as `totp`.
+  Without it, Keycloak answers `invalid_grant` / `Invalid user credentials`
+  even though email and password are correct.
+- Because of OTP, the password grant needs a person at hand. Unattended jobs
+  would need `grant_type=client_credentials` on a client with a service
+  account. Its service-account user has no email by default, so give it one
+  that matches a montrek user, or montrek cannot map the token to a user.
 - Refresh with `grant_type=refresh_token` against the same endpoint.
 
 montrek checks Keycloak tokens against Keycloak's userinfo endpoint and maps
