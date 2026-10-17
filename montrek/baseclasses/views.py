@@ -43,7 +43,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_api.authentication import MontrekApiAuthentication
 
 from baseclasses import utils
 from baseclasses.access import AccessKind, permissions_for_view
@@ -351,7 +351,7 @@ class MontrekApiViewMixin(APIView):
 
     def dispatch(self, request, *args, **kwargs):
         if self._is_rest(request):
-            # Use DRF's dispatch (this will run JWT auth/DRF permissions)
+            # Use DRF's dispatch (this will run token auth/DRF permissions)
             return APIView.dispatch(self, request, *args, **kwargs)
         # Non-REST: fall back to the normal Django CBV chain
         return super(APIView, self).dispatch(request, *args, **kwargs)
@@ -369,7 +369,7 @@ class MontrekApiViewMixin(APIView):
     # Only used on the REST path (because non-REST doesn't hit APIView.dispatch)
     def get_authenticators(self):
         if self._is_rest(self.request):
-            return [JWTAuthentication()]
+            return [MontrekApiAuthentication()]
         return []  # not used outside REST
 
     def get_permissions(self):
