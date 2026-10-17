@@ -499,7 +499,7 @@ ADMIN_PASSWORD = config("ADMIN_PASSWORD", default=None)
 # Rest Framework
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_api.authentication.MontrekApiAuthentication",
     ],
 }
 SIMPLE_JWT = {
