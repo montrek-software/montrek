@@ -86,6 +86,19 @@ Pre-commit hooks run automatically on `git commit` and include: ruff, black, djl
 
 Make sure that the produced code is ruff and sonarcube compliant
 
+## Code Conventions
+
+### Django ORM calls belong in repositories
+
+- Before writing any query, check whether the framework mechanics already handle the task (`receive()`, `filter_by_linked_hub()`, `add_linked_satellites_field_annotations()` with `link_satellite_filter`/`cross_satellite_filters`, `create_by_dict()`, ...).
+- If a direct Django ORM call (`Model.objects...`) is unavoidable, put it in the matching repository, or create a new repository for it. Never put one in managers, views, forms or modules.
+- If the framework almost covers the task but needs a workaround or a direct ORM call, raise it as a possible framework enhancement instead of silently working around it.
+
+### Comments
+
+- Assume the reader can read Python. Comment only when it adds understanding beyond what the code says: intent, invariants, non-obvious constraints, why an alternative doesn't work.
+- Comments describe the current state of the code, never its history. Don't explain what was changed or why it changed; that belongs in the commit message or PR.
+
 ## Architecture
 
 ### Directory Layout
