@@ -1,4 +1,5 @@
 from django.http.response import HttpResponseBase
+from baseclasses.repositories.db.db_creator import DataDict
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from typing import Any
 from collections.abc import Mapping
