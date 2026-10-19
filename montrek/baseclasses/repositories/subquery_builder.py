@@ -61,9 +61,9 @@ class CrossSatelliteFilter:
 
         Fetched --link_class-- L0 --parent_link_classes[0]-- L1 --...-- Outer
 
-    Example (CrmDocument perspective, fetching the country of the main contact):
-        CountryHub --LinkContactCountry-- ContactHub (L0, ContactStaticSatellite:
-        is_main_contact=True) --LinkContactClient-- ClientHub (L1) --...
+    Example (HubB perspective, fetching SatC1 only via HubDs whose SatD1 matches):
+        HubC (SatC1) --LinkHubCHubD-- HubD (L0, SatD1: field_d1_str="X")
+        --LinkHubBHubD-- HubB (L1, outer hub)
 
     satellite_class:   the satellite on the cross-hub to filter on (e.g. SatC)
     link_class:        the link connecting the anchor hub to the cross-hub

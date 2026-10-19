@@ -8,7 +8,7 @@ Montrek is a Django-based data management platform following a **data warehouse 
 
 ## Commands
 
-All `make` commands must be run from the project root (`../`), i.e. `montrek_competo/`.
+All `make` commands must be run from the project root (`../`).
 
 ### Local Development (non-Docker)
 
@@ -45,6 +45,8 @@ make docker-db-restore                   # Restore database from backup
 ```
 
 ### Testing
+
+Don't run the full test suite during development; it is slow, and it always runs before merging. Run only the tests affected by a change: the touched app, or a specific module/class/method (e.g. `manage.py test montrek_example.tests.repositories.test_montrek_example_repository.TestCrossSatelliteFilter`). For a change in a shared foundation (e.g. `baseclasses`), also run the tests of the apps that use the changed code most directly. Don't run everything.
 
 Tests use Django's test runner with `coverage`. Run from `montrek/`:
 
@@ -98,13 +100,14 @@ Make sure that the produced code is ruff and sonarcube compliant
 
 - Assume the reader can read Python. Comment only when it adds understanding beyond what the code says: intent, invariants, non-obvious constraints, why an alternative doesn't work.
 - Comments describe the current state of the code, never its history. Don't explain what was changed or why it changed; that belongs in the commit message or PR.
+- Never mention classes, functions or other names from `mt_*` apps in comments or docstrings of framework code; they may be confidential. Use neutral examples, e.g. from `montrek_example`.
 
 ## Architecture
 
 ### Directory Layout
 
 ```
-montrek_competo/         # Project root (Makefile, .env, docker-compose.yml, pyproject.toml)
+<project root>/          # Makefile, .env, docker-compose.yml, pyproject.toml
 └── montrek/             # Django project root (manage.py, .coveragerc)
     ├── montrek/         # Main Django package (settings.py, urls.py, celery.py)
     ├── baseclasses/     # Foundation: abstract models, base views, mixins, utils
@@ -124,11 +127,7 @@ montrek_competo/         # Project root (Makefile, .env, docker-compose.yml, pyp
     ├── rest_api/        # REST API endpoints (JWT via SimpleJWT)
     ├── middleware/      # LoginRequired, PermissionError, MontrekError middleware
     ├── testing/         # Shared test utilities, base test cases, decorators
-    ├── montrek_example/ # Example app demonstrating framework patterns
-    ├── mt_competo/      # Extension: asset management (Company, Fund, Covenant, Contract)
-    ├── mt_economic_common/ # Extension: economic data (country, currency, credit institutions, SDMX)
-    ├── mt_llm/          # Extension: LLM/RAG integration (Ollama, LangChain, chatbots)
-    └── mt_tools/        # Extension: utilities (Excel processor)
+    └── montrek_example/ # Example app demonstrating framework patterns
 ```
 
 ### App Discovery
@@ -149,19 +148,19 @@ All domain models inherit from abstract base classes in `baseclasses/models.py`:
 
 ### Repositories & Query Pipeline
 
-Domain queries are built by **repositories** (`*/repositories/*.py`), not ad-hoc ORM calls. Pipeline: `MontrekRepository.set_annotations()` registers fields (via `add_satellite_fields_annotations`, `add_linked_satellites_field_annotations`, `add_linked_hub_id`, or `annotator.annotations[name] = SomeSubqueryBuilder(...)`) → `Annotator` collects them → `QueryBuilder.build_queryset()` applies them → each `SubqueryBuilder.build()` returns the expression.
+Domain queries are built by **repositories** (`*/repositories/*.py`), preferably through the annotation pipeline below. Direct ORM calls are the exception and also live in repositories (see Code Conventions). Pipeline: `MontrekRepository.set_annotations()` registers fields (via `add_satellite_fields_annotations`, `add_linked_satellites_field_annotations`, `add_linked_hub_id`, or `annotator.annotations[name] = SomeSubqueryBuilder(...)`) → `Annotator` collects them → `QueryBuilder.build_queryset()` applies them → each `SubqueryBuilder.build()` returns the expression.
 
 - Most annotations are **correlated subqueries** — cheap individually, but they add up per row.
 - **Filtering/ordering on an annotation re-runs its subquery per row.** To filter by a linked hub use `filter_by_linked_hub()` or a direct FK column (`hub_id`), not the annotation.
 - Subclasses reuse a parent's `set_annotations()` and prune with `annotator.remove_annotations((...))` — each removed field is one subquery fewer.
-- `queryset_aware=True` builders receive the intermediate queryset to pre-compute in Python and emit literal `Value()`s (e.g. `DerivedDamageValueSubqueryBuilder`).
+- `queryset_aware=True` builders receive the intermediate queryset to pre-compute in Python and emit literal `Value()`s.
 
 ### Query Performance: SQL vs Python
 
 Do set-based work (filter, sort, paginate, aggregate, join) in SQL — always. But a **display-only, per-row derived value** is often cheaper in Python:
 
-- Postgres can't reference a sibling `SELECT` alias, so a Django annotation referencing **other annotations** re-inlines their full SQL — duplicating expensive subqueries already selected as columns. A `CASE` over `risk_values_count`/`derived_damage_value` can double the query.
-- Move such a value to Python **only if** it's never used in `.filter()`/`.order_by()`/`.aggregate()`, its inputs are already-selected columns, and the row set is bounded. Compute it in the table element's `get_value()` (see `compute_risk_value_status`, `compute_risk_profile_status_tag`).
+- Postgres can't reference a sibling `SELECT` alias, so a Django annotation referencing **other annotations** re-inlines their full SQL — duplicating expensive subqueries already selected as columns. A `CASE` over two expensive annotations can double the query.
+- Move such a value to Python **only if** it's never used in `.filter()`/`.order_by()`/`.aggregate()`, its inputs are already-selected columns, and the row set is bounded. Compute it in the table element's `get_value()`.
 - When porting SQL→Python, mirror SQL semantics exactly: NULL comparisons (`NOT (x = NULL)` is NULL, not `True`) and rounding mode (Postgres half-away-from-zero vs Python banker's `round()`).
 - Verify with `len(str(qs.query))` + `SELECT` count before/after, and `qs.explain(analyze=True)`.
 
@@ -188,26 +187,59 @@ Tasks are auto-discovered from each app's `tasks.py` using `@shared_task`.
 
 ### App Convention
 
-Each app typically follows this structure:
+Apps are organised in packages, with one module per entity (`<prefix>`, snake_case). This is the layout the code generators produce:
 
 ```
 app_name/
-├── managers/               # Business logic (manager, repository, storage managers)
+├── apps.py                 # MontrekAppConfig with the app's access policy
+├── models/
+│   ├── __init__.py         # re-exports the models
+│   ├── <prefix>_hub_models.py      # hub, hub value date, links
+│   └── <prefix>_sat_models.py      # satellites
+├── repositories/
+│   └── <prefix>_repositories.py    # queries (annotation pipeline, ORM calls)
+├── managers/
+│   └── <prefix>_managers.py        # business logic, table/report managers
+├── forms/
+│   └── <prefix>_forms.py
+├── pages/
+│   └── <prefix>_pages.py
+├── views/
+│   ├── __init__.py
+│   └── <prefix>_views.py
+├── urls/
+│   ├── __init__.py         # collects the urlpatterns of the modules
+│   └── <prefix>_urls.py
 ├── tests/
-│   ├── factories/          # Factory Boy fixtures
+│   ├── factories/
+│   │   ├── <prefix>_hub_factories.py
+│   │   └── <prefix>_sat_factories.py
 │   ├── managers/
+│   ├── repositories/
 │   └── views/
-├── migrations/
-├── models.py
-├── views.py
-├── urls.py
-├── forms.py
-└── apps.py
+│       └── test_<prefix>_views.py
+└── migrations/
 ```
+
+File uploads and exports add `<prefix>_registry_*` / `<prefix>_export_registry_*` modules (plus a processor and an upload/export manager in `managers/`) to the same packages. Some older apps still use flat modules (`models.py`, `views.py`, ...); follow the existing layout of the app you work in.
+
+#### Code generation
+
+Prefer the `code_generation` management commands when introducing new montrek structures, and adapt the generated code afterwards rather than writing the boilerplate by hand. Run them from `montrek/`:
+
+| Command | Generates |
+| --- | --- |
+| `start_montrek_app <name> --access open\|restricted [-p <dir>] [--permissions <dotted.path>]` | a new app with its `MontrekAppConfig` and access policy |
+| `generate_table <app_path> <Prefix>` | a full entity: hub + satellite models, repository, managers, pages, forms, views, urls, factories and view tests |
+| `generate_link <path_in> <model_in> <path_out> <model_out>` | a `MontrekOneToManyLinkABC` link between two hubs, plus the repository annotation and factory post-generation hook; change the base class if a different cardinality is needed |
+| `generate_file_upload <app_path> <Prefix>` | a file upload registry with processor, upload manager, views and tests |
+| `generate_file_export <app_path> <Prefix>` | a file export registry with processor, export manager, views and tests |
+
+The building-block commands those wrap (`generate_hub_models`, `generate_repositories`, `generate_views`, ...) can be run individually. By default generated code is appended to existing files; `--replace` overwrites them.
 
 ### Environment Configuration
 
-All configuration is via `.env` (one level up, at `montrek_competo/.env`). See `.env.template` for all required variables. Key variables: `SECRET_KEY`, `DEBUG`, `DB_ENGINE` (postgresql/mariadb), `DB_HOST`, `PROJECT_NAME`, `DEPLOY_HOST`.
+All configuration is via `.env` (one level up, in the project root). See `.env.template` for all required variables. Key variables: `SECRET_KEY`, `DEBUG`, `DB_ENGINE` (postgresql/mariadb), `DB_HOST`, `PROJECT_NAME`, `DEPLOY_HOST`.
 
 ### Authentication
 
