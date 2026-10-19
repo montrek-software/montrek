@@ -18,6 +18,7 @@ module = [
   "decouple.*",
   "django_pandas.*",
   "encrypted_fields.*",
+  "google_auth_oauthlib.*",
   "kombu.*",
   "mozilla_django_oidc.*",
   "networkx.*",
@@ -44,6 +45,12 @@ module = [
   "mt_tools.*",
 ]
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+# mypy 1.19 crashes on the generic TypedDicts with type parameter defaults
+# in langchain.agents (e.g. AgentState[ResponseT]); treat the module as Any.
+module = ["langchain.agents", "langchain.agents.*"]
+follow_imports = "skip"
 
 [tool.django-stubs]
 django_settings_module = "montrek.settings"
