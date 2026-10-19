@@ -26,6 +26,7 @@ from django.db.models import (
     Case,
     CharField,
     F,
+    Exists,
     ExpressionWrapper,
     FilteredRelation,
     FloatField,
@@ -53,17 +54,34 @@ class CrossSatelliteFilter:
                                    \\
                                     --LinkHubBHubC--> HubC --SatC (filter: field_c = "X")
 
-    satellite_class: the satellite on the cross-hub to filter on (e.g. SatC)
-    link_class:      the link connecting the fetched hub to the cross-hub (e.g. LinkHubBHubC)
-    filter_dict:     ORM filter kwargs applied to the cross satellite (e.g. {"field_c": "X"})
-    reversed_link:   True if the fetched hub sits on the hub_out side of link_class
-                     (i.e. the cross hub is reached via hub_in)
+    By default the filter is anchored at the fetched hub. With
+    ``parent_link_level`` it is anchored at a hub along the parent link chain
+    instead, correlated to the link row being traversed. Levels are counted
+    from the fetched hub towards the outer hub:
+
+        Fetched --link_class-- L0 --parent_link_classes[0]-- L1 --...-- Outer
+
+    Example (CrmDocument perspective, fetching the country of the main contact):
+        CountryHub --LinkContactCountry-- ContactHub (L0, ContactStaticSatellite:
+        is_main_contact=True) --LinkContactClient-- ClientHub (L1) --...
+
+    satellite_class:   the satellite on the cross-hub to filter on (e.g. SatC)
+    link_class:        the link connecting the anchor hub to the cross-hub
+                       (e.g. LinkHubBHubC); None if satellite_class sits on the
+                       anchor hub itself
+    filter_dict:       ORM filter kwargs applied to the cross satellite
+                       (e.g. {"field_c": "X"})
+    reversed_link:     True if the anchor hub sits on the hub_out side of
+                       link_class (i.e. the cross hub is reached via hub_in)
+    parent_link_level: None to anchor at the fetched hub, otherwise the level
+                       of the anchor hub in the parent link chain (see above)
     """
 
-    satellite_class: type
-    link_class: type
+    satellite_class: type[MontrekSatelliteBaseABC]
+    link_class: type[MontrekLinkABC] | None = None
     filter_dict: dict[str, Any] = field(default_factory=dict)
     reversed_link: bool = False
+    parent_link_level: int | None = None
 
 
 @dataclass
@@ -601,15 +619,21 @@ class MultipleLinksCheckMixin(HasLinkAttrs):
     def _get_parent_db_name_und_link_string(
         self, hub_field: str
     ) -> tuple[str, list[str]]:
-        db_name = hub_field
+        hub_paths, parent_link_strings = self._get_parent_chain_paths(hub_field)
+        return hub_paths[-1], parent_link_strings
+
+    def _get_parent_chain_paths(self, hub_field: str) -> tuple[list[str], list[str]]:
+        """Return the lookup paths of each hub along the parent link chain
+        (index = parent link level) and of each parent link in between."""
+        hub_paths = [hub_field]
         parent_link_strings = []
         for i, link_class in enumerate(self.parent_link_classes):
             is_reversed = self.parent_link_reversed[i]
             parent_hub_field = "hub_out" if is_reversed else "hub_in"
-            db_name += "__" + link_class.__name__.lower()
-            parent_link_strings.append(db_name)
-            db_name += f"__{parent_hub_field}"
-        return db_name, parent_link_strings
+            link_path = f"{hub_paths[-1]}__{link_class.__name__.lower()}"
+            parent_link_strings.append(link_path)
+            hub_paths.append(f"{link_path}__{parent_hub_field}")
+        return hub_paths, parent_link_strings
 
     def _get_parent_link_filters(
         self, reference_date: datetime.datetime, parent_link_strings: list[str]
@@ -925,17 +949,46 @@ class LinkedSatelliteSubqueryBuilderBase(
         self.parent_link_reversed = parent_link_reversed
         self.link_satellite_filter = link_satellite_filter
         self.cross_satellite_filters = cross_satellite_filters
+        self._check_cross_satellite_filters()
         self.value_date_scope_path = value_date_scope_path
         self.link_hub_value_date_filter = link_hub_value_date_filter
+
+    def _check_cross_satellite_filters(self) -> None:
+        for csf in self.cross_satellite_filters:
+            if csf.parent_link_level is None:
+                continue
+            if self.satellite_class.is_timeseries:
+                # The timeseries link traversal starts from the linked hub's
+                # HubValueDate and does not walk the parent link chain.
+                raise NotImplementedError(
+                    "CrossSatelliteFilter.parent_link_level is not supported for "
+                    f"timeseries satellite {self.satellite_class.__name__}"
+                )
+            if not 0 <= csf.parent_link_level <= len(self.parent_link_classes):
+                raise ValueError(
+                    f"CrossSatelliteFilter.parent_link_level must be between 0 and "
+                    f"{len(self.parent_link_classes)}, got {csf.parent_link_level}"
+                )
 
     def get_link_query(
         self, hub_field: str, reference_date: datetime.datetime, outer_ref: str = "hub"
     ) -> QuerySet:
-        hub_db_field_name, parent_link_strings = (
-            self._get_parent_db_name_und_link_string(hub_field)
-        )
+        hub_paths, parent_link_strings = self._get_parent_chain_paths(hub_field)
+        hub_db_field_name = hub_paths[-1]
         parent_link_filters = self._get_parent_link_filters(
             reference_date, parent_link_strings
+        )
+        # Must come after the parent link filters within the same filter() call
+        # so the OuterRef paths reuse their joins and stay correlated to the
+        # traversed link row.
+        parent_chain_cross_filter = Q(
+            *(
+                self._build_cross_satellite_exists(
+                    csf, hub_paths[csf.parent_link_level], reference_date
+                )
+                for csf in self.cross_satellite_filters
+                if csf.parent_link_level is not None
+            )
         )
         # Plain hub-level links carry no value_date of their own, so without this
         # the link traversal matches every linked hub ever connected (across all
@@ -966,6 +1019,7 @@ class LinkedSatelliteSubqueryBuilderBase(
                 }
             )
             & Q(**parent_link_filters)
+            & parent_chain_cross_filter
             & value_date_scope
         )
 
@@ -1002,47 +1056,71 @@ class LinkedSatelliteSubqueryBuilderBase(
             ),
         )
 
-    def _build_cross_satellite_filter_dict(
-        self, reference_date: datetime.datetime
-    ) -> dict:
-        """Build ORM filter kwargs that traverse from the fetched satellite's hub
-        through a second link to a different hub's satellite."""
-        result = {}
-        hub_prefix = (
+    def _build_cross_satellite_filter(self, reference_date: datetime.datetime) -> Q:
+        """Build the filter for the fetched satellite from all cross satellite
+        filters anchored at the fetched hub. Filters anchored along the parent
+        link chain are applied in :meth:`get_link_query` instead."""
+        hub_path = (
             "hub_value_date__hub"
             if self.satellite_class.is_timeseries
             else "hub_entity"
         )
+        return Q(
+            *(
+                self._build_cross_satellite_exists(csf, hub_path, reference_date)
+                for csf in self.cross_satellite_filters
+                if csf.parent_link_level is None
+            )
+        )
 
-        for csf in self.cross_satellite_filters:
-            link_lower = csf.link_class.__name__.lower()
-            hub_field = "hub_in" if csf.reversed_link else "hub_out"
-            sat_lower = csf.satellite_class.__name__.lower()
+    @staticmethod
+    def _build_cross_satellite_exists(
+        csf: CrossSatelliteFilter,
+        anchor_hub_path: str,
+        reference_date: datetime.datetime,
+    ) -> Exists:
+        """Return an EXISTS clause checking that the hub at ``anchor_hub_path``
+        of the outer query has a valid cross satellite matching
+        ``csf.filter_dict``, either directly or via a valid ``csf.link_class``.
 
-            link_path = f"{hub_prefix}__{link_lower}"
-            hub_path = f"{link_path}__{hub_field}"
-            if getattr(csf.satellite_class, "is_timeseries", False):
-                # TS satellites are not directly reachable from the cross-hub;
-                # HubForeignKey sets related_name="hub_value_date" on all hub-value-date
-                # models, so the path is hub → hub_value_date → satellite.
-                sat_path = f"{hub_path}__hub_value_date__{sat_lower}"
-            else:
-                sat_path = f"{hub_path}__{sat_lower}"
+        EXISTS (instead of joins) keeps one row per outer row, even if several
+        cross hubs match."""
+        # TS satellites are not directly reachable from the hub; HubForeignKey
+        # sets related_name="hub_value_date" on all hub-value-date models, so
+        # the path is hub → hub_value_date → satellite.
+        sat_hub_field = (
+            "hub_value_date__hub"
+            if getattr(csf.satellite_class, "is_timeseries", False)
+            else "hub_entity"
+        )
+        validity = {
+            "state_date_start__lte": reference_date,
+            "state_date_end__gt": reference_date,
+        }
+        if csf.link_class is None:
+            return Exists(
+                csf.satellite_class.objects.filter(
+                    **{sat_hub_field: OuterRef(anchor_hub_path)},
+                    **validity,
+                    **csf.filter_dict,
+                )
+            )
 
-            # Link validity
-            result[f"{link_path}__state_date_start__lte"] = reference_date
-            result[f"{link_path}__state_date_end__gt"] = reference_date
-            # Target hub validity
-            result[f"{hub_path}__state_date_start__lte"] = reference_date
-            result[f"{hub_path}__state_date_end__gt"] = reference_date
-            # Cross satellite validity
-            result[f"{sat_path}__state_date_start__lte"] = reference_date
-            result[f"{sat_path}__state_date_end__gt"] = reference_date
-            # User-supplied field filters
-            for key, value in csf.filter_dict.items():
-                result[f"{sat_path}__{key}"] = value
-
-        return result
+        anchor_field = "hub_out" if csf.reversed_link else "hub_in"
+        cross_field = "hub_in" if csf.reversed_link else "hub_out"
+        cross_sat_qs = csf.satellite_class.objects.filter(
+            **{sat_hub_field: OuterRef(cross_field)},
+            **validity,
+            **csf.filter_dict,
+        )
+        return Exists(
+            csf.link_class.objects.filter(
+                Exists(cross_sat_qs),
+                **{anchor_field: OuterRef(anchor_hub_path)},
+                **validity,
+                **{f"{cross_field}__{key}": value for key, value in validity.items()},
+            )
+        )
 
     def _link_hubs_and_get_subquery(
         self,
@@ -1052,7 +1130,7 @@ class LinkedSatelliteSubqueryBuilderBase(
     ) -> Subquery:
         sat_query = self.satellite_class.objects.filter(
             self.link_satellite_filter,
-            **self._build_cross_satellite_filter_dict(reference_date),
+            self._build_cross_satellite_filter(reference_date),
             **self.subquery_filter(
                 reference_date,
                 lookup_field="hub_entity",
@@ -1141,7 +1219,7 @@ class LinkedSatelliteSubqueryBuilderBase(
                 )
             ),
             self.link_satellite_filter,
-            Q(**self._build_cross_satellite_filter_dict(reference_date)),
+            self._build_cross_satellite_filter(reference_date),
             Q(**(value_date_filter or {})),
         )
         if self.agg_func == LinkAggFunctionEnum.JSON_AGG:
@@ -1202,7 +1280,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         """
         sat_pk_qs = self.satellite_class.objects.filter(
             self.link_satellite_filter,
-            **self._build_cross_satellite_filter_dict(reference_date),
+            self._build_cross_satellite_filter(reference_date),
             **self.subquery_filter(
                 reference_date,
                 lookup_field="hub_entity",
@@ -1232,7 +1310,7 @@ class LinkedSatelliteSubqueryBuilderBase(
         """
         sat_pk_qs = self.satellite_class.objects.filter(
             self.link_satellite_filter,
-            **self._build_cross_satellite_filter_dict(reference_date),
+            self._build_cross_satellite_filter(reference_date),
             **self.subquery_filter(
                 reference_date,
                 lookup_field="hub_value_date",
@@ -1478,7 +1556,7 @@ class LinkedHubPairedJsonSubqueryBuilder(LinkedSatelliteSubqueryBuilderBase):
                     )
                 ),
                 self.link_satellite_filter,
-                Q(**self._build_cross_satellite_filter_dict(reference_date)),
+                self._build_cross_satellite_filter(reference_date),
             ).values(field)[:1]
         )
 

@@ -4414,6 +4414,188 @@ class TestCrossSatelliteFilter(TestCase):
         self.assertEqual(queryset.count(), 1)
         self.assertIsNone(queryset[0].field_d1_str)
 
+    def test_multiple_matching_cross_hubs_return_single_value(self):
+        """Two matching HubCs on the same HubD must not duplicate the fetched row."""
+        satb, satd = self._make_hub_b_with_matching_hub_d("B-multi", "D-multi")
+        hubc = me_factories.HubCFactory()
+        me_factories.SatC1Factory(hub_entity=hubc, field_c1_str="matched")
+        me_factories.LinkHubCHubDFactory(hub_in=hubc, hub_out=satd.hub_entity)
+
+        repo = HubBRepositoryWithCrossSatFilter()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(json.loads(queryset[0].field_d1_str), ["D-multi"])
+
+
+class TestCrossSatelliteFilterParentLinkLevel(TestCase):
+    """Tests for CrossSatelliteFilter.parent_link_level.
+
+    Model structure used (HubB perspective, fetching SatC1 via a parent link):
+        HubB (L1) --LinkHubBHubD--> HubD (L0) <--LinkHubCHubD-- HubC --SatC1 (fetched)
+    """
+
+    @staticmethod
+    def _repository_class(*cross_satellite_filters: CrossSatelliteFilter):
+        class HubBRepositoryWithParentLevelFilter(MontrekRepository):
+            hub_class = me_models.HubB
+
+            def set_annotations(self):
+                self.add_satellite_fields_annotations(me_models.SatB1, ["field_b1_str"])
+                self.add_linked_satellites_field_annotations(
+                    me_models.SatC1,
+                    me_models.LinkHubCHubD,
+                    ["field_c1_str"],
+                    reversed_link=True,
+                    parent_link_classes=(me_models.LinkHubBHubD,),
+                    parent_link_reversed=(False,),
+                    cross_satellite_filters=cross_satellite_filters,
+                )
+
+        return HubBRepositoryWithParentLevelFilter
+
+    @staticmethod
+    def _link_hub_d_to_hub_c(satd, c1_str: str):
+        satc = me_factories.SatC1Factory(field_c1_str=c1_str)
+        me_factories.LinkHubCHubDFactory(
+            hub_in=satc.hub_entity, hub_out=satd.hub_entity
+        )
+        return satc
+
+    def test_level_0_is_correlated_to_traversed_hub(self):
+        """Only the HubC behind the matching HubD is returned, not the one
+        behind the other HubD linked to the same HubB."""
+        satb = me_factories.SatB1Factory(field_b1_str="B")
+        satd_main = me_factories.SatD1Factory(field_d1_str="main")
+        satd_other = me_factories.SatD1Factory(field_d1_str="other")
+        for satd in (satd_main, satd_other):
+            me_factories.LinkHubBHubDFactory(
+                hub_in=satb.hub_entity, hub_out=satd.hub_entity
+            )
+        self._link_hub_d_to_hub_c(satd_main, "C-main")
+        self._link_hub_d_to_hub_c(satd_other, "C-other")
+
+        repo = self._repository_class(
+            CrossSatelliteFilter(
+                satellite_class=me_models.SatD1,
+                filter_dict={"field_d1_str": "main"},
+                parent_link_level=0,
+            )
+        )()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertEqual(json.loads(queryset[0].field_c1_str), ["C-main"])
+
+    def test_level_1_is_correlated_to_outer_hub(self):
+        """A HubD shared by two HubBs only passes for the HubB that matches,
+        even though the other HubB reaches the same HubD."""
+        satb_yes = me_factories.SatB1Factory(field_b1_str="yes")
+        satb_no = me_factories.SatB1Factory(field_b1_str="no")
+        satd = me_factories.SatD1Factory()
+        for satb in (satb_yes, satb_no):
+            me_factories.LinkHubBHubDFactory(
+                hub_in=satb.hub_entity, hub_out=satd.hub_entity
+            )
+        self._link_hub_d_to_hub_c(satd, "C")
+
+        repo = self._repository_class(
+            CrossSatelliteFilter(
+                satellite_class=me_models.SatB1,
+                filter_dict={"field_b1_str": "yes"},
+                parent_link_level=1,
+            )
+        )()
+        queryset = repo.receive().order_by("field_b1_str")
+        self.assertEqual(queryset.count(), 2)
+        self.assertIsNone(queryset[0].field_c1_str)  # "no"
+        self.assertEqual(json.loads(queryset[1].field_c1_str), ["C"])  # "yes"
+
+    def test_level_0_with_cross_link(self):
+        """Anchor hub reaches the cross satellite via a further link."""
+        satb_yes = me_factories.SatB1Factory(field_b1_str="yes")
+        satb_no = me_factories.SatB1Factory(field_b1_str="no")
+        satd_shared = me_factories.SatD1Factory()
+        satd_no_only = me_factories.SatD1Factory()
+        for satb, satd in (
+            (satb_yes, satd_shared),
+            (satb_no, satd_shared),
+            (satb_no, satd_no_only),
+        ):
+            me_factories.LinkHubBHubDFactory(
+                hub_in=satb.hub_entity, hub_out=satd.hub_entity
+            )
+        self._link_hub_d_to_hub_c(satd_shared, "C-shared")
+        self._link_hub_d_to_hub_c(satd_no_only, "C-no-only")
+
+        repo = self._repository_class(
+            CrossSatelliteFilter(
+                satellite_class=me_models.SatB1,
+                link_class=me_models.LinkHubBHubD,
+                filter_dict={"field_b1_str": "yes"},
+                reversed_link=True,
+                parent_link_level=0,
+            )
+        )()
+        queryset = repo.receive().filter(hub=satb_no.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        # Only the HubD that is also linked to a "yes" HubB passes
+        self.assertEqual(json.loads(queryset[0].field_c1_str), ["C-shared"])
+
+    def test_expired_anchor_satellite_is_excluded(self):
+        satb = me_factories.SatB1Factory()
+        satd = me_factories.SatD1Factory(
+            field_d1_str="main",
+            state_date_end=montrek_time(2020, 1, 1),
+        )
+        me_factories.LinkHubBHubDFactory(
+            hub_in=satb.hub_entity, hub_out=satd.hub_entity
+        )
+        self._link_hub_d_to_hub_c(satd, "C")
+
+        repo = self._repository_class(
+            CrossSatelliteFilter(
+                satellite_class=me_models.SatD1,
+                filter_dict={"field_d1_str": "main"},
+                parent_link_level=0,
+            )
+        )()
+        queryset = repo.receive().filter(hub=satb.hub_entity)
+        self.assertEqual(queryset.count(), 1)
+        self.assertIsNone(queryset[0].field_c1_str)
+
+    def test_level_out_of_range_raises(self):
+        repo_class = self._repository_class(
+            CrossSatelliteFilter(
+                satellite_class=me_models.SatB1,
+                filter_dict={"field_b1_str": "yes"},
+                parent_link_level=2,
+            )
+        )
+        with self.assertRaisesMessage(ValueError, "between 0 and 1, got 2"):
+            repo_class().receive()
+
+    def test_timeseries_satellite_raises(self):
+        class HubBTSParentLevelFilter(MontrekRepository):
+            hub_class = me_models.HubB
+
+            def set_annotations(self):
+                self.add_linked_satellites_field_annotations(
+                    me_models.SatTSC2,
+                    me_models.LinkHubCHubD,
+                    ["field_tsc2_float"],
+                    reversed_link=True,
+                    parent_link_classes=(me_models.LinkHubBHubD,),
+                    parent_link_reversed=(False,),
+                    cross_satellite_filters=(
+                        CrossSatelliteFilter(
+                            satellite_class=me_models.SatD1,
+                            parent_link_level=0,
+                        ),
+                    ),
+                )
+
+        with self.assertRaises(NotImplementedError):
+            HubBTSParentLevelFilter().receive()
+
 
 class TestFilterByLinkedHub(TestCase):
     """Tests for MontrekRepository.filter_by_linked_hub.
