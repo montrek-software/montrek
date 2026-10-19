@@ -100,7 +100,7 @@ Make sure that the produced code is ruff and sonarcube compliant
 
 - Assume the reader can read Python. Comment only when it adds understanding beyond what the code says: intent, invariants, non-obvious constraints, why an alternative doesn't work.
 - Comments describe the current state of the code, never its history. Don't explain what was changed or why it changed; that belongs in the commit message or PR.
-- Never mention classes, functions or other names from `mt_*` apps in comments or docstrings of framework code; they may be confidential. Use neutral examples, e.g. from `montrek_example`.
+- Names from `mt_*` apps (classes, functions, fields) may be confidential. Never mention them in comments or docstrings of framework code (any app that isn't an `mt_*` app); use neutral examples, e.g. from `montrek_example`, instead. Code inside an `mt_*` app may reference its own classes and those of other `mt_*` apps.
 
 ## Architecture
 
