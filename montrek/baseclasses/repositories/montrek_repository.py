@@ -195,37 +195,68 @@ class MontrekRepository:
         hub: MontrekHubABC | int,
         *,
         reversed_link: bool = False,
+        parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
+        parent_link_reversed: tuple[bool, ...] | list[bool] | None = None,
     ) -> QuerySet:
         """Filter a queryset returned by receive() to rows linked to a specific hub.
 
         This is the ORM equivalent of filtering on a fund_id / hub_entity_id
         annotation that was built by LinkedSatelliteSubqueryBuilder.  Filtering
         on a Subquery annotation forces a correlated subquery per row (slow);
-        this method generates a JOIN instead.
+        this method generates JOINs instead.
 
-        The link_class name and reversed_link convention match those used in
-        add_linked_satellites_field_annotations so the two always stay in sync.
+        The link_class, reversed_link and parent link conventions match those
+        used in add_linked_satellites_field_annotations so the two always stay
+        in sync:
+
+            Target --link_class-- L0 --parent_link_classes[0]-- ... -- This hub
+
+        Every link and every hub along the chain must be valid at the reference
+        date. A row is returned once per matching chain, so a hub reaching the
+        target through several valid chains appears several times.
 
         Args:
             queryset:      A queryset produced by receive().
-            link_class:    The link model connecting this repository's hub to
-                           the target hub (e.g. LinkOrderCustomer).
+            link_class:    The link model connecting the target hub to the hub
+                           next to it in the chain (this repository's hub if
+                           there are no parent links, e.g. LinkOrderCustomer).
             hub:           The target hub instance, or its pk, to filter by.
-            reversed_link: True when this hub sits on hub_out and the target hub
-                           is on hub_in (mirrors the reversed_link flag used in
+            reversed_link: True when the target hub is on hub_in of link_class
+                           (mirrors the reversed_link flag used in
                            add_linked_satellites_field_annotations).
+            parent_link_classes: The links between link_class and this
+                           repository's hub, starting next to link_class
+                           (e.g. HubA --LinkHubAHubC-- HubC --LinkHubCHubD--
+                           HubD: link_class=LinkHubCHubD,
+                           parent_link_classes=(LinkHubAHubC,)).
+            parent_link_reversed: Per parent link, True when the hub closer to
+                           this repository's hub is on hub_out. Defaults to
+                           reversed_link for every parent link.
         """
-        link_name = link_class.__name__.lower()
-        target_field = "hub_in" if reversed_link else "hub_out"
-        return queryset.filter(
-            **{
-                f"hub__{link_name}__{target_field}": hub,
-                f"hub__{link_name}__state_date_start__lte": self.reference_date,
-                f"hub__{link_name}__state_date_end__gt": self.reference_date,
-                f"hub__{link_name}__{target_field}__state_date_start__lte": self.reference_date,
-                f"hub__{link_name}__{target_field}__state_date_end__gt": self.reference_date,
-            }
-        )
+        if parent_link_reversed is None:
+            parent_link_reversed = [reversed_link for _ in parent_link_classes]
+        if len(parent_link_reversed) != len(parent_link_classes):
+            raise ValueError(
+                "'parent_link_classes' and 'parent_link_reversed' must have same length"
+            )
+        chain = [
+            *zip(
+                reversed(parent_link_classes),
+                reversed(parent_link_reversed),
+                strict=True,
+            ),
+            (link_class, reversed_link),
+        ]
+        filters: dict[str, Any] = {}
+        hub_path = "hub"
+        for chain_link_class, is_reversed in chain:
+            link_path = f"{hub_path}__{chain_link_class.__name__.lower()}"
+            hub_path = f"{link_path}__{'hub_in' if is_reversed else 'hub_out'}"
+            for path in (link_path, hub_path):
+                filters[f"{path}__state_date_start__lte"] = self.reference_date
+                filters[f"{path}__state_date_end__gt"] = self.reference_date
+        filters[hub_path] = hub
+        return queryset.filter(**filters)
 
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
