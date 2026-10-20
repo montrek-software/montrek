@@ -3,6 +3,7 @@ import math
 import os
 from dataclasses import dataclass
 from decimal import Decimal
+from functools import cached_property
 from io import BytesIO
 from collections.abc import Callable, Mapping
 from typing import ClassVar
@@ -56,6 +57,9 @@ class MontrekTableManagerABC(
     latex_max_cell_chars: int | None = None
     latex_long_table: bool = False
     excel_formatter_class: type[MontrekExcelFormatter] = MontrekExcelFormatter
+    # Manager whose table elements (and repository) back the CSV, Excel and JSON
+    # exports when they need more than the on-screen table shows.
+    export_manager_class: ClassVar[type["MontrekTableManagerABC"] | None] = None
     # Set on first use by ``get_display_field_names``; class level so subclasses
     # with their own ``__init__`` signature cannot miss it.
     _table_element_field_names: dict[str, str] | None = None
@@ -78,6 +82,15 @@ class MontrekTableManagerABC(
     @property
     def table_elements(self) -> TableElementsType:
         return ()
+
+    @cached_property
+    def export_manager(self) -> "MontrekTableManagerABC":
+        if self.export_manager_class is None:
+            return self
+        export_manager = self.export_manager_class(self.session_data)
+        # Shared, so messages raised during an export reach the view.
+        export_manager.messages = self.messages
+        return export_manager
 
     @property
     def document_name(self) -> str:
@@ -225,8 +238,9 @@ class MontrekTableManagerABC(
         )
 
     def to_json(self) -> list[dict]:
-        serializer = TableSerializer(self.table_elements)
-        return serializer.serialize_all(self.get_full_table())
+        export_manager = self.export_manager
+        serializer = TableSerializer(export_manager.table_elements)
+        return serializer.serialize_all(export_manager.get_full_table())
 
     def to_latex(self):
         return LatexTableConverter(
@@ -256,10 +270,12 @@ class MontrekTableManagerABC(
         return self.get_df()
 
     def download_or_mail_csv(self) -> HttpResponse:
-        return self._download_or_mail("csv", self._download_csv)
+        export_manager = self.export_manager
+        return export_manager._download_or_mail("csv", export_manager._download_csv)
 
     def download_or_mail_excel(self) -> HttpResponse:
-        return self._download_or_mail("xlsx", self._download_excel)
+        export_manager = self.export_manager
+        return export_manager._download_or_mail("xlsx", export_manager._download_excel)
 
     def _download_or_mail(
         self, filetype: str, download_method: Callable[[], HttpResponse]
