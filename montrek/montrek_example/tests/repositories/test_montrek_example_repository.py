@@ -4749,6 +4749,81 @@ class TestFilterByLinkedHub(TestCase):
         self.assertNotIn(self.satd2.hub_entity_id, hub_ids)
 
 
+class TestFilterByLinkedHubParentLinks(TestCase):
+    """filter_by_linked_hub through parent links, along the chain
+    HubA --LinkHubAHubC-- HubC --LinkHubCHubD-- HubD."""
+
+    def setUp(self):
+        self.ref = timezone.now()
+        self.hub_d = me_factories.HubDFactory()
+        self.hub_d_other = me_factories.HubDFactory()
+        self.hub_a_linked = self._create_chain(self.hub_d)
+        self.hub_a_other = self._create_chain(self.hub_d_other)
+
+    def _create_chain(
+        self, hub_d, parent_link_end=None, link_end=None
+    ) -> me_models.HubA:
+        hub_a = cast(me_models.SatA1, me_factories.SatA1Factory()).hub_entity
+        hub_c = me_factories.HubCFactory()
+        parent_link_kwargs = (
+            {"state_date_end": parent_link_end} if parent_link_end else {}
+        )
+        link_kwargs = {"state_date_end": link_end} if link_end else {}
+        me_factories.LinkHubAHubCFactory(
+            hub_in=hub_a, hub_out=hub_c, **parent_link_kwargs
+        )
+        me_factories.LinkHubCHubDFactory(hub_in=hub_c, hub_out=hub_d, **link_kwargs)
+        return hub_a
+
+    def _filtered_hub_a_ids(self, hub_d) -> list[int]:
+        repo = HubARepository({"reference_date": self.ref})
+        qs = repo.filter_by_linked_hub(
+            repo.receive(),
+            me_models.LinkHubCHubD,
+            hub_d,
+            parent_link_classes=(me_models.LinkHubAHubC,),
+        )
+        return list(qs.values_list("hub_id", flat=True))
+
+    def test_returns_only_rows_linked_through_the_chain(self):
+        self.assertEqual(self._filtered_hub_a_ids(self.hub_d), [self.hub_a_linked.id])
+
+    def test_accepts_hub_pk(self):
+        self.assertEqual(
+            self._filtered_hub_a_ids(self.hub_d.pk), [self.hub_a_linked.id]
+        )
+
+    def test_expired_parent_link_is_excluded(self):
+        hub_a = self._create_chain(self.hub_d, parent_link_end=montrek_time(2020, 1, 1))
+        self.assertNotIn(hub_a.id, self._filtered_hub_a_ids(self.hub_d))
+
+    def test_expired_link_is_excluded(self):
+        hub_a = self._create_chain(self.hub_d, link_end=montrek_time(2020, 1, 1))
+        self.assertNotIn(hub_a.id, self._filtered_hub_a_ids(self.hub_d))
+
+    def test_reversed_chain(self):
+        repo = HubDRepository()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(),
+            me_models.LinkHubAHubC,
+            self.hub_a_linked,
+            reversed_link=True,
+            parent_link_classes=(me_models.LinkHubCHubD,),
+        )
+        self.assertEqual(list(qs.values_list("hub_id", flat=True)), [self.hub_d.id])
+
+    def test_mismatched_parent_link_reversed_raises(self):
+        repo = HubARepository({"reference_date": self.ref})
+        with self.assertRaises(ValueError):
+            repo.filter_by_linked_hub(
+                repo.receive(),
+                me_models.LinkHubCHubD,
+                self.hub_d,
+                parent_link_classes=(me_models.LinkHubAHubC,),
+                parent_link_reversed=(False, False),
+            )
+
+
 class TestTSSatelliteLinkSatelliteFilterCount(TestCase):
     """
     Regression: link_satellite_filter on a TS satellite with agg_func="count" must
