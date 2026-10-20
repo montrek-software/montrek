@@ -62,7 +62,6 @@ from baseclasses.managers.montrek_manager import (
 )
 from baseclasses.pages import MontrekPage, NoPage
 from baseclasses.sanitizer import HtmlSanitizer
-from baseclasses.serializers import MontrekSerializer
 from baseclasses.typing import SessionDataType
 from baseclasses.utils import TableMetaSessionData, get_content_type
 
@@ -489,9 +488,7 @@ class MontrekListView(
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
             self.manager.document_name, DownloadType.API
         )
-        query = self.manager.to_json()
-        serializer = MontrekSerializer(query, manager=self.manager, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(self.manager.to_json(), status=status.HTTP_200_OK)
 
     def refresh_data(self):
         self.manager.refresh_data_task.delay()
@@ -718,9 +715,7 @@ class MontrekDetailView(
         return kwargs
 
     def list_to_rest_api(self):
-        query = self.manager.to_json()
-        serializer = MontrekSerializer(query, manager=self.manager)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(self.manager.to_json(), status=status.HTTP_200_OK)
 
 
 class ReturnToSenderProtocol(Protocol):
@@ -930,9 +925,7 @@ class MontrekRestApiView(
         return True
 
     def get(self, request, *args, **kwargs):
-        query = self.manager.to_json()
-        serializer = MontrekSerializer(query, many=True, manager=self.manager)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(self.manager.to_json(), status=status.HTTP_200_OK)
 
     def view_dependent_session_data(
         self, session_data: SessionDataType

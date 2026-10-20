@@ -358,6 +358,17 @@ class MockEmptyMontrekTableManager(MockMontrekTableManager):
     repository_class = cast(type[MontrekRepository], MockEmptyRepository)
 
 
+class MockExportingMontrekTableManager(MontrekTableManager):
+    """Shows one column on screen, exports all columns of the export manager."""
+
+    repository_class = cast(type[MontrekRepository], MockRepository)
+    export_manager_class = MockMontrekTableManager
+
+    @property
+    def table_elements(self) -> tuple[te.TableElement, ...]:
+        return (te.StringTableElement(attr="field_a", name="Field A"),)
+
+
 class MockRepositoryFilterFieldsManager(MockMontrekTableManager):
     """Opts out of table-element filter fields: falls back to the repository."""
 
@@ -430,6 +441,16 @@ class MockMontrekDetailsManager(MontrekDetailsManager):
                 kwargs={},
                 hover_text="Link Text",
                 text="field_a",
+            ),
+        )
+
+
+class MockComparisonMontrekDetailsManager(MockMontrekDetailsManager):
+    @property
+    def table_elements(self) -> tuple[te.TableElement, ...]:
+        return (
+            te.ComparisonTableElement(
+                attr="field_b", name="Field B vs C", comp_attr="field_c"
             ),
         )
 

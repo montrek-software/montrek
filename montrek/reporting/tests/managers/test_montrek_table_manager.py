@@ -17,6 +17,7 @@ from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockCountingTableElementsManager,
     MockEmptyMontrekTableManager,
+    MockExportingMontrekTableManager,
     MockFilterFieldsTableManager,
     MockHtmlMontrekTableManager,
     MockLongMontrekTableManager,
@@ -364,6 +365,46 @@ class TestMontrekTableManager(TestCase):
         soup = BeautifulSoup(html, "html.parser")
         rows = soup.find("tbody").find_all("tr")
         self.assertEqual(len(rows), 3)
+
+
+class TestExportManager(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+
+    def test_export_manager_defaults_to_self(self):
+        manager = MockMontrekTableManager()
+        self.assertIs(manager.export_manager, manager)
+
+    def test_export_manager_shares_messages(self):
+        manager = MockExportingMontrekTableManager()
+        self.assertIsInstance(manager.export_manager, MockMontrekTableManager)
+        self.assertIs(manager.export_manager.messages, manager.messages)
+
+    def test_to_json_uses_export_manager(self):
+        self.assertEqual(
+            MockExportingMontrekTableManager().to_json(),
+            MockMontrekTableManager().to_json(),
+        )
+
+    @add_logged_in_user()
+    def test_download_csv_uses_export_manager(self):
+        manager = MockExportingMontrekTableManager({"user_id": self.user.id})
+        response = manager.download_or_mail_csv()
+        self.assertEqual(response.status_code, 200)
+        header = response.getvalue().decode().splitlines()[0]
+        self.assertEqual(header, "Field A,Field B,Field C,Field D,Field E,Link Text")
+
+    @add_logged_in_user()
+    def test_download_excel_uses_export_manager(self):
+        manager = MockExportingMontrekTableManager({"user_id": self.user.id})
+        response = manager.download_or_mail_excel()
+        self.assertEqual(response.status_code, 200)
+        with io.BytesIO(response.content) as f:
+            excel_file = pd.read_excel(f)
+        self.assertEqual(
+            excel_file.columns.to_list(),
+            ["Field A", "Field B", "Field C", "Field D", "Field E", "Link Text"],
+        )
 
 
 class TestTableElementFilterFields(TestCase):
