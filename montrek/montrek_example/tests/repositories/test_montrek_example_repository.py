@@ -2087,6 +2087,46 @@ class TestLinkOneToManyUpates(TestCase):
         self.assertEqual(link_2.state_date_end, MAX_DATE)
         self.assertGreater(link_2.state_date_start, MIN_DATE)
 
+    def test_rows_differing_only_in_links_create_separate_hubs(self):
+        hub_c2 = me_factories.HubCFactory()
+        hub_c3 = me_factories.HubCFactory()
+        import_df = pd.DataFrame(
+            {
+                "field_a1_int": [5, 5, 5],
+                "link_hub_a_hub_c": [self.hub_c, hub_c2, [hub_c2, hub_c3]],
+            }
+        )
+        hubs = self.repository.create_objects_from_data_frame(import_df)
+        self.assertEqual(len(hubs), 3)
+        self.assertEqual(len({hub.pk for hub in hubs}), 3)
+        self.assertEqual(self.repository.messages, [])
+        linked_hubs_c = [
+            set(
+                me_models.LinkHubAHubC.objects.filter(hub_in=hub).values_list(
+                    "hub_out", flat=True
+                )
+            )
+            for hub in hubs
+        ]
+        self.assertCountEqual(
+            linked_hubs_c,
+            [{self.hub_c.pk}, {hub_c2.pk}, {hub_c2.pk, hub_c3.pk}],
+        )
+
+    def test_rows_with_identical_links_are_dropped_as_duplicates(self):
+        import_df = pd.DataFrame(
+            {
+                "field_a1_int": [5, 5],
+                "link_hub_a_hub_c": [self.hub_c, self.hub_c],
+            }
+        )
+        hubs = self.repository.create_objects_from_data_frame(import_df)
+        self.assertEqual(len(hubs), 1)
+        self.assertEqual(
+            self.repository.messages[0].message,
+            "1 duplicated entries not uploaded!",
+        )
+
     def test_duplicate_links_are_ignored(self):
         hub_c2 = me_factories.HubCFactory()
         linked_hubs = [self.hub_c, hub_c2]
