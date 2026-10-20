@@ -1,4 +1,3 @@
-import datetime
 import math
 from collections.abc import Sequence
 from typing import Any, cast
@@ -14,6 +13,7 @@ from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
 from reporting.modules.excel_formatter import MontrekDetailsExcelFormatter
+from reporting.modules.table_serializer import TableSerializer
 
 
 class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
@@ -181,22 +181,5 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
         return latex_str
 
     def to_json(self) -> dict:
-        out_json = {}
-        for table_element in self.table_elements:
-            if isinstance(table_element, (te.LinkTableElement)):
-                continue
-            if isinstance(table_element, te.LinkTextTableElement):
-                out_json[table_element.text] = table_element.get_value(
-                    self.object_query
-                )
-            elif isinstance(table_element, te.LinkListTableElement):
-                values = table_element.get_value(self.object_query)
-
-                out_json[table_element.text] = str([val[1] for val in values])
-            else:
-                value = table_element.get_value(self.object_query)
-                if isinstance(value, datetime.datetime | datetime.date):
-                    value = value.isoformat()
-
-                out_json[table_element.attr] = value
-        return out_json
+        serializer = TableSerializer(self.table_elements)
+        return serializer.serialize_object(self.object_query)

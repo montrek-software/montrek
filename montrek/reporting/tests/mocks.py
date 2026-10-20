@@ -445,6 +445,16 @@ class MockMontrekDetailsManager(MontrekDetailsManager):
         )
 
 
+class MockComparisonMontrekDetailsManager(MockMontrekDetailsManager):
+    @property
+    def table_elements(self) -> tuple[te.TableElement, ...]:
+        return (
+            te.ComparisonTableElement(
+                attr="field_b", name="Field B vs C", comp_attr="field_c"
+            ),
+        )
+
+
 class MockMontrekDetailsManager5Cols(MockMontrekDetailsManager):
     table_cols: int = 5
     header_col_width: float = 0.5

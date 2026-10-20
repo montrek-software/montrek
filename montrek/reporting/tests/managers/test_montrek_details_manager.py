@@ -1,12 +1,15 @@
+import dataclasses
 import re
 from io import BytesIO
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
 from openpyxl import load_workbook
+from rest_framework.renderers import JSONRenderer
 from reporting.dataclasses import table_elements as te
 from reporting.managers.excel_export import write_excel_workbook
 from reporting.tests.mocks import (
+    MockComparisonMontrekDetailsManager,
     MockMontrekDetailsManager,
     MockMontrekDetailsManager5Cols,
     MockMontrekTableManager,
@@ -174,6 +177,14 @@ class TestMontrekDetailsManager(TestCase):
                 "field_e": 1.0,
             },
         )
+
+    def test_to_json_is_json_renderable(self):
+        json = MockComparisonMontrekDetailsManager().to_json()
+        self.assertEqual(
+            json,
+            {"field_b": dataclasses.asdict(te.CompValues.EQUAL.value)},
+        )
+        self.assertIsInstance(JSONRenderer().render(json), bytes)
 
 
 class TestMontrekDetailsManagerExcel(TestCase):
