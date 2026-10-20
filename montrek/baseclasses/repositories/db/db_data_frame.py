@@ -163,13 +163,20 @@ class DbDataFrame:
 
     def _drop_duplicates(self):
         satellite_columns = [c.name for c in self.annotator.satellite_fields()]
+        self.link_columns = self.get_link_field_names()
+        # Without identifier columns every row creates its own hub, so rows that
+        # only differ in their links are distinct entries, not duplicates.
+        if not self._has_identifier_columns():
+            satellite_columns += self.link_columns
         satellite_columns = [
             c
             for c in satellite_columns + ["hub_entity_id"]
             if c in self.data_frame.columns
         ]
 
-        duplicated_data_frame = self.data_frame.loc[:, satellite_columns].duplicated()
+        duplicated_data_frame = self._convert_lists_to_tuples(
+            self.data_frame.loc[:, satellite_columns]
+        ).duplicated()
         no_of_duplicated_entries = duplicated_data_frame.sum()
         if no_of_duplicated_entries == 0:
             return
@@ -179,6 +186,15 @@ class DbDataFrame:
             )
         )
         self.data_frame = self.data_frame.loc[~(duplicated_data_frame)]
+
+    def _has_identifier_columns(self) -> bool:
+        if "hub_entity_id" in self.data_frame.columns:
+            return True
+        return any(
+            field in self.data_frame.columns
+            for satellite_class in self.annotator.get_satellite_classes()
+            for field in satellite_class.identifier_fields
+        )
 
     def _drop_empty_rows(self):
         dropped_data_frame = self.data_frame.dropna(how="all")
