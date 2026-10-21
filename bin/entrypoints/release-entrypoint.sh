@@ -7,7 +7,7 @@
 # `condition: service_completed_successfully`.
 set -e
 
-./bin/local/sync-python-env.sh
+[[ -f /montrek/.montrek-image ]] || ./bin/local/sync-python-env.sh
 . .venv/bin/activate
 cd montrek
 /montrek/bin/entrypoints/startup-tasks.sh

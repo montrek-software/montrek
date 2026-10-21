@@ -7,5 +7,6 @@
 set -e
 
 python manage.py migrate
-python manage.py collectstatic --noinput
+# An app image collects them at build time into its read-only STATIC_ROOT.
+[[ -f /montrek/.montrek-image ]] || python manage.py collectstatic --noinput
 python manage.py runscript user.scripts.create_superuser

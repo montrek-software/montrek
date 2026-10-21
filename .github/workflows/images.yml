@@ -1,0 +1,163 @@
+name: Container images
+
+# montrek-base (Dockerfile): the system packages. Rebuilt when its inputs change,
+# weekly for security updates, or by hand.
+# montrek-app (Dockerfile.app): montrek-base plus code, locked dependencies and
+# static files. Built on every push to main and on version tags, from the exact
+# base digest it was tested with.
+#
+# Both go to the Forgejo package registry. Needs the repository secrets
+# FORGEJO_REGISTRY_USER and FORGEJO_REGISTRY_TOKEN (a token with write:package);
+# the variable FORGEJO_REGISTRY overrides the registry host.
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      rebuild_base:
+        description: "Rebuild montrek-base as well"
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ${{ vars.FORGEJO_REGISTRY || 'forgejo.montrek-software.de' }}
+  NAMESPACE: montrek-software
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.base.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: base
+        env:
+          EVENT: ${{ github.event_name }}
+          REBUILD: ${{ inputs.rebuild_base }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "$EVENT" == "schedule" || "$REBUILD" == "true" ]]; then
+            changed=true
+          elif [[ "$EVENT" == "push" && -n "$BEFORE" && "$BEFORE" != 0000000000000000000000000000000000000000 ]] \
+            && git cat-file -e "$BEFORE" 2>/dev/null; then
+            # The inputs of ./Dockerfile, as .dockerignore allows them in.
+            if git diff --quiet "$BEFORE" HEAD -- Dockerfile .dockerignore \
+              bin/entrypoints/montrek-entrypoint.sh .github/workflows/images.yml; then
+              changed=false
+            else
+              changed=true
+            fi
+          else
+            changed=false
+          fi
+          echo "changed=$changed" >>"$GITHUB_OUTPUT"
+
+  base:
+    needs: changes
+    if: needs.changes.outputs.base == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.FORGEJO_REGISTRY_USER }}
+          password: ${{ secrets.FORGEJO_REGISTRY_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/montrek-base
+          tags: |
+            type=raw,value=latest
+            type=raw,value={{date 'YYYYMMDD'}}
+            type=sha,prefix=sha-
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  app:
+    needs: [changes, base]
+    # Runs when the base was skipped, not when it failed. The weekly run only
+    # refreshes the base.
+    if: ${{ !cancelled() && needs.base.result != 'failure' && github.event_name != 'schedule' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.FORGEJO_REGISTRY_USER }}
+          password: ${{ secrets.FORGEJO_REGISTRY_TOKEN }}
+      - id: base
+        env:
+          BUILT_DIGEST: ${{ needs.base.outputs.digest }}
+          BASE: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/montrek-base
+        run: |
+          # Pin the base by digest, so the image is built from the one it says.
+          digest="$BUILT_DIGEST"
+          if [[ -z "$digest" ]]; then
+            digest="$(docker buildx imagetools inspect "$BASE:latest" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+          fi
+          echo "image=$BASE@$digest" >>"$GITHUB_OUTPUT"
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/montrek-app
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=sha,prefix=sha-
+          labels: |
+            org.opencontainers.image.base.name=${{ steps.base.outputs.image }}
+      - name: Build for the smoke test
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.app
+          load: true
+          tags: montrek-app:smoke
+          build-args: |
+            BASE_IMAGE=${{ steps.base.outputs.image }}
+            MONTREK_REVISION=${{ github.sha }}
+      - name: Smoke test
+        run: |
+          # No database: the start-up tasks are off and /health/ does not need
+          # one. Proves the image starts unprivileged and serves.
+          docker run -d --name smoke -p 8000:8000 \
+            -e SERVICE=web -e APP_PORT=8000 -e DO_MONTREK_STARTUP_TASKS=0 \
+            -e SECRET_KEY=smoke -e DB_PASSWORD=smoke -e DEPLOY_HOST=localhost \
+            montrek-app:smoke
+          for _ in $(seq 60); do
+            if curl -fsS http://localhost:8000/health/; then
+              docker rm -f smoke >/dev/null
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs smoke
+          exit 1
+      - name: Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.app
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BASE_IMAGE=${{ steps.base.outputs.image }}
+            MONTREK_REVISION=${{ github.sha }}

@@ -11,9 +11,10 @@ set -e
 : "${PUID:=$(stat -c %u /montrek)}"
 : "${PGID:=$(stat -c %g /montrek)}"
 
-if [[ -f /montrek/nginx/certs/fullchain.crt ]]; then
+CA_CERT="${MONTREK_CA_CERT:-/montrek/nginx/certs/fullchain.crt}"
+if [[ -f "$CA_CERT" ]]; then
   echo "Installing instance-specific certificate system-wide..."
-  cp /montrek/nginx/certs/fullchain.crt /usr/local/share/ca-certificates/montrek_root_ca.crt
+  cp "$CA_CERT" /usr/local/share/ca-certificates/montrek_root_ca.crt
   update-ca-certificates
 fi
 
@@ -58,9 +59,13 @@ repair_owner() {
 }
 
 if [[ -n "${PUID:-}" && -n "${PGID:-}" && "$PUID" != "0" ]]; then
-  repair_owner /montrek/static
-  repair_owner /montrek/.venv
-  repair_owner /montrek/requirements.txt
+  # In an app image the code, the venv and the static files are root-owned on
+  # purpose, so the app cannot rewrite them; only the runtime paths are its own.
+  if [[ ! -f /montrek/.montrek-image ]]; then
+    repair_owner /montrek/static
+    repair_owner /montrek/.venv
+    repair_owner /montrek/requirements.txt
+  fi
   repair_owner /montrek/montrek/uploads
   # WORKBENCH_PATH: LaTeX builds, plot PNGs and downloaded report images.
   repair_owner /montrek/montrek/reporting/.workbench

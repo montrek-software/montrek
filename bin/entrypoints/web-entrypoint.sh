@@ -6,7 +6,8 @@ set -e
 # root. Doing it again here fails now that this script genuinely runs
 # unprivileged -- /usr/local/share/ca-certificates is not writable by PUID.
 
-./bin/local/sync-python-env.sh
+# An app image has its venv baked in; only a VM install syncs it at start.
+[[ -f /montrek/.montrek-image ]] || ./bin/local/sync-python-env.sh
 . .venv/bin/activate
 cd montrek
 # On by default, so a single-container install migrates on every start. Off
