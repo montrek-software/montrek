@@ -6,12 +6,12 @@ from typing import Any
 import uuid
 from _plotly_utils.utils import PlotlyJSONEncoder
 from django.template.loader import render_to_string
-from django.conf import settings
 from django.utils.safestring import mark_safe
 
 import plotly.graph_objects as go
 from reporting.constants import ReportingPlotType
 from reporting.core.gold_plotly_theme import gold_axis, gold_color_palette, gold_layout
+from reporting.core import workbench
 from reporting.core.reporting_data import ReportingData, ReportingDataBase
 
 
@@ -72,8 +72,7 @@ class ReportingPlotBase[TData: ReportingDataBase]:
             plot_json = self.figure.to_json()
             hash_digest = hashlib.sha256(plot_json.encode("utf-8")).hexdigest()[:16]
             filename = f"{hash_digest}.png"
-            image_path = settings.WORKBENCH_PATH / filename
-            settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+            image_path = workbench.current() / filename
             if not image_path.exists():
                 self.figure.write_image(
                     str(image_path), width=1200, height=600, scale=2

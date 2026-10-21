@@ -25,10 +25,10 @@ collect static files on every web start. Unchanged by the app image.
 
 **App image.** The code is baked in and marked by `/montrek/.montrek-image`,
 which a bind mount would hide. Code, venv and static files are root-owned and
-read-only; the app runs as `appuser` and can write only `montrek/uploads`,
-`montrek/reporting/.workbench`, `montrek/sent_emails` and `/tmp`, so the root
-filesystem can be mounted read-only (with a tmpfs on `/tmp` and a volume on
-`uploads`). On start nothing is installed or collected. Migrations and the
+read-only; the app runs as `appuser` and can write only `montrek/uploads` and
+`/tmp`, so the root filesystem can be mounted read-only (with a tmpfs on `/tmp`
+and a volume on `uploads`). LaTeX runs compile in a temporary directory that is
+removed afterwards; without SMTP, mails go to `/tmp/sent_emails`. On start nothing is installed or collected. Migrations and the
 superuser run once per deployment in the release step:
 
 ```bash

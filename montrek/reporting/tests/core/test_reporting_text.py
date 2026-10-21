@@ -7,6 +7,7 @@ from django.conf import settings
 
 from bs4 import BeautifulSoup
 from django.test import TestCase
+from reporting.core import workbench
 
 from reporting.core.reporting_text import (
     CollapsibleSection,
@@ -337,6 +338,22 @@ class TestReportingImage(ReportingElementTestCase):
         mock_get.assert_called_once_with(
             "https://example.com/properties/lakeside_residences.jpg", timeout=5
         )
+
+    @patch("reporting.core.reporting_text.requests.get")
+    def test_remote_image_is_downloaded_again_for_a_new_run(self, mock_get):
+        mock_get.return_value = Mock(status_code=200, content=b"\x89PNG")
+        reporting_image = ReportingImage("https://example.com/logo.png")
+        paths = []
+        for _ in range(2):
+            with workbench.activate() as directory:
+                path = reporting_image.resolve_path()
+                self.assertEqual(reporting_image.resolve_path(), path)
+                self.assertEqual(os.path.dirname(path), str(directory))
+                self.assertTrue(os.path.exists(path))
+                self.assertIn(path, reporting_image.to_latex())
+                paths.append(path)
+        self.assertNotEqual(paths[0], paths[1])
+        self.assertEqual(mock_get.call_count, 2)
 
 
 class TestReportingMap(ReportingElementTestCase):

@@ -22,7 +22,8 @@ WORKDIR /montrek
 ENV VIRTUAL_ENV=/montrek/.venv \
   PATH=/montrek/.venv/bin:$PATH \
   UV_NO_CACHE=1 \
-  PYTHONDONTWRITEBYTECODE=1
+  PYTHONDONTWRITEBYTECODE=1 \
+  EMAIL_FILE_PATH=/tmp/sent_emails
 
 # Dependencies first, so a code-only change reuses this layer. The glob makes
 # requirements.txt optional.
@@ -45,8 +46,8 @@ LABEL org.opencontainers.image.source="https://github.com/montrek-software/montr
 RUN cd montrek \
   && SECRET_KEY=collectstatic-only DB_PASSWORD=collectstatic-only \
   python manage.py collectstatic --noinput --verbosity 0 \
-  && mkdir -p uploads reporting/.workbench sent_emails \
-  && chown appuser:appgroup uploads reporting/.workbench sent_emails \
+  && mkdir -p uploads \
+  && chown appuser:appgroup uploads \
   && echo "${MONTREK_REVISION}" >/montrek/.montrek-image \
   && chown root:root /montrek
 

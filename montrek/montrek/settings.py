@@ -15,6 +15,7 @@ from __future__ import annotations
 import ipaddress
 import os
 import sys
+import tempfile
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -440,7 +441,7 @@ CSRF_TRUSTED_ORIGINS += config("EXTRA_CSRF_TRUSTED_ORIGINS", default="", cast=Cs
 EMAIL_HOST = config("EMAIL_HOST", default=None)
 if not EMAIL_HOST:
     EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-    EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+    EMAIL_FILE_PATH = config("EMAIL_FILE_PATH", default=str(BASE_DIR / "sent_emails"))
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
@@ -541,4 +542,6 @@ SIMPLE_JWT = {
 
 # Reporting
 
-WORKBENCH_PATH = Path(__file__).resolve().parent.parent / "reporting" / ".workbench"
+# Where report elements write LaTeX includes outside a compile run; a run uses
+# its own temporary directory (reporting/core/workbench.py).
+WORKBENCH_PATH = Path(tempfile.gettempdir()) / "montrek-workbench"
