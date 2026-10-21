@@ -1684,6 +1684,89 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_td_classes=["align-top", "text-start", "ps-1"],
         )
 
+    def test_comparison_table_element__equal_after_default_rounding(self):
+        # Differences below the default 2 digits are not shown as a change
+        test_obj = {"value_1": 1.004, "value_2": 1.0}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
+            expected_format_latex=te.CompValues.EQUAL.value.latex_val + " &",
+            expected_hover_text="1.0 = 1.0",
+            expected_td_classes=["align-top", "text-start", "ps-1"],
+        )
+
+    def test_comparison_table_element__greater_after_default_rounding(self):
+        test_obj = {"value_1": 1.006, "value_2": 1.0}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-up-right-circle-fill text-warning"></span>',
+            expected_format_latex=te.CompValues.GREATER.value.latex_val + " &",
+            expected_hover_text="1.01 > 1.0",
+            expected_td_classes=["align-top", "text-start", "ps-1"],
+        )
+
+    def test_comparison_table_element__custom_round_ndigits(self):
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2", round_ndigits=4
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj={"value_1": 0.12341, "value_2": 0.12344},
+            expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
+            expected_format_latex=te.CompValues.EQUAL.value.latex_val + " &",
+            expected_hover_text="0.1234 = 0.1234",
+            expected_td_classes=["align-top", "text-start", "ps-1"],
+        )
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj={"value_1": 0.1235, "value_2": 0.1234},
+            expected_format='<span class="bi bi-arrow-up-right-circle-fill text-warning"></span>',
+            expected_format_latex=te.CompValues.GREATER.value.latex_val + " &",
+            expected_hover_text="0.1235 > 0.1234",
+            expected_td_classes=["align-top", "text-start", "ps-1"],
+        )
+
+    def test_comparison_table_element__rounds_decimals(self):
+        test_obj = {"value_1": Decimal("2.504"), "value_2": Decimal("2.501")}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
+            expected_format_latex=te.CompValues.EQUAL.value.latex_val + " &",
+            expected_hover_text="2.50 = 2.50",
+            expected_td_classes=["align-top", "text-start", "ps-1"],
+        )
+
+    def test_comparison_table_element__non_numeric_values_are_not_rounded(self):
+        test_obj = {"value_1": "abc", "value_2": "abc"}
+        table_element = te.ComparisonTableElement(
+            name="name", attr="value_1", comp_attr="value_2"
+        )
+
+        self.table_element_test_assertions_from_object(
+            table_element=table_element,
+            test_obj=test_obj,
+            expected_format='<span class="bi bi-arrow-right-circle-fill text-success"></span>',
+            expected_format_latex=te.CompValues.EQUAL.value.latex_val + " &",
+            expected_hover_text="abc = abc",
+            expected_td_classes=["align-top", "text-start", "ps-1"],
+        )
+
     @mock.patch("reporting.dataclasses.table_elements.reverse")
     def test_htmx_link_table_element_renders_hx_attributes(self, mock_reverse):
         mock_reverse.return_value = "/do/action/1"

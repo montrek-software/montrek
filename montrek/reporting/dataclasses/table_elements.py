@@ -2,6 +2,7 @@ import collections
 import datetime
 import inspect
 import json
+import numbers
 import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -1158,6 +1159,7 @@ class CompDataField(serializers.Field):
 @dataclass
 class ComparisonTableElement(AttrTableElement):
     comp_attr: str = field(default="")
+    round_ndigits: int = field(default=2)
     field_template: ClassVar[str | None] = "comparison"
     much_comp_limit: ClassVar[float] = 0.5
     serializer_field_class: ClassVar = CompDataField
@@ -1168,6 +1170,8 @@ class ComparisonTableElement(AttrTableElement):
         comp_value = self._get_value_from_attr(obj, self.comp_attr)
         if pd.isna(value) or pd.isna(comp_value):
             return CompValues.NONE.value
+        value = self._round(value)
+        comp_value = self._round(comp_value)
         if value == comp_value:
             return CompValues.EQUAL.value
         is_greater = value > comp_value
@@ -1188,9 +1192,14 @@ class ComparisonTableElement(AttrTableElement):
         return value.latex_val + " &"
 
     def get_hover_text(self, obj: Any, value: Any) -> str | None:
-        start_value = super().get_value(obj)
-        comp_value = self._get_value_from_attr(obj, self.comp_attr)
+        start_value = self._round(super().get_value(obj))
+        comp_value = self._round(self._get_value_from_attr(obj, self.comp_attr))
         return f"{start_value} {value.hover_text} {comp_value}"
+
+    def _round(self, value: Any) -> Any:
+        if not isinstance(value, numbers.Real | Decimal) or pd.isna(value):
+            return value
+        return round(value, self.round_ndigits)
 
 
 @dataclass
