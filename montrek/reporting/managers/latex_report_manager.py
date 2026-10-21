@@ -1,7 +1,6 @@
 import locale
 import logging
 import os
-import shutil
 import subprocess  # nosec B404
 import uuid
 from pathlib import Path
@@ -13,6 +12,7 @@ from django.template import Context, Template
 from django.utils.safestring import mark_safe
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_text import ClientLogo
+from reporting.core import workbench
 from reporting.core.text_converter import LaTeXEscaper
 from reporting.managers.montrek_report_manager import MontrekReportManager
 
@@ -130,17 +130,20 @@ class LatexReportManager:
             return file.read()
 
     def compile_report(self) -> str | None:
+        with workbench.activate() as workbench_path:
+            return self._compile_report(workbench_path)
+
+    def _compile_report(self, workbench_path: Path) -> str | None:
+        # Rendered inside the workbench: plots and images write the files the
+        # LaTeX source includes while it is generated.
         report_str = self.generate_report()
-        compile_id = str(uuid.uuid4())
-        workbench_path = settings.WORKBENCH_PATH / compile_id
-        workbench_path.mkdir(parents=True, exist_ok=True)
 
         # One directory per compile: document_name is not unique (two runs of
         # the same report on the same day share it), and callers read the file
         # back after this returns, so a shared path could hand one run the PDF
         # a concurrent run just wrote. The file name itself stays
         # document_name, since callers use it as the download name.
-        output_dir = Path(settings.MEDIA_ROOT) / "latex" / compile_id
+        output_dir = Path(settings.MEDIA_ROOT) / "latex" / str(uuid.uuid4())
 
         tex_filename = f"{self.report_manager.document_name}.tex"
         pdf_filename = f"{self.report_manager.document_name}.pdf"
@@ -152,52 +155,48 @@ class LatexReportManager:
         with open(latex_file_path, "w", encoding="utf-8") as f:
             f.write(report_str)
 
-        try:
-            # Safe subprocess invocation:
-            # - executable path is hard-coded
-            # - shell=False (list form)
-            # - no user-controlled input reaches the command
-            proc = subprocess.run(  # noqa: S603
-                [
-                    "/usr/bin/xelatex",
-                    "-output-directory",
-                    str(workbench_path),
-                    "-interaction=nonstopmode",
-                    "-halt-on-error",
-                    str(latex_file_path),
-                ],
-                capture_output=True,
-                check=False,
-                text=False,  # capture raw bytes to avoid UnicodeDecodeError
-                env={**os.environ, "LANG": os.environ.get("LANG", "C.UTF-8")},
-                cwd=str(workbench_path),
-            )  # nosec B603
+        # Safe subprocess invocation:
+        # - executable path is hard-coded
+        # - shell=False (list form)
+        # - no user-controlled input reaches the command
+        proc = subprocess.run(  # noqa: S603
+            [
+                "/usr/bin/xelatex",
+                "-output-directory",
+                str(workbench_path),
+                "-interaction=nonstopmode",
+                "-halt-on-error",
+                str(latex_file_path),
+            ],
+            capture_output=True,
+            check=False,
+            text=False,  # capture raw bytes to avoid UnicodeDecodeError
+            env={**os.environ, "LANG": os.environ.get("LANG", "C.UTF-8")},
+            cwd=str(workbench_path),
+        )  # nosec B603
 
-            if not pdf_file_path.exists():
-                err = (proc.stderr or b"") + b"\n" + (proc.stdout or b"")
-                preferred_encoding = locale.getpreferredencoding(False)
-                err_txt = err.decode(preferred_encoding, errors="replace")
-                self.report_manager.messages.append(
-                    MontrekMessageError(
-                        message=f"LaTeX compilation failed.\n{err_txt[-4000:]}"
-                    )
+        if not pdf_file_path.exists():
+            err = (proc.stderr or b"") + b"\n" + (proc.stdout or b"")
+            preferred_encoding = locale.getpreferredencoding(False)
+            err_txt = err.decode(preferred_encoding, errors="replace")
+            self.report_manager.messages.append(
+                MontrekMessageError(
+                    message=f"LaTeX compilation failed.\n{err_txt[-4000:]}"
                 )
-                return None
+            )
+            return None
 
-            if proc.returncode != 0:
-                stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
-                logger.warning(
-                    "XeLaTeX exited with code %d but produced a PDF: %s",
-                    proc.returncode,
-                    stderr[-500:],
-                )
+        if proc.returncode != 0:
+            stderr = (proc.stderr or b"").decode("latin-1", errors="replace")
+            logger.warning(
+                "XeLaTeX exited with code %d but produced a PDF: %s",
+                proc.returncode,
+                stderr[-500:],
+            )
 
-            output_dir.mkdir(parents=True, exist_ok=True)
-            output_pdf_path.write_bytes(pdf_file_path.read_bytes())
-            return str(output_pdf_path)
-
-        finally:
-            shutil.rmtree(workbench_path, ignore_errors=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_pdf_path.write_bytes(pdf_file_path.read_bytes())
+        return str(output_pdf_path)
 
     def _get_template_path(self) -> str | None:
         for template_dir in cast(list[str], settings.TEMPLATES[0]["DIRS"]):

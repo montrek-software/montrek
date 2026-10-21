@@ -67,6 +67,4 @@ if [[ -n "${PUID:-}" && -n "${PGID:-}" && "$PUID" != "0" ]]; then
     repair_owner /montrek/requirements.txt
   fi
   repair_owner /montrek/montrek/uploads
-  # WORKBENCH_PATH: LaTeX builds, plot PNGs and downloaded report images.
-  repair_owner /montrek/montrek/reporting/.workbench
 fi

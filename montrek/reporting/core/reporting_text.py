@@ -14,6 +14,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.contrib.staticfiles import finders
+from reporting.core import workbench
 from reporting.core.text_converter import HtmlLatexConverter
 
 logger = logging.getLogger(__name__)
@@ -283,7 +284,7 @@ class ReportingImage(ReportingElement):
         return local_image_path if os.path.exists(local_image_path) else ""
 
     def _download_to_workbench(self) -> str:
-        """Download a remote image into WORKBENCH_PATH and return its path.
+        """Download a remote image into the workbench and return its path.
 
         A logo hosted off-site must not be able to fail a report: an
         unreachable host is reported as a missing image, like a 404.
@@ -299,9 +300,7 @@ class ReportingImage(ReportingElement):
         # Derive a unique filename from the URL (safe and repeatable)
         ext = Path(self.image_path).suffix.split("?")[0] or ".png"
         hash_name = hashlib.sha256(self.image_path.encode("utf-8")).hexdigest()
-        image_path = settings.WORKBENCH_PATH / f"{hash_name}{ext}"
-
-        settings.WORKBENCH_PATH.mkdir(parents=True, exist_ok=True)
+        image_path = workbench.current() / f"{hash_name}{ext}"
         with open(image_path, "wb") as f:
             f.write(response.content)
 
