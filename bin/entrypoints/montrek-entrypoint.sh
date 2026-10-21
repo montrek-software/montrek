@@ -63,6 +63,9 @@ sequential_worker | parallel_worker | fast_worker)
 celery_beat)
   run_as_app_user /montrek/bin/entrypoints/celery_beat-entrypoint.sh
   ;;
+release)
+  run_as_app_user /montrek/bin/entrypoints/release-entrypoint.sh
+  ;;
 *)
   run_as_app_user "$@"
   ;;

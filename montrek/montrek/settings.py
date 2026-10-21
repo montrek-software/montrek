@@ -224,6 +224,9 @@ NAVBAR_HOME_LABEL = config("NAVBAR_HOME_LABEL", default="Home").replace("*", " "
 
 DJANGO_MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serves STATIC_ROOT where no nginx sits in front, e.g. on Cloud Run. Behind
+    # nginx it never sees /static/, which nginx answers from the static volume.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -404,6 +407,12 @@ LANGUAGE_CODE = config("LANGUAGE_CODE", default="en-us")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, "..", "static"))
+# Compressed, but not the manifest variant: that one turns a template's
+# reference to a missing static file into a 500 instead of a 404.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
