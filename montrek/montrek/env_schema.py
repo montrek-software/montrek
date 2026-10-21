@@ -13,9 +13,9 @@ Two checks use it, with different reach:
   It reports every missing required value and every value of the wrong type in
   one message, instead of failing on the first `config()` call that hits one.
 - `check_environment` is a Django system check, run by `manage.py check`,
-  `migrate`, `runserver` and `test`. It reports the extension apps' variables as
-  errors, and as warnings the core `scope = "compose"` variables of the wrong
-  type, the keys in `.env` or a secrets directory that no schema lists, since a
+  `migrate`, `runserver` and `test`. It reports the extension apps' `scope = "app"`
+  variables as errors, and as warnings the `scope = "compose"` variables of the
+  wrong type, from core and extensions alike, the keys in `.env` or a secrets directory that no schema lists, since a
   misspelt key leaves its setting silently at the default, and the
   `scope = "build"` credentials found there, since `.env` is handed to every
   application container.
@@ -117,15 +117,28 @@ def _variable(path: Path, name: str, fields: dict) -> Variable:
     )
 
 
+def with_scope(schema: dict[str, Variable], scope: str) -> dict[str, Variable]:
+    return {
+        name: variable for name, variable in schema.items() if variable.scope == scope
+    }
+
+
 def find_problems(schema: dict[str, Variable], config) -> list[str]:
-    """Missing required values and values of the wrong type, one message each."""
+    """Missing required values and values of the wrong type, one message each.
+
+    An empty value counts as missing for a required variable, as an empty secret
+    file already does in `configuration.py`: `SECRET_KEY=` is a blank left in a
+    template, not a key.
+    """
     problems = []
     for variable in schema.values():
         value = config(variable.name, default=_MISSING)
-        if value is _MISSING:
-            if variable.required:
-                problems.append(f"{variable.name} is required: {variable.description}")
-        elif problem := variable.type_problem(value):
+        if variable.required and value in (_MISSING, ""):
+            problems.append(
+                f"{variable.name} is required and must not be empty: "
+                f"{variable.description}"
+            )
+        elif value is not _MISSING and (problem := variable.type_problem(value)):
             problems.append(problem)
     return problems
 
@@ -150,11 +163,7 @@ def find_configured_keys(config) -> list[tuple[str, str]]:
 
 def raise_for_invalid_settings(config) -> None:
     """Stop the start-up if a variable `settings.py` reads is missing or invalid."""
-    schema = {
-        name: variable
-        for name, variable in load_schema(CORE_SCHEMA_FILE).items()
-        if variable.scope == "app"
-    }
+    schema = with_scope(load_schema(CORE_SCHEMA_FILE), "app")
     if problems := find_problems(schema, config):
         raise ImproperlyConfigured(
             "Invalid configuration (see montrek/montrek/env.schema.toml):\n"
@@ -187,18 +196,17 @@ def check_environment(app_configs=None, **kwargs) -> list[CheckMessage]:
 
     core = load_schema(CORE_SCHEMA_FILE)
     extensions = extension_schemas()
-    compose = {
-        name: variable for name, variable in core.items() if variable.scope == "compose"
-    }
+    known = core | extensions
+    # The core app scope is already enforced while settings.py is imported, and
+    # build-scope values are never read at runtime, so neither is checked here.
     messages: list[CheckMessage] = [
         Error(problem, id="montrek.E008")
-        for problem in find_problems(extensions, config)
+        for problem in find_problems(with_scope(extensions, "app"), config)
     ]
     messages += [
         Warning(problem, id="montrek.W001")
-        for problem in find_problems(compose, config)
+        for problem in find_problems(with_scope(known, "compose"), config)
     ]
-    known = core | extensions
     for name, source in find_configured_keys(config):
         if name not in known:
             messages.append(

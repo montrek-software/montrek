@@ -110,7 +110,15 @@ class TestFindProblems(SchemaTestCase):
         self.assertEqual(self.problems(), [])
 
     def test_only_required_values_must_be_set(self):
-        self.assertEqual(self.problems(), ["TOKEN is required: The token."])
+        self.assertEqual(
+            self.problems(), ["TOKEN is required and must not be empty: The token."]
+        )
+
+    def test_empty_required_value_counts_as_missing(self):
+        self.isolate_environment({"TOKEN": "", "COUNT": "3"})
+        self.assertEqual(
+            self.problems(), ["TOKEN is required and must not be empty: The token."]
+        )
 
     def test_required_value_from_a_secret_file(self):
         (self.secrets_dir / "token").write_text("t\n")
@@ -219,6 +227,22 @@ class TestCheckEnvironment(ConfigurationTestCase):
 
             self.env_file.write_text("SOME_APP_TOKEN=t\n")
             self.assertEqual(self.run_check(), [])
+
+    def test_extension_variables_follow_their_scope(self):
+        app_dir = self.root / "some_app"
+        app_dir.mkdir()
+        (app_dir / "env.schema.toml").write_text(
+            '[SOME_APP_WORKERS]\ntype = "int"\nscope = "compose"\ndescription = "x"\n'
+            '[SOME_APP_TOKEN]\ntype = "int"\nscope = "build"\ndescription = "x"\n'
+        )
+        self.isolate_environment({"SOME_APP_WORKERS": "many", "SOME_APP_TOKEN": "t"})
+        app_config = mock.Mock(path=str(app_dir))
+        with mock.patch("django.apps.apps.get_app_configs", return_value=[app_config]):
+            messages = self.run_check()
+        self.assertEqual(
+            [(message.id, message.msg.split()[0]) for message in messages],
+            [("montrek.W001", "SOME_APP_WORKERS")],
+        )
 
     def test_extension_cannot_redeclare_a_core_variable(self):
         app_dir = self.root / "some_app"
