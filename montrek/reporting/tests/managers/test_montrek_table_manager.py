@@ -1,7 +1,9 @@
 import datetime
 import io
+import re
 from decimal import Decimal
 from pathlib import Path
+from urllib.parse import unquote
 
 import numpy as np
 import pandas as pd
@@ -279,6 +281,27 @@ class TestMontrekTableManager(TestCase):
                 manager.messages[-1].message,
                 "Table is too large to download. Sending it by mail.",
             )
+
+    def test_mailed_link_downloads_the_table_for_its_user(self):
+        for filetype, download in (
+            ("csv", "download_or_mail_csv"),
+            ("xlsx", "download_or_mail_excel"),
+        ):
+            with self.subTest(filetype):
+                mail.outbox.clear()
+                manager = MockLongMontrekTableManager(
+                    {"user_id": self.user.id, "host_url": "test_server"}
+                )
+                getattr(manager, download)()
+                link = re.search(
+                    r"href='test_server([^']+)'", mail.outbox[0].message().as_string()
+                )
+                self.client.force_login(self.user)
+                response = self.client.get(unquote(link.group(1)))
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.content)
+                self.client.force_login(MontrekUserFactory())
+                self.assertEqual(self.client.get(link.group(1)).status_code, 404)
 
     def test_large_download_csv(self):
         for manager_cls in (MockLongMontrekTableManager, MockLongMontrekTableManager2):

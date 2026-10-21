@@ -1,8 +1,7 @@
-import os
+import uuid
 
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
@@ -12,55 +11,58 @@ from reporting.tests.mocks import (
     MockMontrekReportView,
     MockMontrekReportWithFormView,
 )
-from reporting.views import download_reporting_file_view
+from reporting.modules import mailed_downloads
 from testing.decorators import add_logged_in_user
+from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
 class TestDownloadFileView(TestCase):
     @add_logged_in_user()
     def setUp(self):
-        self.factory = RequestFactory()
+        self.download_id = mailed_downloads.store(self.user.id, "test file.csv", b"a,b")
+        self.url = reverse(
+            "download_reporting_file",
+            kwargs={"download_id": self.download_id, "file_name": "test file.csv"},
+        )
+        self.path = mailed_downloads.storage_path(
+            self.user.id, self.download_id, "test file.csv"
+        )
 
-    def test_download_view_via_url(self):
-        test_file = SimpleUploadedFile(
-            name="test_file.txt",
-            content=b"test",
-            content_type="text/plain",
-        )
-        temp_file_path = default_storage.save("temp/test_file.txt", test_file)
-        test_url = reverse(
-            "download_reporting_file", kwargs={"file_path": temp_file_path}
-        )
-        response = self.client.get(test_url)
+    def test_download_once(self):
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-
-    def test_download_view(self):
-        test_file = SimpleUploadedFile(
-            name="test_file.txt",
-            content=b"test",
-            content_type="text/plain",
-        )
-        temp_file_path = default_storage.save("temp/test_file.txt", test_file)
-        url = reverse("download_reporting_file", kwargs={"file_path": temp_file_path})
-
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"a,b")
         self.assertEqual(
-            response.get("Content-Disposition"), "attachment; filename=test_file.txt"
+            response["Content-Disposition"], 'attachment; filename="test file.csv"'
         )
-        self.assertFalse(os.path.exists(default_storage.path(temp_file_path)))
-        test_url = reverse(
-            "download_reporting_file", kwargs={"file_path": temp_file_path}
-        )
-        response = self.client.get(test_url)
-        self.assertRaises(Http404)
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 1)
+        self.assertFalse(default_storage.exists(self.path))
+        self.assertEqual(DownloadRegistryRepository().receive().count(), 1)
+        self.assertEqual(self.client.get(self.url).status_code, 404)
 
-    def test_download_view_file_not_found(self):
-        request = self.factory.get("/")
-        request.user = self.user
-        self.assertRaises(Http404, download_reporting_file_view, request, "Dummy.txt")
+    def test_other_users_file_is_not_found(self):
+        self.client.force_login(MontrekUserFactory())
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(default_storage.exists(self.path))
+
+    def test_unknown_download_is_not_found(self):
+        url = reverse(
+            "download_reporting_file",
+            kwargs={"download_id": uuid.uuid4(), "file_name": "test file.csv"},
+        )
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_paths_are_not_accepted(self):
+        other = default_storage.save("temp/other.csv", ContentFile(b"x"))
+        self.addCleanup(default_storage.delete, other)
+        for url in (
+            "/reporting/download/temp/other.csv/",
+            f"/reporting/download/{self.download_id}/../other.csv/",
+            f"/reporting/download/{self.download_id}/../",
+        ):
+            with self.subTest(url):
+                self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertTrue(default_storage.exists(other))
 
 
 class TestMontrekReportFormView(TestCase):

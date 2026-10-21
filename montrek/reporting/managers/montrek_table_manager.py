@@ -1,6 +1,6 @@
 import datetime
 import math
-import os
+import uuid
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import cached_property
@@ -13,8 +13,6 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template, render_to_string
@@ -29,6 +27,7 @@ from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
+from reporting.modules import mailed_downloads
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 from reporting.modules.table_serializer import TableSerializer
 from reporting.tasks.download_table_task import DownloadTableTask
@@ -331,33 +330,26 @@ class MontrekTableManagerABC(
         return value
 
     def send_table_by_mail(self, filetype: str):
-        file_name = f"{self.document_name}.{filetype}"
+        file_name = mailed_downloads.file_name_for_link(
+            f"{self.document_name}.{filetype}"
+        )
         if filetype == "xlsx":
-            self._send_table_excel_by_mail(file_name)
+            output = BytesIO()
+            self.to_excel(output)
+            content = output.getvalue()
         elif filetype == "csv":
-            self._send_table_csv_by_mail(file_name)
+            content = self.get_output_df().to_csv(index=False).encode()
+        else:
+            return
+        download_id = mailed_downloads.store(
+            self.session_data["user_id"], file_name, content
+        )
+        self._send_mail_with_file(download_id, file_name)
 
-    def _send_table_excel_by_mail(self, file_name: str):
-        output = BytesIO()
-        self.to_excel(output)
-        output.seek(0)
-        temp_file_path = os.path.join("temp", file_name)
-
-        # Save the file to the default storage (e.g., file system or cloud storage)
-        saved_file = default_storage.save(temp_file_path, ContentFile(output.read()))
-        self._send_mail_with_file(saved_file, file_name)
-
-    def _send_table_csv_by_mail(self, file_name: str):
-        temp_file_path = os.path.join(file_name)
-        if not os.path.exists(default_storage.path("")):
-            os.mkdir(default_storage.path(""))
-        self.to_csv(default_storage.path(temp_file_path))
-        self._send_mail_with_file(temp_file_path, file_name)
-
-    def _send_mail_with_file(self, saved_file: str, file_name: str):
-        # Return the URL of the stored file
+    def _send_mail_with_file(self, download_id: uuid.UUID, file_name: str):
         file_url = self.session_data.get("host_url", "/") + reverse(
-            "download_reporting_file", kwargs={"file_path": saved_file}
+            "download_reporting_file",
+            kwargs={"download_id": download_id, "file_name": file_name},
         )
         mailing_manager = MailingManager(self.session_data)
         message = "".join(
