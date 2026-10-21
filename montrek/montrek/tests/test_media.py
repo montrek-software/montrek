@@ -6,6 +6,8 @@ from django.urls import reverse
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
+# Cleared, so the tests stream by default even where compose sets it.
+@override_settings(MEDIA_X_ACCEL_REDIRECT="")
 class TestServeMedia(TestCase):
     def setUp(self):
         self.media_root = Path(settings.MEDIA_ROOT)
@@ -72,6 +74,49 @@ class TestServeMedia(TestCase):
             with self.subTest(path):
                 response = self.client.get(f"{settings.MEDIA_URL}{path}")
                 self.assertEqual(response.status_code, 404)
+
+    @override_settings(LOGIN_EXEMPT_PATHS=[r"^uploads/media_test/.*$"])
+    def test_dot_segments_do_not_leave_a_public_prefix(self):
+        private = self.media_root / "media_private" / "private.csv"
+        private.parent.mkdir(exist_ok=True)
+        private.write_text("private")
+        self.addCleanup(private.unlink)
+        for path in (
+            "media_test/../media_private/private.csv",
+            "media_test/./../media_private/private.csv",
+        ):
+            with self.subTest(path):
+                response = self.client.get(f"{settings.MEDIA_URL}{path}")
+                self.assertEqual(response.status_code, 404)
+
+    def test_symlinks_out_of_media_root_are_not_followed(self):
+        self.login()
+        outside_dir = self.media_root.parent / "outside_media_dir"
+        outside_dir.mkdir(exist_ok=True)
+        outside = outside_dir / "secret.txt"
+        outside.write_text("secret")
+        self.addCleanup(outside_dir.rmdir)
+        self.addCleanup(outside.unlink)
+        links = {
+            self.file.parent / "file_link.txt": outside,
+            self.file.parent / "dir_link": outside_dir,
+        }
+        for link, target in links.items():
+            link.symlink_to(target)
+            self.addCleanup(link.unlink)
+        for path in ("media_test/file_link.txt", "media_test/dir_link/secret.txt"):
+            with self.subTest(path):
+                response = self.client.get(reverse("media", args=[path]))
+                self.assertEqual(response.status_code, 404)
+
+    def test_symlinks_within_media_root_are_served(self):
+        self.login()
+        link = self.file.parent / "inner_link.txt"
+        link.symlink_to(self.file)
+        self.addCleanup(link.unlink)
+        response = self.client.get(reverse("media", args=["media_test/inner_link.txt"]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), b"content")
 
     def test_only_safe_methods(self):
         self.login()

@@ -11,16 +11,13 @@ nginx, Django streams the file itself.
 """
 
 import mimetypes
-import os
 from pathlib import Path
 from urllib.parse import quote
 
 from baseclasses.utils import htmx_aware_redirect
 from django.conf import settings
-from django.core.exceptions import SuspiciousFileOperation
 from django.http import FileResponse, Http404, HttpResponse
 from django.http.response import HttpResponseBase
-from django.utils._os import safe_join
 from django.utils.cache import patch_cache_control
 from django.views.decorators.http import require_safe
 from middleware.login_required_middleware import is_login_exempt_path
@@ -28,20 +25,25 @@ from middleware.login_required_middleware import is_login_exempt_path
 
 @require_safe
 def serve_media(request, path: str) -> HttpResponseBase:
+    # Before the exemption check: a request that reaches Django without
+    # nginx normalizing it, such as a/../b, would otherwise be judged by its
+    # public prefix and then served from where it points.
+    if any(part in (".", "..") for part in path.split("/")):
+        raise Http404
     # LoginRequiredMiddleware also lets through REST API calls by a query
     # parameter, which must not open up every upload, so the login is checked
     # here again.
     if not request.user.is_authenticated and not is_login_exempt_path(request.path):
         return htmx_aware_redirect(request, str(settings.LOGIN_URL))
-    try:
-        file_path = Path(safe_join(settings.MEDIA_ROOT, path))
-    except SuspiciousFileOperation as error:
-        raise Http404 from error
-    if not file_path.is_file():
+    # Resolved, so a symlink under MEDIA_ROOT that points out of it is not
+    # followed.
+    media_root = Path(settings.MEDIA_ROOT).resolve()
+    file_path = (media_root / path).resolve()
+    if not file_path.is_relative_to(media_root) or not file_path.is_file():
         raise Http404
     response: HttpResponseBase
     if accel_location := settings.MEDIA_X_ACCEL_REDIRECT:
-        relative_path = file_path.relative_to(os.path.abspath(settings.MEDIA_ROOT))
+        relative_path = file_path.relative_to(media_root)
         response = HttpResponse(
             content_type=mimetypes.guess_type(file_path.name)[0]
             or "application/octet-stream"
