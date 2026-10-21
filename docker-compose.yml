@@ -90,6 +90,8 @@ services:
       <<: *montrek-identity
       REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
       SERVICE: web
+      # The internal location in nginx/templates/django.conf.template.
+      MEDIA_X_ACCEL_REDIRECT: /protected-uploads/
     volumes:
       - .:/montrek
       - /dev/null:/montrek/.env:ro

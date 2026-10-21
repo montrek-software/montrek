@@ -38,6 +38,12 @@ docker run --rm --env-file .env -e SERVICE=release <montrek-app ref>
 and web runs with `DO_MONTREK_STARTUP_TASKS=0`. Static files are served by
 WhiteNoise, so no nginx is needed in front.
 
+Uploads under `/uploads/` are only served to logged-in users (paths in
+`LOGIN_EXEMPT_PATHS` stay public). Django checks the request; with
+`MEDIA_X_ACCEL_REDIRECT` set to an internal nginx location (compose sets
+`/protected-uploads/`), it answers with an `X-Accel-Redirect` and nginx sends
+the file. Without nginx, leave it empty and Django streams the file itself.
+
 An instance CA (`MONTREK_CA_CERT`, default `/montrek/nginx/certs/fullchain.crt`)
 cannot be installed system-wide without root; the entrypoint appends it to a
 private bundle under `/tmp` and points `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE`

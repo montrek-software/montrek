@@ -16,10 +16,14 @@ server {
         alias /montrek/static/;
     }
 
-    location /uploads/ {
+    # Uploads go through Django, which checks the login and answers with an
+    # X-Accel-Redirect into this location (MEDIA_X_ACCEL_REDIRECT). internal
+    # keeps it from being requested directly.
+    location /protected-uploads/ {
+        internal;
         alias /montrek/uploads/;
-        expires 30d;
-        add_header Cache-Control "public";
+        # Django's own headers are not kept when nginx serves the file.
+        add_header X-Content-Type-Options nosniff always;
     }
 
     location / {

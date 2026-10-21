@@ -20,9 +20,9 @@ import os
 from baseclasses import views as base_views
 from baseclasses.urls import javascriptcatalog_url
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from montrek.media import serve_media
 
 urlpatterns = [
     path("", base_views.redirect_home, name="redirect_home"),
@@ -33,7 +33,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("oidc/", include("mozilla_django_oidc.urls")),
     javascriptcatalog_url,
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path(settings.MEDIA_URL.lstrip("/") + "<path:path>", serve_media, name="media"),
+]
 
 for app in settings.INSTALLED_APPS:
     app_path = app.replace(".", "/") + "/"
