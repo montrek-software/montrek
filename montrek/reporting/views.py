@@ -16,10 +16,9 @@ from baseclasses.views import (
 )
 from django.core.files.storage import default_storage
 from django.forms import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
-from django.utils.http import content_disposition_header
 from django.views.decorators.http import require_safe
 from info.managers.download_registry_storage_managers import (
     DownloadRegistryStorageManager,
@@ -38,25 +37,24 @@ logger = logging.getLogger(__name__)
 @require_safe
 @login_required
 def download_reporting_file_view(request, download_id: uuid.UUID, file_name: str):
-    # Single use: the file is deleted once it has been read.
+    # Single use: the file is deleted once it has been sent.
     if file_name in (".", ".."):
         raise Http404
     path = mailed_downloads.storage_path(request.user.id, download_id, file_name)
     if not default_storage.exists(path):
         raise Http404
-    with default_storage.open(path, "rb") as file:
-        content = file.read()
-    default_storage.delete(path)
+    file = mailed_downloads.SingleUseFile(path)
     DownloadRegistryStorageManager(
         {"user_id": request.user.id}
     ).store_in_download_registry(
         file_name, DownloadType(Path(file_name).suffix.lstrip(".").lower())
     )
-    response = HttpResponse(content, content_type="application/octet-stream")
-    response["Content-Disposition"] = (
-        content_disposition_header(True, file_name) or "attachment"
+    return FileResponse(
+        file,
+        as_attachment=True,
+        filename=file_name,
+        content_type="application/octet-stream",
     )
-    return response
 
 
 class MontrekReportView(

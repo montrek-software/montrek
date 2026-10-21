@@ -8,7 +8,7 @@ put a details block and a table side by side as two sheets.
 
 from collections.abc import Mapping
 from io import BytesIO
-from typing import Protocol
+from typing import BinaryIO, Protocol
 
 import pandas as pd
 from django.http import HttpResponse
@@ -31,6 +31,7 @@ class ExcelSheetProtocol(Protocol):
 def write_excel_workbook[ExcelOutput: (
     HttpResponse,
     BytesIO,
+    BinaryIO,
     str,
 )](
     output: ExcelOutput,
@@ -73,6 +74,7 @@ class ExcelSheetMixin:
     def to_excel[ExcelOutput: (
         HttpResponse,
         BytesIO,
+        BinaryIO,
         str,
     )](
         self,

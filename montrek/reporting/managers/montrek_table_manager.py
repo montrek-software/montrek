@@ -1,10 +1,10 @@
 import datetime
 import math
+import tempfile
 import uuid
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import cached_property
-from io import BytesIO
 from collections.abc import Callable, Mapping
 from typing import ClassVar
 
@@ -13,6 +13,7 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from django.conf import settings
+from django.core.files.base import File
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template, render_to_string
@@ -333,17 +334,20 @@ class MontrekTableManagerABC(
         file_name = mailed_downloads.file_name_for_link(
             f"{self.document_name}.{filetype}"
         )
-        if filetype == "xlsx":
-            output = BytesIO()
-            self.to_excel(output)
-            content = output.getvalue()
-        elif filetype == "csv":
-            content = self.get_output_df().to_csv(index=False).encode()
-        else:
-            return
-        download_id = mailed_downloads.store(
-            self.session_data["user_id"], file_name, content
-        )
+        # A disk-backed file, not a string: these are the tables too large
+        # for a direct download, and the CSV would otherwise be held in
+        # memory twice, as text and as bytes.
+        with tempfile.TemporaryFile() as output:
+            if filetype == "xlsx":
+                self.to_excel(output)
+            elif filetype == "csv":
+                self.get_output_df().to_csv(output, index=False)
+            else:
+                return
+            output.seek(0)
+            download_id = mailed_downloads.store(
+                self.session_data["user_id"], file_name, File(output, file_name)
+            )
         self._send_mail_with_file(download_id, file_name)
 
     def _send_mail_with_file(self, download_id: uuid.UUID, file_name: str):

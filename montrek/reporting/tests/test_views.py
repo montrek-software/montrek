@@ -19,7 +19,9 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 class TestDownloadFileView(TestCase):
     @add_logged_in_user()
     def setUp(self):
-        self.download_id = mailed_downloads.store(self.user.id, "test file.csv", b"a,b")
+        self.download_id = mailed_downloads.store(
+            self.user.id, "test file.csv", ContentFile(b"a,b")
+        )
         self.url = reverse(
             "download_reporting_file",
             kwargs={"download_id": self.download_id, "file_name": "test file.csv"},
@@ -31,7 +33,7 @@ class TestDownloadFileView(TestCase):
     def test_download_once(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, b"a,b")
+        self.assertEqual(b"".join(response.streaming_content), b"a,b")
         self.assertEqual(
             response["Content-Disposition"], 'attachment; filename="test file.csv"'
         )

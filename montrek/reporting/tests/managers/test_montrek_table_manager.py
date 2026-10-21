@@ -296,12 +296,15 @@ class TestMontrekTableManager(TestCase):
                 link = re.search(
                     r"href='test_server([^']+)'", mail.outbox[0].message().as_string()
                 )
-                self.client.force_login(self.user)
-                response = self.client.get(unquote(link.group(1)))
-                self.assertEqual(response.status_code, 200)
-                self.assertTrue(response.content)
+                url = unquote(link.group(1))
                 self.client.force_login(MontrekUserFactory())
-                self.assertEqual(self.client.get(link.group(1)).status_code, 404)
+                self.assertEqual(self.client.get(url).status_code, 404)
+                self.client.force_login(self.user)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                content = b"".join(response.streaming_content)
+                self.assertTrue(content)
+                self.assertEqual(self.client.get(url).status_code, 404)
 
     def test_large_download_csv(self):
         for manager_cls in (MockLongMontrekTableManager, MockLongMontrekTableManager2):
