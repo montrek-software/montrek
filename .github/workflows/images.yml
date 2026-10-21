@@ -117,6 +117,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/montrek-app
+          # latest means main. The default (auto) would also tag every stable
+          # version tag as latest, so a hotfix tagged on an older commit would
+          # move it backwards.
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
