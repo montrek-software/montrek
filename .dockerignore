@@ -5,26 +5,9 @@
 # every build, and one `COPY . .` away from being baked into an image that gets
 # pushed to a registry.
 #
-# If you add a COPY/ADD to Dockerfile or Dockerfile.app, add a matching `!` line
-# here or the build will fail with "file not found".
+# If you add a COPY/ADD to the Dockerfile, add a matching `!` line here or the
+# build will fail with "file not found". Dockerfile.app has its own allowlist in
+# Dockerfile.app.dockerignore, which Docker reads instead of this file.
 *
 
 !bin/entrypoints/montrek-entrypoint.sh
-
-# Dockerfile.app: the code and the requirements. A re-included directory comes
-# back whole, so everything under it that is runtime data, a local artefact or
-# an extension checked out into a dev tree is excluded again after it -- later
-# lines win.
-!bin
-!montrek
-!requirements.in
-!requirements.txt
-montrek/uploads
-montrek/sent_emails
-montrek/reporting/.workbench
-montrek/mt_*
-**/__pycache__
-**/*.pyc
-**/.coverage
-**/.scannerwork
-**/node_modules

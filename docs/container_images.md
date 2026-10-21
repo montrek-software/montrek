@@ -52,5 +52,16 @@ docker build -f Dockerfile.app --build-arg BASE_IMAGE=<montrek-base ref> -t mont
 
 A `requirements.txt` in the repo root (the one `make sync-local-python-env`
 writes) is installed as it is; without one, `requirements.in` is compiled
-during the build. A client image adds its extensions and its own locked
-requirements on top in its deployment repository.
+during the build. The context is limited by `Dockerfile.app.dockerignore`
+(Docker reads it instead of `.dockerignore` for that Dockerfile), which keeps
+runtime data and any `montrek/mt_*` extension checked out locally out of a core
+image.
+
+## Client images
+
+A client image is built with the same `Dockerfile.app`, from `montrek-base`
+rather than on top of `montrek-app`, so core and extension dependencies are
+resolved into one lock. Its pipeline assembles the build context: core at the
+pinned version, each extension under `montrek/<extension>`, the client's
+committed `requirements.txt` in the root, and a `Dockerfile.app.dockerignore`
+without the `montrek/mt_*` line.
