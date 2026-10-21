@@ -259,9 +259,13 @@ class ReportingImage(ReportingElement):
 
         Resolved once per instance: a report asks the same image for both the
         ready-made string and the raw path, and a remote image must not be
-        fetched twice to answer that.
+        fetched twice to answer that. A downloaded image lives in the
+        workbench of one LaTeX run, which is removed afterwards, so a path
+        whose file is gone is resolved again.
         """
-        if self._resolved_path is None:
+        if self._resolved_path is None or (
+            self._resolved_path and not os.path.exists(self._resolved_path)
+        ):
             self._resolved_path = (
                 self._download_to_workbench()
                 if self._is_url()
