@@ -19,11 +19,13 @@ from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from decouple import Csv
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
 from reporting.core.reporting_colors import ReportingColors
 
 from montrek.configuration import config
+from montrek.env_schema import raise_for_invalid_settings
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
 
@@ -38,6 +40,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # `config` resolves each key from the environment, then from a `NAME_FILE` path
 # or a secret mounted under /run/secrets, then from ../.env -- see
 # montrek/configuration.py and docs/secrets.md.
+# Every variable is declared in montrek/env.schema.toml; a missing or invalid
+# one stops the start-up here, with all problems listed at once.
+raise_for_invalid_settings(config)
 
 
 # Quick-start development settings - unsuitable for production
@@ -62,6 +67,9 @@ ALLOWED_HOSTS = [
     DEPLOY_HOST,
     f"{PROJECT_NAME}.{DEPLOY_HOST}",
 ]
+# Names the derived ones cannot express, such as a load balancer or a custom
+# domain in front of the install.
+ALLOWED_HOSTS += config("EXTRA_ALLOWED_HOSTS", default="", cast=Csv())
 USE_X_FORWARDED_HOST = True
 # Only safe because nginx is the sole ingress and always sets this header.
 # Nothing may publish the gunicorn port directly -- a client that can reach it
@@ -250,7 +258,13 @@ MONTREK_MIDDLEWARE = [
     "middleware.MontrekErrorMiddleware",
 ]
 
-MIDDLEWARE = DJANGO_MIDDLEWARE + MONTREK_MIDDLEWARE
+# First, so a health check is answered before host validation, the https
+# redirect and the login redirect -- see HealthCheckMiddleware.
+MIDDLEWARE = [
+    "middleware.HealthCheckMiddleware",
+    *DJANGO_MIDDLEWARE,
+    *MONTREK_MIDDLEWARE,
+]
 
 ROOT_URLCONF = "montrek.urls"
 
@@ -406,6 +420,7 @@ CSRF_TRUSTED_ORIGINS += [
     f"https://{DEPLOY_HOST}:{DEPLOY_PORT}",
     f"https://{DEPLOY_HOST}",
 ]
+CSRF_TRUSTED_ORIGINS += config("EXTRA_CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 
 EMAIL_HOST = config("EMAIL_HOST", default=None)
 if not EMAIL_HOST:
