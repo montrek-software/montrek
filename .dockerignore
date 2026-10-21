@@ -6,7 +6,8 @@
 # pushed to a registry.
 #
 # If you add a COPY/ADD to the Dockerfile, add a matching `!` line here or the
-# build will fail with "file not found".
+# build will fail with "file not found". Dockerfile.app has its own allowlist in
+# Dockerfile.app.dockerignore, which Docker reads instead of this file.
 *
 
 !bin/entrypoints/montrek-entrypoint.sh

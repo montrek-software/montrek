@@ -1,0 +1,25 @@
+# The build context of Dockerfile.app. Docker reads this file instead of
+# .dockerignore for that Dockerfile. Same allowlist approach: deny everything,
+# allow only what Dockerfile.app COPYs.
+#
+# A re-included directory comes back whole, so everything under it that is
+# runtime data or a local artefact is excluded again after it -- later lines win.
+*
+
+!bin
+!montrek
+!requirements.in
+!requirements.txt
+montrek/uploads
+montrek/sent_emails
+montrek/reporting/.workbench
+**/__pycache__
+**/*.pyc
+**/.coverage
+**/.scannerwork
+**/node_modules
+
+# Extensions checked out into a dev tree stay out of a core image. A client
+# build assembles its own context with its extensions under montrek/ and
+# replaces this file with one that leaves out this line.
+montrek/mt_*

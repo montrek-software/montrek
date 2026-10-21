@@ -380,8 +380,13 @@ if ENABLE_KEYCLOAK:
     OIDC_USE_PKCE = True
     OIDC_PKCE_CODE_CHALLENGE_METHOD = "S256"
 
-    OIDC_EXTRA_REQUEST_ARGS = {"verify": "/etc/ssl/certs/ca-certificates.crt"}
-    os.environ["REQUESTS_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
+    # The system bundle, unless the entrypoint has pointed REQUESTS_CA_BUNDLE at
+    # one with the instance CA appended -- what an app image does, since it
+    # cannot install the CA system-wide without root.
+    CA_BUNDLE = os.environ.setdefault(
+        "REQUESTS_CA_BUNDLE", "/etc/ssl/certs/ca-certificates.crt"
+    )
+    OIDC_EXTRA_REQUEST_ARGS = {"verify": CA_BUNDLE}
 
 else:
     LOGIN_URL = reverse_lazy("login")
