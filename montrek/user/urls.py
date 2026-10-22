@@ -7,6 +7,7 @@ urlpatterns = [
     path("signup/", views.MontrekSignUpView.as_view(), name="signup"),
     path("login/", views.MontrekLoginView.as_view(), name="login"),
     path("logout/", views.MontrekLogoutView.as_view(next_page="login"), name="logout"),
+    path("logged_out/", views.MontrekLoggedOutView.as_view(), name="logged_out"),
     path(
         "password_reset/",
         views.MontrekPasswordResetView.as_view(),

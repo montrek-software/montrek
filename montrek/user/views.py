@@ -79,10 +79,22 @@ class MontrekOIDCAuthenticationRequestView(OIDCAuthenticationRequestView):
 
 class MontrekLogoutView(auth_views.LogoutView):
     def dispatch(self, request, *args, **kwargs):
-        if settings.ENABLE_OIDC and (logout_url := OidcProvider.logout_url()):
+        if settings.ENABLE_OIDC:
+            logout_url = OidcProvider.logout_url()
             logout(request)
-            return redirect(logout_url)
+            # Without the provider's logout page its session stays open, and
+            # the login page would sign the user straight back in.
+            return redirect(logout_url or "logged_out")
         return super().dispatch(request, *args, **kwargs)
+
+
+class MontrekLoggedOutView(generic_views.TemplateView):
+    template_name = "user/logged_out.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Logged out"
+        return context
 
 
 class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):

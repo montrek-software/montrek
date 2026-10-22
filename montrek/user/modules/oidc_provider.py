@@ -104,6 +104,8 @@ class OidcProvider:
             )
             response.raise_for_status()
             configuration = response.json()
+            if not isinstance(configuration, dict):
+                raise ValueError("the discovery document is no JSON object")
         except (requests.RequestException, ValueError) as error:
             logger.exception("OIDC discovery at %s failed", url)
             raise OidcDiscoveryError(f"OIDC discovery at {url} failed") from error

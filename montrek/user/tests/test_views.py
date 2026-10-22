@@ -366,7 +366,27 @@ class TestOidcLogin(TestCase):
             mock.patch(oidc_mocks.REQUESTS_GET, side_effect=oidc_mocks.unreachable()),
             self.assertLogs("user.modules.oidc_provider", "ERROR"),
         ):
-            response = self.client.post(reverse("logout"))
+            response = self.client.post(reverse("logout"), follow=True)
 
-        self.assertRedirects(response, reverse("login"), fetch_redirect_response=False)
+        self._assert_logged_out_without_new_login(response)
+
+    def test_logout_without_end_session_endpoint_does_not_log_in_again(self):
+        document = {**oidc_mocks.DISCOVERY_DOCUMENT}
+        del document["end_session_endpoint"]
+        self.client.force_login(self.user)
+        with mock.patch(
+            oidc_mocks.REQUESTS_GET,
+            return_value=oidc_mocks.discovery_response(document),
+        ):
+            response = self.client.post(reverse("logout"), follow=True)
+
+        self._assert_logged_out_without_new_login(response)
+
+    def _assert_logged_out_without_new_login(self, response):
+        self.assertEqual(response.redirect_chain, [(reverse("logged_out"), 302)])
+        # The page is shown instead of the login, which would start the login
+        # at the provider again.
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "user/logged_out.html")
+        self.assertContains(response, reverse("login"))
         self.assertNotIn("_auth_user_id", self.client.session)

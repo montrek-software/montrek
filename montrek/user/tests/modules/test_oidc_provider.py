@@ -76,6 +76,19 @@ class TestOidcProvider(TestCase):
         ):
             str(OidcProvider.get_settings("OIDC_OP_TOKEN_ENDPOINT"))
 
+    def test_document_that_is_no_json_object_raises_a_discovery_error(self):
+        for document in (None, [], "issuer"):
+            cache.clear()
+            response = oidc_mocks.discovery_response()
+            response.json.return_value = document
+            with (
+                self.subTest(document=document),
+                mock.patch(oidc_mocks.REQUESTS_GET, return_value=response),
+                self.assertRaises(OidcDiscoveryError),
+                self.assertLogs("user.modules.oidc_provider", "ERROR"),
+            ):
+                str(OidcProvider.get_settings("OIDC_OP_TOKEN_ENDPOINT"))
+
     def test_missing_endpoint_raises_a_discovery_error(self):
         document = {**oidc_mocks.DISCOVERY_DOCUMENT}
         del document["userinfo_endpoint"]
