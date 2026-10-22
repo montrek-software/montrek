@@ -2,7 +2,6 @@ from baseclasses.models import ValueDateList
 from django.db.models import OuterRef, Subquery, CharField, Func
 from django.db.models.functions import Cast
 from django.test import TestCase
-from django.conf import settings
 
 from baseclasses.utils import montrek_time
 from montrek_example.models.example_models import (
@@ -33,23 +32,6 @@ from montrek_example.tests.factories.montrek_example_factories import (
 class StringAgg(Func):
     function = "STRING_AGG"
     template = "%(function)s(%(expressions)s, ',')"
-
-
-class GroupConcat(Func):
-    function = "GROUP_CONCAT"
-    template = "%(function)s(%(expressions)s SEPARATOR ',')"
-
-
-def func():
-    engine = settings.DATABASES["default"]["ENGINE"]
-    if "mysql" in engine:
-        return GroupConcat
-    elif "postgresql" in engine:
-        return StringAgg
-    else:
-        raise NotImplementedError(
-            f"No function for concatenating list of strings defined for {engine}!"
-        )
 
 
 class TestMontrekHub(TestCase):
@@ -185,7 +167,7 @@ class TestMontrekSatellite(TestCase):
     def _add_concat(self, query):
         return query.annotate(
             field_d1_stragg=Cast(
-                func()(Cast("field_d1_str", CharField())),
+                StringAgg(Cast("field_d1_str", CharField())),
                 CharField(),
             )
         ).values("field_d1_stragg")
@@ -355,7 +337,7 @@ class TestMontrekSatellite(TestCase):
     def test_multiple_ts_links_aggregated_to_one(self):
         c_sat1 = SatC1Factory()
         tsd2_fac1 = SatTSD2Factory(field_tsd2_float=10, value_date="2019-09-09")
-        tsd2_fac2 = SatTSD2Factory(
+        SatTSD2Factory(
             field_tsd2_float=20,
             hub_entity=tsd2_fac1.hub_value_date.hub,
             value_date="2024-09-09",

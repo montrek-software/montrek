@@ -138,8 +138,7 @@ every run.
 
 The third-party images cannot follow that rule, so they are wired explicitly
 through the `*_FILE` convention they already support: `POSTGRES_PASSWORD_FILE`
-and `MYSQL_*_PASSWORD_FILE` for `db`, `KC_DB_PASSWORD_FILE` and friends for
-`keycloak` (read by `keycloak/bin/init-realm.sh`, which is the entrypoint).
+for `db`, `KC_DB_PASSWORD_FILE` and friends for `keycloak` (read by `keycloak/bin/init-realm.sh`, which is the entrypoint).
 Flower has no `*_FILE` support at all, so its basic-auth credential is assembled
 in the shell that already wraps its command -- into that process's environment
 rather than into argv, where `ps` inside the container would show it.

@@ -297,18 +297,13 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-postgres_backend_str = "django.db.backends.postgresql"
-DATABASE_ENGINE_MAP = {
-    "mariadb": "django.db.backends.mysql",
-    "postgres": postgres_backend_str,
-    "postgres_ext": postgres_backend_str,
-    "cloudsqlproxy": postgres_backend_str,
-}
+# Postgres only. DB_ENGINE picks how the install reaches it (db_yml/<engine>.yml);
+# the env schema check above refuses any other value.
 db_engine = str(config("DB_ENGINE", default="postgres"))
 
 DATABASES = {
     "default": {
-        "ENGINE": DATABASE_ENGINE_MAP[db_engine],
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": config("DB_NAME", default="montrek_db"),
         "USER": config("DB_USER", default="root"),
         "PASSWORD": config("DB_PASSWORD"),
@@ -316,7 +311,7 @@ DATABASES = {
             "DB_HOST", default="localhost"
         ),  # in docker setup: docker-compose service name (db)
         "PORT": config(
-            "DB_PORT", default=3306, cast=int
+            "DB_PORT", default=5432, cast=int
         ),  # in docker setup: internal docker container port
     }
 }

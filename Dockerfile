@@ -19,7 +19,6 @@ RUN apt-get update && \
   git \
   gnupg \
   gosu \
-  libmariadb-dev \
   libpq-dev \
   lsb-release \
   pandoc \

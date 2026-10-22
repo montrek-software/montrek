@@ -54,7 +54,7 @@ CONTAINER_SECRETS_DIR = "/run/secrets"
 HOST_SECRETS_DIRNAME = "secrets"
 
 # Suffix of the environment variable naming a file to read a value from. The
-# convention postgres, mariadb and keycloak already use for their own settings.
+# convention postgres and keycloak already use for their own settings.
 FILE_SUFFIX = "_FILE"
 
 # Sentinel distinct from decouple's `undefined`, which doubles as "no default

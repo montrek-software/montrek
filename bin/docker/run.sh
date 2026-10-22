@@ -7,6 +7,12 @@ set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/../lib/secrets.sh"
 montrek_load_env
 montrek_require_env DB_ENGINE || exit 1
+# docker-compose.yml includes db_yml/${DB_ENGINE}.yml.
+if [[ ! -f "db_yml/${DB_ENGINE}.yml" ]]; then
+  echo "DB_ENGINE=${DB_ENGINE} is not supported; montrek runs on Postgres only ($(cd db_yml && ls -- *.yml | sed 's/\.yml$//' | paste -sd, -))." >&2
+  echo "A MariaDB install moves its data to Postgres first, e.g. with pgloader." >&2
+  exit 1
+fi
 
 # Base compose file plus any nested ones. Each path is its own array element
 # with its own -f, so a path containing a space still arrives as one argument.

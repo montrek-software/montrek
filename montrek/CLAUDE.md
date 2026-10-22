@@ -245,7 +245,7 @@ The building-block commands those wrap (`generate_hub_models`, `generate_reposit
 
 ### Environment Configuration
 
-All configuration is via `.env` (one level up, in the project root). See `.env.template` for all required variables. Key variables: `SECRET_KEY`, `DEBUG`, `DB_ENGINE` (postgresql/mariadb), `DB_HOST`, `PROJECT_NAME`, `DEPLOY_HOST`.
+All configuration is via `.env` (one level up, in the project root). See `.env.template` for all required variables. Key variables: `SECRET_KEY`, `DEBUG`, `DB_ENGINE` (postgres/postgres_ext/cloudsqlproxy; Postgres only), `DB_HOST`, `PROJECT_NAME`, `DEPLOY_HOST`.
 
 ### Authentication
 
