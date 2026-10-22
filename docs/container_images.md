@@ -51,6 +51,19 @@ by path get the stored file's path, or a temporary copy on a backend without
 local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
 tables and report PDFs after seven days.
 
+**Workers.** `SERVICE` (`sequential_worker`, `parallel_worker`, `fast_worker`)
+picks the queue and pool. The fast worker is optional (`ENABLE_FAST_WORKER=1`
+in compose); the parallel worker runs the fast queue's tasks as well.
+`WORKER_CONCURRENCY` sets how many tasks a worker runs at once (parallel 4,
+fast 50 per CPU up to 500 by default; sequential always 1).
+Set it explicitly where the CPU count is not the container's own, and keep the
+fast worker's below what the database allows in connections. Tasks are
+acknowledged once they have run, so they must be safe to run twice. On SIGTERM a
+prefork worker gives running tasks `CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT` (8 s) to
+finish and puts the rest back in the queue; the gevent fast worker keeps the
+warm shutdown, and a task it is killed in comes back after
+`CELERY_VISIBILITY_TIMEOUT` (10 h). Keep the platform's stop timeout above 8 s.
+
 An instance CA (`MONTREK_CA_CERT`, default `/montrek/nginx/certs/fullchain.crt`)
 cannot be installed system-wide without root; the entrypoint appends it to a
 private bundle under `/tmp` and points `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE`

@@ -28,7 +28,7 @@ esac
 # Several workers with threads, so one slow request (e.g. the risk values
 # report and its summary refresh) no longer blocks every other user. Gunicorn
 # defaults to a single sync worker. Tunable via .env without a rebuild.
-python -m gunicorn --chdir montrek montrek.wsgi:application \
+exec python -m gunicorn --chdir montrek montrek.wsgi:application \
   --bind 0.0.0.0:${APP_PORT} \
   --workers "${GUNICORN_WORKERS:-4}" \
   --worker-class gthread \

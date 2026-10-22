@@ -3,4 +3,4 @@ set -e
 
 . .venv/bin/activate
 cd montrek
-python -m celery --app=montrek beat --loglevel=info
+exec python -m celery --app=montrek beat --loglevel=info
