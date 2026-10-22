@@ -42,7 +42,7 @@ _FIELDS = {"type", "description", "required", "secret", "choices", "default", "s
 
 # A secrets directory can also hold files that are not a variable, such as the
 # Cloud SQL key file. Only names that could be a variable are matched up.
-_VARIABLE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_VARIABLE_NAME = re.compile(r"^[A-Za-z_]\w*$", re.ASCII)
 
 _MISSING = object()
 

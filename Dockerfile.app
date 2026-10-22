@@ -43,14 +43,15 @@ LABEL org.opencontainers.image.source="https://github.com/montrek-software/montr
 
 # Settings refuse to load without SECRET_KEY and DB_PASSWORD. collectstatic
 # needs neither, so placeholders that exist only for this RUN are enough.
-RUN cd montrek \
-  && SECRET_KEY=collectstatic-only DB_PASSWORD=collectstatic-only \
+WORKDIR /montrek/montrek
+RUN SECRET_KEY=collectstatic-only DB_PASSWORD=collectstatic-only \
   python manage.py collectstatic --noinput --verbosity 0 \
   && mkdir -p uploads \
   && chown appuser:appgroup uploads \
   && echo "${MONTREK_REVISION}" >/montrek/.montrek-image \
   && chown root:root /montrek
 
+WORKDIR /montrek
 EXPOSE 8000
 ENTRYPOINT ["/montrek/bin/entrypoints/montrek-entrypoint.sh"]
 USER appuser

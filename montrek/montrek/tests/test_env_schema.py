@@ -26,6 +26,7 @@ from montrek.env_schema import (
     raise_for_invalid_settings,
 )
 from montrek.tests.test_configuration import ConfigurationTestCase
+from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
 
 SETTINGS_FILE = Path(__file__).resolve().parent.parent / "settings.py"
 
@@ -166,7 +167,11 @@ class TestRaiseForInvalidSettings(ConfigurationTestCase):
 
     def test_ignores_compose_scope(self):
         self.isolate_environment(
-            {"SECRET_KEY": "s", "DB_PASSWORD": "p", "GUNICORN_WORKERS": "many"}
+            {
+                "SECRET_KEY": "s",
+                "DB_PASSWORD": TEST_USER_PASSWORD,
+                "GUNICORN_WORKERS": "many",
+            }
         )
         raise_for_invalid_settings(self.config())
 
