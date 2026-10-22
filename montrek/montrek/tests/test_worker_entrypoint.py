@@ -84,7 +84,8 @@ class TestWorkerEntrypoint(SimpleTestCase):
                     SERVICE="parallel_worker", **environment
                 )
                 self.assertEqual(options["concurrency"], expected)
-                self.assertEqual(options["queue"], "parallel_queue")
+                # The fast queue too: the fast worker is optional.
+                self.assertEqual(options["queue"], "parallel_queue,fast_queue")
 
     def test_fast_worker_concurrency(self):
         for environment, expected in (

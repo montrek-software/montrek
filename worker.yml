@@ -72,7 +72,8 @@ services:
     environment:
       <<: *worker-identity
       SERVICE: parallel_worker
-      QUEUE: parallel_queue
+      # The fast queue as well, so its tasks run without the fast worker.
+      QUEUE: parallel_queue,fast_queue
       POOL: prefork
       WORKER_CONCURRENCY: ${PARALLEL_WORKER_CONCURRENCY:-${SET_CONCURRENCY:-}}
     volumes: *worker-volumes
@@ -86,7 +87,11 @@ services:
     networks:
       - montrek_network
 
+  # Optional: started with ENABLE_FAST_WORKER=1 (bin/docker/run.sh adds the
+  # profile). Without it the parallel worker runs the fast queue's tasks.
   fast_worker:
+    profiles:
+      - fast_worker
     image: ${CONTAINER_REGISTRY:-ghcr.io}/${CONTAINER_NAMESPACE:-montrek-software}/${CONTAINER_IMAGE:-montrek-container}:${CONTAINER_TAG:-latest}
     <<: *worker-hardening
     environment:

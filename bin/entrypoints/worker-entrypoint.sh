@@ -22,7 +22,8 @@ sequential_worker)
   ;;
 parallel_worker)
   CONCURRENCY=${WORKER_CONCURRENCY:-${SET_CONCURRENCY:-4}}
-  QUEUE=${QUEUE:-parallel_queue}
+  # The fast queue as well: the fast worker is optional.
+  QUEUE=${QUEUE:-parallel_queue,fast_queue}
   POOL=${POOL:-prefork}
   ;;
 fast_worker)

@@ -52,8 +52,10 @@ local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
 tables and report PDFs after seven days.
 
 **Workers.** `SERVICE` (`sequential_worker`, `parallel_worker`, `fast_worker`)
-picks the queue and pool; `WORKER_CONCURRENCY` sets how many tasks a worker runs
-at once (parallel 4, fast 50 per CPU up to 500 by default; sequential always 1).
+picks the queue and pool. The fast worker is optional (`ENABLE_FAST_WORKER=1`
+in compose); the parallel worker runs the fast queue's tasks as well.
+`WORKER_CONCURRENCY` sets how many tasks a worker runs at once (parallel 4,
+fast 50 per CPU up to 500 by default; sequential always 1).
 Set it explicitly where the CPU count is not the container's own, and keep the
 fast worker's below what the database allows in connections. Tasks are
 acknowledged once they have run, so they must be safe to run twice. On SIGTERM a

@@ -47,7 +47,10 @@ esac
 
 PROFILE=()
 if [[ "${ENABLE_KEYCLOAK:-0}" == "1" ]]; then
-  PROFILE=(--profile keycloak)
+  PROFILE+=(--profile keycloak)
+fi
+if [[ "${ENABLE_FAST_WORKER:-0}" == "1" ]]; then
+  PROFILE+=(--profile fast_worker)
 fi
 
 # Strip any USER_ID/GROUP_ID left in .env by an older version of this script,

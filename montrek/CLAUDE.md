@@ -187,7 +187,7 @@ Three worker queues defined in `montrek/celery.py` and `settings.py`:
 | ------------------ | ------------------------------------ |
 | `SEQUENTIAL_QUEUE` | Long-running, must run one at a time |
 | `PARALLEL_QUEUE`   | Parallel-safe tasks                  |
-| `FAST_QUEUE`       | Short, quick tasks                   |
+| `FAST_QUEUE`       | Short, quick tasks; runs on the parallel worker unless the optional fast worker is enabled (`ENABLE_FAST_WORKER`) |
 
 Tasks are auto-discovered from each app's `tasks.py` using `@shared_task`.
 
