@@ -2,9 +2,7 @@ import warnings
 
 from baseclasses import models as bc_models
 from baseclasses.repositories.subquery_builder import (
-    GroupConcat,
     JsonAgg,
-    JsonArrayAgg,
     LinkedSatelliteSubqueryBuilder,
     ReverseLinkedSatelliteSubqueryBuilder,
     StringAgg,
@@ -149,32 +147,14 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 
 class TestSideFunctions(TestCase):
     def test_get_string_concat_function(self):
-        with self.settings(DATABASES={"default": {"ENGINE": "mysql"}}):
-            act = get_string_concat_function(separator="|")()
-            exp = GroupConcat(separator="|")
-            self.assertEqual(act, exp)
-            self.assertEqual(
-                act.template, "GROUP_CONCAT(%(expressions)s SEPARATOR '|')"
-            )
-        with self.settings(DATABASES={"default": {"ENGINE": "postgresql"}}):
-            act = get_string_concat_function(separator=",")()
-            exp = StringAgg(separator=",")
-            self.assertEqual(act, exp)
-            self.assertEqual(act.template, "STRING_AGG(%(expressions)s, ',')")
-        with self.settings(DATABASES={"default": {"ENGINE": "unknown"}}):
-            self.assertRaises(
-                NotImplementedError, get_string_concat_function, separator=","
-            )
+        act = get_string_concat_function(separator=",")()
+        exp = StringAgg(separator=",")
+        self.assertEqual(act, exp)
+        self.assertEqual(act.template, "STRING_AGG(%(expressions)s, ',')")
 
     def test_get_json_agg_function(self):
-        with self.settings(DATABASES={"default": {"ENGINE": "mysql"}}):
-            act = get_json_agg_function()()
-            self.assertIsInstance(act, JsonArrayAgg)
-        with self.settings(DATABASES={"default": {"ENGINE": "postgresql"}}):
-            act = get_json_agg_function()()
-            self.assertIsInstance(act, JsonAgg)
-        with self.settings(DATABASES={"default": {"ENGINE": "unknown"}}):
-            self.assertRaises(NotImplementedError, get_json_agg_function)
+        act = get_json_agg_function()()
+        self.assertIsInstance(act, JsonAgg)
 
 
 class TestIsPlainColumnFilter(TestCase):

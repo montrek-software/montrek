@@ -37,7 +37,7 @@ montrek_load_secrets() {
   [[ -n "${MONTREK_SECRETS_DIR:-}" ]] && dirs=("$MONTREK_SECRETS_DIR")
   local dir pointer target file name value
 
-  # NAME_FILE pointers, which is how postgres, mariadb and keycloak are wired
+  # NAME_FILE pointers, which is how postgres and keycloak are wired
   # and how a secret whose file name differs from its variable is resolved.
   while IFS= read -r pointer; do
     target="${pointer%_FILE}"

@@ -19,7 +19,6 @@ from baseclasses.models import (
     MontrekSatelliteBaseABC,
     MontrekTimeSeriesSatelliteABC,
 )
-from django.conf import settings
 from django.db import models
 from django.db.models import (
     BooleanField,
@@ -1624,23 +1623,8 @@ class StringAgg(Func):
         super().__init__(*expressions, template=self.template, **extra)
 
 
-class GroupConcat(Func):
-    function = "GROUP_CONCAT"
-
-    def __init__(self, *expressions, separator, **extra):
-        self.template = f"{self.function}(%(expressions)s SEPARATOR '{separator}')"
-        super().__init__(*expressions, template=self.template, **extra)
-
-
 def get_string_concat_function(separator: str) -> Callable[..., Any]:
-    engine = settings.DATABASES["default"]["ENGINE"]
-    if "mysql" in engine:
-        return lambda *args, **kwargs: GroupConcat(*args, separator=separator, **kwargs)
-    if "postgresql" in engine:
-        return lambda *args, **kwargs: StringAgg(*args, separator=separator, **kwargs)
-    raise NotImplementedError(
-        f"No function for concatenating list of strings defined for {engine}!"
-    )
+    return lambda *args, **kwargs: StringAgg(*args, separator=separator, **kwargs)
 
 
 class JsonAgg(Func):
@@ -1648,18 +1632,8 @@ class JsonAgg(Func):
     template = "%(function)s(%(expressions)s)"
 
 
-class JsonArrayAgg(Func):
-    function = "JSON_ARRAYAGG"
-    template = "%(function)s(%(expressions)s)"
-
-
 def get_json_agg_function() -> type[Func]:
-    engine = settings.DATABASES["default"]["ENGINE"]
-    if "mysql" in engine:
-        return JsonArrayAgg
-    if "postgresql" in engine:
-        return JsonAgg
-    raise NotImplementedError(f"No JSON aggregation function defined for {engine}!")
+    return JsonAgg
 
 
 class LinkAggFunctionEnum(Enum):
