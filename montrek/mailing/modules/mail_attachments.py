@@ -2,6 +2,7 @@ from pathlib import Path, PurePosixPath
 
 from baseclasses.utils import get_content_type
 from django.conf import settings
+from django.core.exceptions import SuspiciousFileOperation
 from django.core.files.storage import default_storage
 
 
@@ -51,6 +52,17 @@ class MailAttachments:
             name = resolved.relative_to(media_root).as_posix()
         else:
             name = entry
-        if ".." in PurePosixPath(name).parts or not default_storage.exists(name):
+        if ".." in PurePosixPath(name).parts or not MailAttachments._is_file(name):
             raise ValueError(f"{entry} is not a stored file")
         return name
+
+    @staticmethod
+    def _is_file(name: str) -> bool:
+        # Opened rather than checked with exists(), which a filesystem
+        # storage also answers with True for a directory; sending the mail
+        # would then fail reading it.
+        try:
+            with default_storage.open(name, "rb"):
+                return True
+        except (OSError, SuspiciousFileOperation):
+            return False

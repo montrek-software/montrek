@@ -53,3 +53,22 @@ class TestMailAttachments(TestCase):
         ):
             with self.subTest(entry=entry), self.assertRaises(ValueError):
                 MailAttachments(entry).to_storage_names()
+
+
+class TestMailAttachmentsOnFilesystem(TestCase):
+    def test_directories_are_refused(self):
+        name = default_storage.save("latex/a/report.pdf", ContentFile(b"1"))
+        media_root_directory = str(Path(settings.MEDIA_ROOT) / "latex")
+        for entry in (
+            ".",
+            "latex",
+            "latex/a",
+            media_root_directory,
+            str(Path(name).parent) + "/",
+        ):
+            with self.subTest(entry=entry), self.assertRaises(ValueError):
+                MailAttachments(entry).to_storage_names()
+
+    def test_stored_files_are_accepted(self):
+        name = default_storage.save("latex/a/report.pdf", ContentFile(b"1"))
+        self.assertEqual(MailAttachments(name).to_storage_names(), name)

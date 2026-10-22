@@ -49,9 +49,15 @@ class TestStorageCleanup(TestCase):
         )
 
     @object_storage
-    def test_works_without_local_paths(self):
+    def test_missing_prefix_on_object_storage_deletes_nothing(self):
+        self.assertEqual(self.cleanup.delete_old_files(), 0)
+
+    @object_storage
+    def test_deletes_under_a_prefix_that_is_no_object(self):
         old = default_storage.save(f"{self.directory}/a/old.csv", ContentFile(b"x"))
         new = default_storage.save(f"{self.directory}/b/new.csv", ContentFile(b"x"))
+        # As on S3, GCS or Azure Blob: the directory is a prefix, no object.
+        self.assertFalse(default_storage.exists(self.directory))
         cutoff_passed = timezone.now() + datetime.timedelta(days=8)
 
         with mock.patch.object(timezone, "now", return_value=cutoff_passed):

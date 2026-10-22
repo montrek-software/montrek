@@ -16,11 +16,16 @@ class StorageCleanup:
 
     def delete_old_files(self) -> int:
         """Returns the number of files deleted."""
-        if not default_storage.exists(self.directory):
+        # Listed rather than checked with exists() first: on an object
+        # storage the directory is only a prefix of the stored names, so
+        # exists() is False for it even while files are stored under it.
+        try:
+            names = list(self._walk(self.directory))
+        except FileNotFoundError:
             return 0
         cutoff = timezone.now() - self.max_age
         deleted = 0
-        for name in self._walk(self.directory):
+        for name in names:
             if default_storage.get_modified_time(name) < cutoff:
                 default_storage.delete(name)
                 deleted += 1
