@@ -3,9 +3,13 @@ from typing import cast
 from baseclasses.managers.montrek_manager import MontrekManager
 from django.conf import settings
 from django.core import mail
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.test import TestCase
 from mailing import views
 from mailing.forms import MailingSendForm
 from mailing.managers.mailing_manager import MailingManager
+from mailing.repositories.mailing_repository import MailingRepository
 from mailing.tests.factories.mailing_factories import MailSatelliteFactory
 from testing.test_cases import view_test_cases as vtc
 
@@ -90,3 +94,27 @@ class TestMailDetailsView(vtc.MontrekDetailViewTestCase):
 
     def url_kwargs(self):
         return {"pk": self.mail.hub_entity.pk}
+
+
+class TestMailingSendForm(TestCase):
+    def _form(self, attachments: str) -> MailingSendForm:
+        return MailingSendForm(
+            repository=MailingRepository({}),
+            data={
+                "mail_recipients": "a@b.de",
+                "mail_subject": "Test",
+                "mail_message": "This is a test",
+                "mail_attachments": attachments,
+            },
+        )
+
+    def test_attachments_in_the_storage_are_accepted(self):
+        name = default_storage.save("latex/a/report.pdf", ContentFile(b"pdf"))
+        form = self._form(name)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["mail_attachments"], name)
+
+    def test_local_files_cannot_be_attached(self):
+        form = self._form("/etc/passwd")
+        self.assertFalse(form.is_valid())
+        self.assertIn("mail_attachments", form.errors)

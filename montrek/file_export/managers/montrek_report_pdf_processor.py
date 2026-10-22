@@ -1,8 +1,6 @@
 import logging
-import os
 from typing import Any
 
-from django.core.files.base import ContentFile
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 
@@ -30,16 +28,13 @@ class MontrekReportPdfProcessor(FileExportProcessorABC):
     def process(self) -> bool:
         try:
             latex_manager = LatexReportManager(self.get_report_manager())
-            pdf_path = latex_manager.compile_report()
-            if pdf_path is None:
+            pdf = latex_manager.compile_pdf()
+            if pdf is None:
                 self._log_compile_errors(latex_manager.report_manager)
                 self.set_message(f"Kein {self.report_name} generiert.")
                 return False
 
-            with open(pdf_path, "rb") as f:
-                self.set_result_file(
-                    ContentFile(f.read(), name=os.path.basename(pdf_path))
-                )
+            self.set_result_file(pdf)
             self.set_message(f"{self.report_name} generiert.")
         except Exception:
             logger.exception("%s export failed", self.report_name)

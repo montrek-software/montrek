@@ -1,9 +1,8 @@
-import os
 import re
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any, ClassVar, Protocol
 
-from django.conf import settings
 from django.core.files import File
 from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManager,
@@ -22,6 +21,7 @@ from process_pipeline.managers.process_pipeline_processor_abc import (
 )
 from file_upload.modules.unattended_upload_registry import UnattendedUploadRegistry
 from process_pipeline.tasks.montrek_pipeline_task import MontrekPipelineTask
+from storage.modules.local_storage_file import LocalStorageFile
 
 
 class FileUploadProcessorInterface(PipelineProcessorProtocol, Protocol):
@@ -101,11 +101,18 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     def __init__(self, session_data: dict[str, Any]) -> None:
         super().__init__(session_data=session_data)
         self.file_path = ""
+        # Holds the local copy of the upload that file_path points to, for as
+        # long as process() runs.
+        self._local_files = ExitStack()
 
     # ---- public entry point ----
 
     def upload_and_process(self, file: File) -> bool:
         return self.trigger_pipeline(file=file)
+
+    def process(self, pipeline_data: dict[str, Any] | None = None) -> bool:
+        with self._local_files:
+            return super().process(pipeline_data)
 
     # ---- pipeline hooks ----
 
@@ -129,7 +136,9 @@ class FileUploadManagerABC(MontrekPipelineManagerABC):
     def _build_processor(
         self, pipeline_data: dict[str, Any]
     ) -> PipelineProcessorProtocol:
-        self.file_path = os.path.join(settings.MEDIA_ROOT, self.registry.file)
+        self.file_path = self._local_files.enter_context(
+            LocalStorageFile(self.registry.file)
+        )
         return self.processor_class(self.registry, self.session_data)
 
     def _apply_step(self, step: str) -> bool:

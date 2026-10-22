@@ -96,6 +96,12 @@ Make sure that the produced code is ruff and sonarcube compliant
 - If a direct Django ORM call (`Model.objects...`) is unavoidable, put it in the matching repository, or create a new repository for it. Never put one in managers, views, forms or modules.
 - If the framework almost covers the task but needs a workaround or a direct ORM call, raise it as a possible framework enhancement instead of silently working around it.
 
+### Modules are classes
+
+- Write every new module (in `modules/`, or any helper module) as a class named after the module, e.g. `mail_attachments.py` → `MailAttachments`, `storage_cleanup.py` → `StorageCleanup`; no loose module-level functions. State goes into `__init__`; helpers that need none become `@staticmethod`/`@classmethod`.
+- A resource that must be released (a temporary copy, an open handle) is a context manager class (`__enter__`/`__exit__`), not a `@contextmanager` function.
+- Exceptions: Django's function-based conventions (migrations' `RunPython` functions, function views, signal receivers, template tags), and module-level constants.
+
 ### Comments
 
 - Assume the reader can read Python. Comment only when it adds understanding beyond what the code says: intent, invariants, non-obvious constraints, why an alternative doesn't work.

@@ -8,6 +8,7 @@ from django.conf import settings
 from bs4 import BeautifulSoup
 from django.test import TestCase
 from reporting.core import workbench
+from reporting.core.text_converter import HtmlLatexConverter
 
 from reporting.core.reporting_text import (
     CollapsibleSection,
@@ -350,7 +351,11 @@ class TestReportingImage(ReportingElementTestCase):
                 self.assertEqual(reporting_image.resolve_path(), path)
                 self.assertEqual(os.path.dirname(path), str(directory))
                 self.assertTrue(os.path.exists(path))
-                self.assertIn(path, reporting_image.to_latex())
+                # Escaped, as LaTeX gets it: the run's directory name may hold
+                # an underscore.
+                self.assertIn(
+                    HtmlLatexConverter.convert(path), reporting_image.to_latex()
+                )
                 paths.append(path)
         self.assertNotEqual(paths[0], paths[1])
         self.assertEqual(mock_get.call_count, 2)

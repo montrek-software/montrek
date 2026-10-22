@@ -8,8 +8,11 @@ from typing import cast
 
 from baseclasses.dataclasses.montrek_message import MontrekMessageError
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.template import Context, Template
 from django.utils.safestring import mark_safe
+from reporting.constants import LATEX_PDF_STORAGE_DIR
 from reporting.core.reporting_colors import Color, ReportingColors
 from reporting.core.reporting_text import ClientLogo
 from reporting.core import workbench
@@ -129,28 +132,50 @@ class LatexReportManager:
         with open(template_path) as file:
             return file.read()
 
-    def compile_report(self) -> str | None:
-        with workbench.activate() as workbench_path:
-            return self._compile_report(workbench_path)
+    def compile_pdf(self) -> ContentFile | None:
+        """The compiled PDF, named `<document_name>.pdf`.
 
-    def _compile_report(self, workbench_path: Path) -> str | None:
+        None if LaTeX produced no PDF; its output is then on the report
+        manager's messages.
+        """
+        with workbench.activate() as workbench_path:
+            return self._compile_pdf(workbench_path)
+
+    def store_pdf(self) -> str | None:
+        """Compile the PDF into the default storage and return its name there.
+
+        For a PDF needed beyond the request, such as a mail attachment. Each
+        compile gets its own directory, since document_name is not unique and
+        stays the file name.
+        """
+        pdf = self.compile_pdf()
+        if pdf is None:
+            return None
+        return default_storage.save(
+            f"{LATEX_PDF_STORAGE_DIR}/{uuid.uuid4()}/{pdf.name}", pdf
+        )
+
+    def compile_report(self) -> str | None:
+        """Local path of the stored PDF.
+
+        Only works with a filesystem storage; use compile_pdf() or
+        store_pdf() instead.
+        """
+        name = self.store_pdf()
+        if name is None:
+            return None
+        return default_storage.path(name)
+
+    def _compile_pdf(self, workbench_path: Path) -> ContentFile | None:
         # Rendered inside the workbench: plots and images write the files the
         # LaTeX source includes while it is generated.
         report_str = self.generate_report()
-
-        # One directory per compile: document_name is not unique (two runs of
-        # the same report on the same day share it), and callers read the file
-        # back after this returns, so a shared path could hand one run the PDF
-        # a concurrent run just wrote. The file name itself stays
-        # document_name, since callers use it as the download name.
-        output_dir = Path(settings.MEDIA_ROOT) / "latex" / str(uuid.uuid4())
 
         tex_filename = f"{self.report_manager.document_name}.tex"
         pdf_filename = f"{self.report_manager.document_name}.pdf"
 
         latex_file_path = workbench_path / tex_filename
         pdf_file_path = workbench_path / pdf_filename
-        output_pdf_path = output_dir / pdf_filename
 
         with open(latex_file_path, "w", encoding="utf-8") as f:
             f.write(report_str)
@@ -194,9 +219,7 @@ class LatexReportManager:
                 stderr[-500:],
             )
 
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_pdf_path.write_bytes(pdf_file_path.read_bytes())
-        return str(output_pdf_path)
+        return ContentFile(pdf_file_path.read_bytes(), name=pdf_filename)
 
     def _get_template_path(self) -> str | None:
         for template_dir in cast(list[str], settings.TEMPLATES[0]["DIRS"]):

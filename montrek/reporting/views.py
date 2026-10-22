@@ -14,7 +14,6 @@ from baseclasses.views import (
     MontrekViewMixin,
     ToPdfMixin,
 )
-from django.core.files.storage import default_storage
 from django.forms import ValidationError
 from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.shortcuts import render
@@ -27,7 +26,7 @@ from info.models.download_registry_sat_models import DownloadType
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.mixins.view_form_mixin import ViewFormMixin
-from reporting.modules import mailed_downloads
+from reporting.modules.mailed_downloads import MailedDownloads
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -40,10 +39,10 @@ def download_reporting_file_view(request, download_id: uuid.UUID, file_name: str
     # Single use: the file is deleted once it has been sent.
     if file_name in (".", ".."):
         raise Http404
-    path = mailed_downloads.storage_path(request.user.id, download_id, file_name)
-    if not default_storage.exists(path):
+    mailed_downloads = MailedDownloads(request.user.id)
+    if not mailed_downloads.exists(download_id, file_name):
         raise Http404
-    file = mailed_downloads.SingleUseFile(path)
+    file = mailed_downloads.open(download_id, file_name)
     DownloadRegistryStorageManager(
         {"user_id": request.user.id}
     ).store_in_download_registry(
@@ -81,8 +80,7 @@ class MontrekReportView(
             return self.list_to_pdf()
         if self.request.GET.get("send_mail") == "true":
             report_manager = LatexReportManager(self.manager)
-            pdf_path = report_manager.compile_report()
-            return self.manager.prepare_mail(pdf_path)
+            return self.manager.prepare_mail(report_manager.store_pdf())
         if self._is_rest(request):
             return self.list_to_rest_api()
         if request.headers.get("HX-Request"):

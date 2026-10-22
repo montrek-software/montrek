@@ -1,8 +1,7 @@
 import logging
-import os
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, BinaryIO, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from django.conf import settings
 from django.contrib import messages
@@ -290,24 +289,17 @@ class ToPdfMixin:
     def list_to_pdf_latex(self):
         """Opt-in LaTeX path: full XeLaTeX typesetting (?gen_pdf=latex)."""
         report_manager = LatexReportManager(self.manager)
-        pdf_path = report_manager.compile_report()
+        pdf = report_manager.compile_pdf()
         self.show_messages()
-        if pdf_path and os.path.exists(pdf_path):
+        if pdf is not None:
             DownloadRegistryStorageManager(
                 self.session_data
             ).store_in_download_registry(self.manager.document_name, DownloadType.PDF)
-            return FileResponse(
-                self.open_file(pdf_path),
-                content_type="application/pdf",
-                filename=os.path.basename(pdf_path),
-            )
+            return FileResponse(pdf, content_type="application/pdf", filename=pdf.name)
         previous_url = utils.get_safe_redirect_url(
             self.request, self.request.META.get("HTTP_REFERER"), self.request.path
         )
         return HttpResponseRedirect(previous_url)
-
-    def open_file(self, path: str) -> BinaryIO:
-        return open(path, "rb")  # noqa: SIM115    FileResponse needs the file open
 
 
 class MontrekApiViewMixin(APIView):

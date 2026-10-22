@@ -1,7 +1,7 @@
 import os
 
-from django.conf import settings
 from django.core.files import File
+from django.core.files.storage import default_storage
 
 from process_pipeline.repositories.pipeline_registry_repositories import (
     PipelineRegistryRepositoryABC,
@@ -23,10 +23,7 @@ class FileExportRegistryRepositoryABC(PipelineRegistryRepositoryABC):
         file_path = registry.export_file
         if not file_path:
             return None
-        full_path = os.path.join(settings.MEDIA_ROOT, str(file_path))
-        if not os.path.exists(full_path):
+        name = str(file_path)
+        if not default_storage.exists(name):
             return None
-        return File(
-            open(full_path, "rb"),  # noqa: SIM115
-            name=os.path.basename(full_path),
-        )
+        return File(default_storage.open(name, "rb"), name=os.path.basename(name))
