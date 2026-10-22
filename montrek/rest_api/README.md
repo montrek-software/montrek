@@ -37,11 +37,12 @@ refresh = tokens["refresh"]  # valid for 7 days
 | `/rest_api/token/refresh/`| `{refresh}`           | `{access, refresh}` (rotated)   |
 | `/rest_api/token/verify/` | `{token}`             | `200` if valid, `401` otherwise |
 
-### b) Keycloak login (`ENABLE_KEYCLOAK=true`)
+### b) OIDC login (`ENABLE_OIDC=true` or `ENABLE_KEYCLOAK=true`)
 
-Users who log in through Keycloak have **no Django password**, so
+Users who log in through the OpenID provider have **no Django password**, so
 `/rest_api/token/` answers `No active account found with the given
-credentials`. Get the token from Keycloak instead:
+credentials`. Get the token from the provider instead (its token endpoint is
+`token_endpoint` in `<issuer>/.well-known/openid-configuration`). For Keycloak:
 
 ```python
 REALM_URL = "https://auth-<PROJECT_NAME>.<DEPLOY_HOST>/realms/<REALM>"

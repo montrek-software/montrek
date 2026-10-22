@@ -344,7 +344,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "user.MontrekUser"
 
+# ENABLE_KEYCLOAK also runs the Keycloak container (compose, nginx); any other
+# OpenID provider is used with ENABLE_OIDC and its OIDC_ISSUER_URL.
 ENABLE_KEYCLOAK = config("ENABLE_KEYCLOAK", default=False, cast=bool)
+ENABLE_OIDC = ENABLE_KEYCLOAK or config("ENABLE_OIDC", default=False, cast=bool)
+OIDC_ISSUER_URL = config("OIDC_ISSUER_URL", default="")
 LOGIN_EXEMPT_PATHS = [
     r"^oidc/authenticate/?$",
     r"^oidc/callback/?$",
@@ -358,26 +362,37 @@ LOGIN_EXEMPT_PATHS = [
     r"^uploads/website/.*$",
     r"^__debug__/.*$",
 ]
-if ENABLE_KEYCLOAK:
+if ENABLE_OIDC:
     AUTHENTICATION_BACKENDS = (
-        "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
+        "user.backends.MontrekOIDCAuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     )
     LOGIN_URL: StrOrPromise = "/oidc/authenticate/"
+    OIDC_AUTHENTICATE_CLASS = "user.views.MontrekOIDCAuthenticationRequestView"
 
-    KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
-    OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="")
-    OIDC_RP_CLIENT_SECRET = config("KEYCLOAK_CLIENT_SECRET", default="")
+    OIDC_RP_CLIENT_ID = config("OIDC_CLIENT_ID", default="") or config(
+        "KEYCLOAK_CLIENT_ID", default=""
+    )
+    OIDC_RP_CLIENT_SECRET = config("OIDC_CLIENT_SECRET", default="") or config(
+        "KEYCLOAK_CLIENT_SECRET", default=""
+    )
+    OIDC_RP_SCOPES = config("OIDC_SCOPES", default="openid email")
     OIDC_RP_SIGN_ALGO = "RS256"
-    KEYCLOAK_REALM = config("KEYCLOAK_REALM", default="")
-    KEYCLOAK_URL = get_keycloak_base_url()
-    oicd_endpoints = get_oidc_endpoints()
+    # With an issuer URL, the endpoints come from its discovery document
+    # (user.modules.oidc_provider). Without one, they are those of the Keycloak
+    # realm behind auth-<PROJECT_NAME>.<DEPLOY_HOST>.
+    if not OIDC_ISSUER_URL:
+        KEYCLOAK_PORT = config("KEYCLOAK_PORT", default="")
+        KEYCLOAK_REALM = config("KEYCLOAK_REALM", default="")
+        KEYCLOAK_URL = get_keycloak_base_url()
+        oicd_endpoints = get_oidc_endpoints()
 
-    OIDC_OP_AUTHORIZATION_ENDPOINT = oicd_endpoints["authorization"]
-    OIDC_OP_TOKEN_ENDPOINT = oicd_endpoints["token"]
-    OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
-    OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
-    OIDC_OP_LOGOUT = oicd_endpoints["logout"]
+        OIDC_OP_AUTHORIZATION_ENDPOINT = oicd_endpoints["authorization"]
+        OIDC_OP_TOKEN_ENDPOINT = oicd_endpoints["token"]
+        OIDC_OP_USER_ENDPOINT = oicd_endpoints["userinfo"]
+        OIDC_OP_JWKS_ENDPOINT = oicd_endpoints["jwks"]
+        OIDC_OP_LOGOUT = oicd_endpoints["logout"]
+
     OIDC_USE_PKCE = True
     OIDC_PKCE_CODE_CHALLENGE_METHOD = "S256"
 

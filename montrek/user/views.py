@@ -7,7 +7,9 @@ from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
 from django.contrib import messages
+from mozilla_django_oidc.views import OIDCAuthenticationRequestView
 from user import forms
+from user.modules.oidc_provider import OidcProvider
 
 
 class MessageHandlerMixin:
@@ -66,17 +68,33 @@ class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
         return context
 
     def get(self, request, *args, **kwargs):
-        if settings.ENABLE_KEYCLOAK:
+        if settings.ENABLE_OIDC:
             return redirect("oidc_authentication_init")
         return super().get(request, *args, **kwargs)
 
 
+class MontrekOIDCAuthenticationRequestView(OIDCAuthenticationRequestView):
+    get_settings = staticmethod(OidcProvider.get_settings)
+
+
 class MontrekLogoutView(auth_views.LogoutView):
     def dispatch(self, request, *args, **kwargs):
-        if settings.ENABLE_KEYCLOAK:
+        if settings.ENABLE_OIDC:
+            logout_url = OidcProvider.logout_url()
             logout(request)
-            return redirect(settings.OIDC_OP_LOGOUT)
+            # Without the provider's logout page its session stays open, and
+            # the login page would sign the user straight back in.
+            return redirect(logout_url or "logged_out")
         return super().dispatch(request, *args, **kwargs)
+
+
+class MontrekLoggedOutView(generic_views.TemplateView):
+    template_name = "user/logged_out.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Logged out"
+        return context
 
 
 class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
