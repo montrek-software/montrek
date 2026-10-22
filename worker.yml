@@ -74,7 +74,7 @@ services:
       SERVICE: parallel_worker
       QUEUE: parallel_queue
       POOL: prefork
-      SET_CONCURRENCY: ${SET_CONCURRENCY:-}
+      WORKER_CONCURRENCY: ${PARALLEL_WORKER_CONCURRENCY:-${SET_CONCURRENCY:-}}
     volumes: *worker-volumes
     env_file:
       - .env
@@ -94,6 +94,7 @@ services:
       SERVICE: fast_worker
       QUEUE: fast_queue
       POOL: gevent
+      WORKER_CONCURRENCY: ${FAST_WORKER_CONCURRENCY:-}
     volumes: *worker-volumes
     env_file:
       - .env

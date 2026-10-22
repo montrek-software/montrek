@@ -474,9 +474,22 @@ CELERY_TASK_EAGER_PROPAGATES = config(
 )
 # number of messages the worker can prefetch from the broker
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
-# time to wait for the worker to acknowledge the task before the message is re-queued
+# A task is acknowledged once it has run, not when it starts, so one that was
+# running when its worker stopped (a deploy, a restart, a crash) runs again.
+# Tasks must therefore be safe to run twice.
+CELERY_TASK_ACKS_LATE = config("CELERY_TASK_ACKS_LATE", default=True, cast=bool)
+# On SIGTERM a prefork worker gives running tasks this long to finish, then
+# returns the others to the queue (worker-entrypoint.sh). Below the 10 seconds
+# compose and Cloud Run wait before they kill the container.
+CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT = config(
+    "CELERY_WORKER_SOFT_SHUTDOWN_TIMEOUT", default=8.0, cast=float
+)
+# time to wait for the worker to acknowledge the task before the message is re-queued;
+# longer than the longest task, or it runs a second time alongside the first
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "visibility_timeout": 3600 * 10,  # 10 hours
+    "visibility_timeout": config(
+        "CELERY_VISIBILITY_TIMEOUT", default=3600 * 10, cast=int
+    ),  # 10 hours
 }
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 
