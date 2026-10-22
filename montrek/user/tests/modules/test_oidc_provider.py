@@ -12,6 +12,11 @@ class TestOidcProvider(TestCase):
         cache.clear()
         self.addCleanup(cache.clear)
 
+    @staticmethod
+    def resolve(attr: str) -> str:
+        """Forces the lazy endpoint, which runs the discovery."""
+        return str(OidcProvider.get_settings(attr))
+
     def test_endpoints_come_from_the_discovery_document(self):
         with mock.patch(
             oidc_mocks.REQUESTS_GET, return_value=oidc_mocks.discovery_response()
@@ -66,7 +71,7 @@ class TestOidcProvider(TestCase):
             ),
             self.assertRaises(OidcDiscoveryError),
         ):
-            str(OidcProvider.get_settings("OIDC_OP_TOKEN_ENDPOINT"))
+            self.resolve("OIDC_OP_TOKEN_ENDPOINT")
 
     def test_unreachable_provider_raises_a_discovery_error(self):
         with (
@@ -74,7 +79,7 @@ class TestOidcProvider(TestCase):
             self.assertRaises(OidcDiscoveryError),
             self.assertLogs("user.modules.oidc_provider", "ERROR"),
         ):
-            str(OidcProvider.get_settings("OIDC_OP_TOKEN_ENDPOINT"))
+            self.resolve("OIDC_OP_TOKEN_ENDPOINT")
 
     def test_document_that_is_no_json_object_raises_a_discovery_error(self):
         for document in (None, [], "issuer"):
@@ -87,7 +92,7 @@ class TestOidcProvider(TestCase):
                 self.assertRaises(OidcDiscoveryError),
                 self.assertLogs("user.modules.oidc_provider", "ERROR"),
             ):
-                str(OidcProvider.get_settings("OIDC_OP_TOKEN_ENDPOINT"))
+                self.resolve("OIDC_OP_TOKEN_ENDPOINT")
 
     def test_missing_endpoint_raises_a_discovery_error(self):
         document = {**oidc_mocks.DISCOVERY_DOCUMENT}
@@ -99,7 +104,7 @@ class TestOidcProvider(TestCase):
             ),
             self.assertRaises(OidcDiscoveryError),
         ):
-            str(OidcProvider.get_settings("OIDC_OP_USER_ENDPOINT"))
+            self.resolve("OIDC_OP_USER_ENDPOINT")
 
     def test_logout_url_is_the_end_session_endpoint(self):
         with mock.patch(
