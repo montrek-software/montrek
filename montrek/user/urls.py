@@ -28,13 +28,13 @@ urlpatterns = [
         name="password_change",
     ),
 ]
-if settings.ENABLE_KEYCLOAK:
+if settings.ENABLE_OIDC:
     from mozilla_django_oidc import views as oidc_views
 
     urlpatterns += [
         path(
             "oidc/authenticate/",
-            oidc_views.OIDCAuthenticationRequestView.as_view(),
+            views.MontrekOIDCAuthenticationRequestView.as_view(),
             name="oidc_authentication_init",
         ),
         path(

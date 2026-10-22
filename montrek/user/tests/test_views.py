@@ -1,9 +1,16 @@
+from unittest import mock
+from urllib.parse import parse_qs, urlparse
+
 from django.contrib.auth import get_user_model
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core import mail
-from django.test import TestCase, override_settings
+from django.core.cache import cache
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from montrek.utils import get_keycloak_base_url, get_oidc_endpoints
+from user import views
+from user.tests import oidc_mocks
 
 
 def _get_messages_from_response(response):
@@ -307,3 +314,59 @@ class TestKeycloakSettings(TestCase):
             oicd_endpoints["logout"],
             keycloak_base + "/protocol/openid-connect/logout",
         )
+
+
+@override_settings(
+    ENABLE_OIDC=True,
+    OIDC_ISSUER_URL=oidc_mocks.ISSUER_URL,
+    OIDC_RP_CLIENT_ID="montrek",
+)
+class TestOidcLogin(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        self.user = get_user_model().objects.create_user(
+            email="test@example.com",
+            password="testpassword",  # nosec: B106: Testpasswort
+        )
+
+    def test_login_redirects_to_the_discovered_authorization_endpoint(self):
+        request = RequestFactory().get("/oidc/authenticate/")
+        SessionMiddleware(lambda request: None).process_request(request)
+        with mock.patch(
+            oidc_mocks.REQUESTS_GET, return_value=oidc_mocks.discovery_response()
+        ):
+            response = views.MontrekOIDCAuthenticationRequestView.as_view()(request)
+
+        self.assertEqual(response.status_code, 302)
+        location = urlparse(response.url)
+        self.assertEqual(
+            f"{location.scheme}://{location.netloc}{location.path}",
+            "https://login.example.com/tenant/authorize",
+        )
+        self.assertEqual(parse_qs(location.query)["client_id"], ["montrek"])
+
+    def test_logout_ends_the_session_at_the_provider(self):
+        self.client.force_login(self.user)
+        with mock.patch(
+            oidc_mocks.REQUESTS_GET, return_value=oidc_mocks.discovery_response()
+        ):
+            response = self.client.post(reverse("logout"))
+
+        self.assertRedirects(
+            response,
+            "https://login.example.com/tenant/logout",
+            fetch_redirect_response=False,
+        )
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_logout_without_reachable_provider_logs_out_of_montrek(self):
+        self.client.force_login(self.user)
+        with (
+            mock.patch(oidc_mocks.REQUESTS_GET, side_effect=oidc_mocks.unreachable()),
+            self.assertLogs("user.modules.oidc_provider", "ERROR"),
+        ):
+            response = self.client.post(reverse("logout"))
+
+        self.assertRedirects(response, reverse("login"), fetch_redirect_response=False)
+        self.assertNotIn("_auth_user_id", self.client.session)

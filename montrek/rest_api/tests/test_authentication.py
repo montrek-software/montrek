@@ -34,12 +34,12 @@ class TestMontrekApiAuthentication(TestCase):
 
         self.assertEqual(user, self.user)
 
-    @override_settings(ENABLE_KEYCLOAK=False)
+    @override_settings(ENABLE_OIDC=False)
     def test_foreign_token_is_rejected_without_keycloak(self):
         with self.assertRaises(InvalidToken):
             self.authentication.authenticate(request_with_token(KEYCLOAK_TOKEN))
 
-    @override_settings(ENABLE_KEYCLOAK=True)
+    @override_settings(ENABLE_OIDC=True)
     def test_foreign_token_is_checked_against_keycloak(self):
         with (
             patch(OIDC_AUTHENTICATE, return_value=(self.user, KEYCLOAK_TOKEN)),
@@ -52,7 +52,7 @@ class TestMontrekApiAuthentication(TestCase):
         self.assertEqual(user, self.user)
         self.assertEqual(token, KEYCLOAK_TOKEN)
 
-    @override_settings(ENABLE_KEYCLOAK=True)
+    @override_settings(ENABLE_OIDC=True)
     def test_montrek_token_does_not_reach_keycloak(self):
         token = str(AccessToken.for_user(self.user))
 
@@ -73,7 +73,7 @@ class TestRestApiViewWithKeycloakToken(TestCase):
             headers={"Authorization": f"Bearer {KEYCLOAK_TOKEN}"},
         )
 
-    @override_settings(ENABLE_KEYCLOAK=True)
+    @override_settings(ENABLE_OIDC=True)
     def test_keycloak_token_grants_access(self):
         with (
             patch(OIDC_AUTHENTICATE, return_value=(self.user, KEYCLOAK_TOKEN)),
@@ -83,7 +83,7 @@ class TestRestApiViewWithKeycloakToken(TestCase):
 
         self.assertEqual(response.status_code, 200, response.content)
 
-    @override_settings(ENABLE_KEYCLOAK=False)
+    @override_settings(ENABLE_OIDC=False)
     def test_keycloak_token_is_unauthorized_without_keycloak(self):
         response = self.get_uploads()
 

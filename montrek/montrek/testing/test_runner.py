@@ -40,6 +40,8 @@ class MontrekTestRunner(DiscoverRunner):
             "NAVBAR_RENAME": {"info": "Amazing App"},
             "MONTREK_EXTENSION_APPS": ["app1", "app2", "mt_dummy.app3"],
             "ENABLE_KEYCLOAK": False,
+            "ENABLE_OIDC": False,
+            "OIDC_ISSUER_URL": "",
             "LOGIN_URL": reverse_lazy("login"),
             "AUTHENTICATION_BACKENDS": ("django.contrib.auth.backends.ModelBackend",),
             # Add other test-specific settings here

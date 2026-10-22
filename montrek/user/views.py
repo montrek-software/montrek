@@ -7,7 +7,9 @@ from django.urls import reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
 from django.contrib import messages
+from mozilla_django_oidc.views import OIDCAuthenticationRequestView
 from user import forms
+from user.modules.oidc_provider import OidcProvider
 
 
 class MessageHandlerMixin:
@@ -66,16 +68,20 @@ class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
         return context
 
     def get(self, request, *args, **kwargs):
-        if settings.ENABLE_KEYCLOAK:
+        if settings.ENABLE_OIDC:
             return redirect("oidc_authentication_init")
         return super().get(request, *args, **kwargs)
 
 
+class MontrekOIDCAuthenticationRequestView(OIDCAuthenticationRequestView):
+    get_settings = staticmethod(OidcProvider.get_settings)
+
+
 class MontrekLogoutView(auth_views.LogoutView):
     def dispatch(self, request, *args, **kwargs):
-        if settings.ENABLE_KEYCLOAK:
+        if settings.ENABLE_OIDC and (logout_url := OidcProvider.logout_url()):
             logout(request)
-            return redirect(settings.OIDC_OP_LOGOUT)
+            return redirect(logout_url)
         return super().dispatch(request, *args, **kwargs)
 
 
