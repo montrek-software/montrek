@@ -28,7 +28,7 @@ from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
-from reporting.modules import mailed_downloads
+from reporting.modules.mailed_downloads import MailedDownloads
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 from reporting.modules.table_serializer import TableSerializer
 from reporting.tasks.download_table_task import DownloadTableTask
@@ -331,7 +331,7 @@ class MontrekTableManagerABC(
         return value
 
     def send_table_by_mail(self, filetype: str):
-        file_name = mailed_downloads.file_name_for_link(
+        file_name = MailedDownloads.file_name_for_link(
             f"{self.document_name}.{filetype}"
         )
         # A disk-backed file, not a string: these are the tables too large
@@ -345,8 +345,8 @@ class MontrekTableManagerABC(
             else:
                 return
             output.seek(0)
-            download_id = mailed_downloads.store(
-                self.session_data["user_id"], file_name, File(output, file_name)
+            download_id = MailedDownloads(self.session_data["user_id"]).store(
+                file_name, File(output, file_name)
             )
         self._send_mail_with_file(download_id, file_name)
 

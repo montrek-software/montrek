@@ -11,7 +11,7 @@ from reporting.tests.mocks import (
     MockMontrekReportView,
     MockMontrekReportWithFormView,
 )
-from reporting.modules import mailed_downloads
+from reporting.modules.mailed_downloads import MailedDownloads
 from testing.decorators import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -19,16 +19,13 @@ from user.tests.factories.montrek_user_factories import MontrekUserFactory
 class TestDownloadFileView(TestCase):
     @add_logged_in_user()
     def setUp(self):
-        self.download_id = mailed_downloads.store(
-            self.user.id, "test file.csv", ContentFile(b"a,b")
-        )
+        mailed_downloads = MailedDownloads(self.user.id)
+        self.download_id = mailed_downloads.store("test file.csv", ContentFile(b"a,b"))
         self.url = reverse(
             "download_reporting_file",
             kwargs={"download_id": self.download_id, "file_name": "test file.csv"},
         )
-        self.path = mailed_downloads.storage_path(
-            self.user.id, self.download_id, "test file.csv"
-        )
+        self.path = mailed_downloads.storage_path(self.download_id, "test file.csv")
 
     def test_download_once(self):
         response = self.client.get(self.url)

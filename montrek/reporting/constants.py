@@ -25,3 +25,8 @@ class TextType(Enum):
     UNDERLINE = 3
     STRIKETHROUGH = 4
     CODE = 5
+
+
+# Default storage directory of compiled report PDFs kept beyond the request,
+# such as the attachment of a mail draft.
+LATEX_PDF_STORAGE_DIR = "latex"

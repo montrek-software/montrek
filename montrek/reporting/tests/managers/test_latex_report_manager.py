@@ -1,8 +1,19 @@
 import os
 
+from django.core.files.storage import default_storage
 from django.test import TestCase, override_settings
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.tests import mocks
+from testing.decorators.object_storage import object_storage
+
+
+def mock_latex_manager() -> LatexReportManager:
+    # A fresh manager per compile, as for two separate requests: to_latex()
+    # consumes the report elements, so a second compile of the same manager
+    # would render an empty document.
+    manager = mocks.MockMontrekReportManager(session_data={})
+    manager.append_report_element(mocks.MockReportElement())
+    return LatexReportManager(manager)
 
 
 class TestLatexReportManager(TestCase):
@@ -47,16 +58,8 @@ class TestLatexReportManager(TestCase):
         """Two runs of the same report share document_name; each must still get
         its own file, or one could read back the PDF the other just wrote."""
 
-        def compile_run() -> str | None:
-            # A fresh manager per run, as for two separate requests: to_latex()
-            # consumes the report elements, so a second compile of the same
-            # manager would render an empty document.
-            manager = mocks.MockMontrekReportManager(session_data={})
-            manager.append_report_element(mocks.MockReportElement())
-            return LatexReportManager(manager).compile_report()
-
-        first_path = compile_run()
-        second_path = compile_run()
+        first_path = mock_latex_manager().compile_report()
+        second_path = mock_latex_manager().compile_report()
         self.assertIsNotNone(first_path)
         self.assertIsNotNone(second_path)
         self.assertNotEqual(first_path, second_path)
@@ -64,3 +67,27 @@ class TestLatexReportManager(TestCase):
         self.assertEqual(os.path.basename(second_path), "document.pdf")
         self.assertTrue(os.path.exists(first_path))
         self.assertTrue(os.path.exists(second_path))
+
+    def test_compile_pdf_returns_the_pdf_named_after_the_document(self):
+        pdf = mock_latex_manager().compile_pdf()
+        self.assertIsNotNone(pdf)
+        self.assertEqual(pdf.name, "document.pdf")
+        self.assertTrue(pdf.read().startswith(b"%PDF"))
+
+    def test_compile_pdf_returns_none_when_latex_fails(self):
+        manager = mocks.MockMontrekReportManager(session_data={})
+        latex_manager = LatexReportManager(manager)
+        latex_manager.generate_report = lambda: "\\undefinedcommand"
+        self.assertIsNone(latex_manager.compile_pdf())
+        self.assertIn("LaTeX compilation failed", manager.messages[-1].message)
+
+    @object_storage
+    def test_store_pdf_saves_each_compile_under_its_own_name(self):
+        first_name = mock_latex_manager().store_pdf()
+        second_name = mock_latex_manager().store_pdf()
+        self.assertNotEqual(first_name, second_name)
+        for name in (first_name, second_name):
+            self.assertTrue(name.startswith("latex/"))
+            self.assertTrue(name.endswith("/document.pdf"))
+            with default_storage.open(name, "rb") as pdf:
+                self.assertTrue(pdf.read().startswith(b"%PDF"))

@@ -2,7 +2,7 @@ import os
 from typing import cast
 from django.contrib import messages
 from django.core.files import File
-from django.conf import settings
+from django.core.files.storage import default_storage
 from baseclasses.models import MontrekLinkABC
 from baseclasses.typing import SessionDataType
 from file_upload.models import FileUploadRegistryHubABC
@@ -113,19 +113,13 @@ class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
         """
         if not file_registry_path:
             return None
-        file_registry_path = os.path.join(settings.MEDIA_ROOT, file_registry_path)
-        if not os.path.exists(file_registry_path):
+        if not default_storage.exists(file_registry_path):
             messages.error(request, f"File {file_registry_path} not found")
             return None
         return File(
-            open(  # noqa: SIM115 # FileResponse takes ownership and closes the handle after streaming
-                file_registry_path, "rb"
-            ),
+            default_storage.open(file_registry_path, "rb"),
             name=os.path.basename(file_registry_path),
         )
-
-
-# FileResponse streams and closes the handle when done
 
 
 class FileUploadRegistryRepository(FileUploadRegistryRepositoryABC):

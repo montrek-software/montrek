@@ -1,9 +1,9 @@
 from baseclasses.repositories.montrek_repository import MontrekRepository
 import pandas as pd
-import os
 from typing import TYPE_CHECKING
-from django.conf import settings
+from django.core.files.storage import default_storage
 from django.test import TestCase
+from storage.modules.local_storage_file import LocalStorageFile
 
 if TYPE_CHECKING:
     # Lets mypy see the TestCase API the mixin uses; at runtime it stays a
@@ -22,7 +22,24 @@ class LogFileTestMixin(_TestCaseBase):
         additional_data: pd.DataFrame = None,
         _startswith: bool = False,
     ):
-        log_excel_path = self._get_log_file_path(registry_repository)
+        with LocalStorageFile(
+            self._get_log_file_name(registry_repository)
+        ) as log_excel_path:
+            self._assert_log_excel_file(
+                log_excel_path,
+                err_msg,
+                additional_data=additional_data,
+                _startswith=_startswith,
+            )
+
+    def _assert_log_excel_file(
+        self,
+        log_excel_path: str,
+        err_msg: str,
+        *,
+        additional_data: pd.DataFrame | None,
+        _startswith: bool,
+    ):
         test_excel_df = pd.read_excel(log_excel_path)
         result_msg = test_excel_df.set_index("Param").loc[
             "Upload Message", "Log Meta Data"
@@ -55,18 +72,17 @@ class LogFileTestMixin(_TestCaseBase):
         additional_data: pd.DataFrame = None,
         _startswith: bool = False,
     ):
-        log_txt_path = self._get_log_file_path(registry_repository)
-        with open(log_txt_path) as log_txt_file:
-            file_content = log_txt_file.read()
+        log_txt_name = self._get_log_file_name(registry_repository)
+        with default_storage.open(log_txt_name, "rb") as log_txt_file:
+            file_content = log_txt_file.read().decode()
         self.assertIn(err_msg, file_content)
         if additional_data is not None:
             self.assertIn(additional_data.to_string(), file_content)
 
-    def _get_log_file_path(self, registry_repository: MontrekRepository) -> str:
+    def _get_log_file_name(self, registry_repository: MontrekRepository) -> str:
         upload_registry_query = registry_repository.receive()
         self.assertEqual(upload_registry_query.count(), 1)
         upload_registry = upload_registry_query.first()
         if upload_registry is None:
             self.fail("No upload registry entry found")
-        log_excel_file = upload_registry.log_file
-        return os.path.join(settings.MEDIA_ROOT, log_excel_file)
+        return upload_registry.log_file

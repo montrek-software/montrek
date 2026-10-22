@@ -1,4 +1,3 @@
-import os
 from smtplib import SMTPException
 
 from baseclasses.dataclasses.montrek_message import (
@@ -6,11 +5,11 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageInfo,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
-from baseclasses.utils import get_content_type
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from mailing.modules.mail_attachments import MailAttachments
 from mailing.repositories.mailing_repository import MailingRepository
 
 
@@ -26,7 +25,7 @@ class MailingManager(MontrekManager):
         recipients: str,
         subject: str,
         message: str,
-        additional_parms: dict = {},
+        additional_parms: dict | None = None,
         attachments: str = "",
         bcc: str = "",
     ) -> bool:
@@ -41,7 +40,7 @@ class MailingManager(MontrekManager):
             "mail_bcc": bcc,
         }
         mail_hub = self.repository.std_create_object(mail_params)
-        body = self.get_mail_body(message, additional_parms)
+        body = self.get_mail_body(message, additional_parms or {})
         attachments_list = self.get_attachments(attachments)
         is_sent = False
         try:
@@ -80,7 +79,7 @@ class MailingManager(MontrekManager):
         self,
         subject: str,
         message: str,
-        additional_parms: dict = {},
+        additional_parms: dict | None = None,
         attachments: str = "",
     ) -> None:
         user_id = self.session_data["user_id"]
@@ -102,16 +101,7 @@ class MailingManager(MontrekManager):
         return {"message": message, **additional_parms}
 
     def get_attachments(self, attachments: str):
-        if attachments == "":
-            return []
-        attachment_list = attachments.replace(" ", "").split(",")
-        output_list = []
-        for attachment in attachment_list:
-            output_list.append(self.get_attachment(attachment))
-        return output_list
+        return MailAttachments(attachments).to_email_attachments()
 
     def get_attachment(self, attachment):
-        file_name = os.path.basename(attachment)
-        file_content_type = get_content_type(attachment)
-        file_content = open(attachment, "rb").read()
-        return (file_name, file_content, file_content_type)
+        return MailAttachments.to_email_attachment(attachment)

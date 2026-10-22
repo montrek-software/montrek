@@ -44,6 +44,13 @@ Uploads under `/uploads/` are only served to logged-in users (paths in
 `/protected-uploads/`), it answers with an `X-Accel-Redirect` and nginx sends
 the file. Without nginx, leave it empty and Django streams the file itself.
 
+All other file access (uploads, upload logs, exports, mailed tables, report
+PDFs attached to mail drafts) goes through Django's default storage, which is
+the filesystem under `uploads` for now. Upload processors that read the file
+by path get the stored file's path, or a temporary copy on a backend without
+local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
+tables and report PDFs after seven days.
+
 An instance CA (`MONTREK_CA_CERT`, default `/montrek/nginx/certs/fullchain.crt`)
 cannot be installed system-wide without root; the entrypoint appends it to a
 private bundle under `/tmp` and points `REQUESTS_CA_BUNDLE` and `SSL_CERT_FILE`
