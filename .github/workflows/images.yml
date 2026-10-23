@@ -108,9 +108,14 @@ jobs:
           BASE: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/montrek-base
         run: |
           # Pin the base by digest, so the image is built from the one it says.
+          set -o pipefail
           digest="$BUILT_DIGEST"
           if [[ -z "$digest" ]]; then
-            digest="$(docker buildx imagetools inspect "$BASE:latest" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+            digest="$(docker buildx imagetools inspect "$BASE:latest" --format '{{json .Manifest.Digest}}' | tr -d '"')" || true
+          fi
+          if [[ -z "$digest" ]]; then
+            echo "::error::$BASE:latest is not in the registry. Run this workflow with 'Rebuild montrek-base' ticked."
+            exit 1
           fi
           echo "image=$BASE@$digest" >>"$GITHUB_OUTPUT"
       - id: meta
