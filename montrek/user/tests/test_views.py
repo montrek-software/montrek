@@ -261,10 +261,8 @@ class TestMontrekPasswordChangeView(TestCase):
     def test_password_change_view_anonymous(self):
         url = reverse("password_change")
         response = self.client.get(url)
-        self.assertRedirects(
-            response,
-            f"{reverse('login')}?next={reverse('password_change')}",
-        )
+        # The login middleware turns signed-out users away first.
+        self.assertRedirects(response, reverse("login"))
 
     def test_password_change_form_submission_anonymous(self):
         url = reverse("password_change")
@@ -275,9 +273,7 @@ class TestMontrekPasswordChangeView(TestCase):
         }
         response = self.client.post(url, data)
 
-        self.assertRedirects(
-            response, f"{reverse('login')}?next={reverse('password_change')}"
-        )
+        self.assertRedirects(response, reverse("login"))
 
 
 class TestKeycloakSettings(TestCase):
