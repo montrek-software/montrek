@@ -359,7 +359,12 @@ LOGIN_EXEMPT_PATHS = [
     r"^oidc/logout/?$",
     r"^admin/.*$",
     r"^rest_api/token/.*$",
-    r"^user/.*$",
+    # The user app's pages for signed-out users, by name: anything else under
+    # user/, such as password_change, needs the login.
+    r"^user/(signup|login|logout|logged_out|password_reset)/?$",
+    r"^user/password_reset_confirm/[^/]+/[^/]+/?$",
+    r"^user/password_reset_complete/?$",
+    r"^user/oidc/(authenticate|callback|logout)/?$",
     r"^mt_website/.*$",
     r"^uploads/website/.*$",
     r"^__debug__/.*$",

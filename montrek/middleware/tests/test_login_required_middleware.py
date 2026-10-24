@@ -1,5 +1,6 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from middleware.login_required_middleware import is_login_exempt_path
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -29,6 +30,33 @@ class TestLoginRequiredMiddleware(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class TestUserPagesExemption(TestCase):
+    def test_pages_for_signed_out_users_are_exempt(self):
+        for url in (
+            reverse("signup"),
+            reverse("login"),
+            reverse("logout"),
+            reverse("logged_out"),
+            reverse("password_reset"),
+            reverse("password_reset_confirm", kwargs={"uidb64": "MQ", "token": "x-y"}),
+            reverse("password_reset_complete"),
+            "/user/oidc/authenticate/",
+            "/user/oidc/callback/",
+            "/user/oidc/logout/",
+        ):
+            with self.subTest(url=url):
+                self.assertTrue(is_login_exempt_path(url))
+
+    def test_other_user_pages_need_the_login(self):
+        for url in (
+            reverse("password_change"),
+            "/user/",
+            "/user/new_page/",
+            "/user/login/extra",
+            "/user/signup/x/",
+        ):
+            with self.subTest(url=url):
+                self.assertFalse(is_login_exempt_path(url))
 class TestLoginRequiredMiddlewareRestRequests(TestCase):
     def test_rest_request_to_a_page_needs_the_login(self):
         for url in (reverse("home"), reverse("montrek_example_a_create")):
