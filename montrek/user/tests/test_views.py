@@ -1,6 +1,7 @@
 from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core import mail
@@ -390,3 +391,166 @@ class TestOidcLogin(TestCase):
         self.assertTemplateUsed(response, "user/logged_out.html")
         self.assertContains(response, reverse("login"))
         self.assertNotIn("_auth_user_id", self.client.session)
+
+
+@override_settings(ALLOW_SIGNUP=False)
+class TestSignUpClosed(TestCase):
+    def test_signup_is_not_found(self):
+        response = self.client.post(
+            reverse("signup"),
+            {
+                "email": "new@example.com",
+                "password1": "!@#$hardt0guess",  # nosec: B106: Testpasswort
+                "password2": "!@#$hardt0guess",  # nosec: B106: Testpasswort
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(
+            get_user_model().objects.filter(email="new@example.com").exists()
+        )
+
+    def test_navbar_does_not_link_to_signup(self):
+        response = self.client.get(reverse("logged_out"))
+
+        self.assertNotContains(response, reverse("signup"))
+
+
+@override_settings(
+    ENABLE_OIDC=True,
+    OIDC_ISSUER_URL=oidc_mocks.ISSUER_URL,
+    OIDC_RP_CLIENT_ID="montrek",
+    OIDC_RP_CLIENT_SECRET="",  # nosec: B106: public test client
+    ALLOW_PASSWORD_LOGIN=False,
+    ALLOW_SIGNUP=False,
+    LOGIN_URL="/oidc/authenticate/",
+    AUTHENTICATION_BACKENDS=("user.backends.MontrekOIDCAuthenticationBackend",),
+)
+class TestOidcOnlySignIn(TestCase):
+    password = "testpassword"  # noqa: S105 # nosec: B105: Testpasswort
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="test@example.com", password=self.password
+        )
+
+    def test_password_form_is_not_accepted(self):
+        response = self.client.post(
+            reverse("login"), {"username": self.user.email, "password": self.password}
+        )
+
+        self.assertEqual(response.status_code, 405)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_password_pages_are_not_found(self):
+        for url in (
+            reverse("password_reset"),
+            reverse("password_reset_complete"),
+            reverse("password_reset_confirm", kwargs={"uidb64": "MQ", "token": "x-y"}),
+        ):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_password_change_is_not_found(self):
+        self.client.force_login(self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
+
+        response = self.client.get(reverse("password_change"))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_tokens_are_not_issued_for_a_password(self):
+        for name, data in (
+            (
+                "token_obtain_pair",
+                {"email": self.user.email, "password": self.password},
+            ),
+            ("token_refresh", {"refresh": "x"}),
+            ("token_verify", {"token": "x"}),
+        ):
+            with self.subTest(name=name):
+                response = self.client.post(reverse(name), data)
+                self.assertEqual(response.status_code, 404)
+
+    def test_admin_login_goes_to_the_provider(self):
+        response = self.client.get(reverse("admin:login"))
+
+        self.assertRedirects(
+            response,
+            f"/oidc/authenticate/?next={reverse('admin:index')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_admin_pages_go_to_the_provider(self):
+        changelist = reverse("admin:auth_group_changelist")
+
+        to_login = self.client.get(changelist)
+        to_provider = self.client.get(to_login.url)
+
+        self.assertRedirects(
+            to_provider,
+            f"/oidc/authenticate/?next={changelist}",
+            fetch_redirect_response=False,
+        )
+
+    def test_admin_login_for_a_signed_in_user_stays_in_the_admin(self):
+        # No staff member: the admin says so instead of sending the user to the
+        # provider, which would sign them in and send them back here.
+        self.client.force_login(self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
+
+        response = self.client.get(reverse("admin:login"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "admin/login.html")
+
+    def test_admin_login_does_not_accept_the_password(self):
+        self.user.is_staff = True
+        self.user.save()
+
+        self.client.post(
+            reverse("admin:login"),
+            {"username": self.user.email, "password": self.password},
+        )
+
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_navbar_does_not_link_to_password_pages(self):
+        self.client.force_login(self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
+
+        response = self.client.get(reverse("home"))
+
+        self.assertNotContains(response, reverse("password_change"))
+        self.assertNotContains(response, reverse("signup"))
+
+
+@override_settings(
+    ENABLE_OIDC=True,
+    OIDC_ISSUER_URL=oidc_mocks.ISSUER_URL,
+    OIDC_RP_CLIENT_ID="montrek",
+    OIDC_RP_CLIENT_SECRET="",  # nosec: B106: public test client
+    ALLOW_PASSWORD_LOGIN=True,
+    LOGIN_URL="/oidc/authenticate/",
+    AUTHENTICATION_BACKENDS=(
+        "user.backends.MontrekOIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    ),
+)
+class TestOidcWithPasswordFallback(TestCase):
+    def test_admin_login_accepts_the_password(self):
+        get_user_model().objects.create_superuser(
+            email="admin@example.com",
+            password="testpassword",  # nosec: B106: Testpasswort
+        )
+
+        response = self.client.post(
+            reverse("admin:login"),
+            {
+                "username": "admin@example.com",
+                "password": "testpassword",
+                "next": reverse("admin:index"),
+            },
+        )
+
+        self.assertRedirects(
+            response, reverse("admin:index"), fetch_redirect_response=False
+        )
+        self.assertIn("_auth_user_id", self.client.session)

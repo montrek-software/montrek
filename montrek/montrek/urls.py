@@ -23,6 +23,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from montrek.media import serve_media
+from user import views as user_views
 
 urlpatterns = [
     path("", base_views.redirect_home, name="redirect_home"),
@@ -30,6 +31,8 @@ urlpatterns = [
     path(
         "under_construction", base_views.under_construction, name="under_construction"
     ),
+    # Ahead of admin.site.urls: with OIDC, the admin signs in at the provider.
+    path("admin/login/", user_views.admin_login),
     path("admin/", admin.site.urls),
     path("oidc/", include("mozilla_django_oidc.urls")),
     javascriptcatalog_url,

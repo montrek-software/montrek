@@ -2,8 +2,11 @@ from typing import cast
 
 from django.contrib.auth import login, logout
 from django.conf import settings
+from django.contrib import admin
+from django.contrib.auth.views import redirect_to_login
+from django.http import Http404, HttpResponseNotAllowed
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.views import generic as generic_views
 from django.contrib import messages
@@ -21,6 +24,16 @@ class MessageHandlerMixin:
 
     def add_successfull_login_message(self, email):
         messages.info(self.request, f"You have logged in as {email}!")
+
+
+class PasswordLoginMixin:
+    """For the views that sign in, or set a password, with the Django password:
+    not there when OIDC handles the sign-in (settings.ALLOW_PASSWORD_LOGIN)."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not settings.ALLOW_PASSWORD_LOGIN:
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
 
 
 class MontrekSignUpView(generic_views.CreateView, MessageHandlerMixin):
@@ -43,6 +56,11 @@ class MontrekSignUpView(generic_views.CreateView, MessageHandlerMixin):
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Sign Up"
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not settings.ALLOW_SIGNUP:
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
 
 
 class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
@@ -72,6 +90,22 @@ class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
             return redirect("oidc_authentication_init")
         return super().get(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        if not settings.ALLOW_PASSWORD_LOGIN:
+            return HttpResponseNotAllowed(["GET"])
+        return super().post(request, *args, **kwargs)
+
+
+def admin_login(request, extra_context=None):
+    """Django's admin login, or the provider's when the password is not
+    accepted. A user who is signed in but no staff member gets the admin's own
+    page, which says so, rather than being sent round to the provider again."""
+    if settings.ALLOW_PASSWORD_LOGIN or request.user.is_authenticated:
+        return admin.site.login(request, extra_context)
+    return redirect_to_login(
+        request.GET.get("next") or reverse("admin:index"), settings.LOGIN_URL
+    )
+
 
 class MontrekOIDCAuthenticationRequestView(OIDCAuthenticationRequestView):
     get_settings = staticmethod(OidcProvider.get_settings)
@@ -97,11 +131,15 @@ class MontrekLoggedOutView(generic_views.TemplateView):
         return context
 
 
-class MontrekPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+class MontrekPasswordResetConfirmView(
+    PasswordLoginMixin, auth_views.PasswordResetConfirmView
+):
     template_name = "user/user_base.html"
 
 
-class MontrekPasswordResetView(auth_views.PasswordResetView, MessageHandlerMixin):
+class MontrekPasswordResetView(
+    PasswordLoginMixin, auth_views.PasswordResetView, MessageHandlerMixin
+):
     form_class = forms.MontrekPasswordResetForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
@@ -118,7 +156,7 @@ class MontrekPasswordResetView(auth_views.PasswordResetView, MessageHandlerMixin
         return super().form_invalid(form)
 
 
-class MontrekPasswordResetCompleteView(generic_views.RedirectView):
+class MontrekPasswordResetCompleteView(PasswordLoginMixin, generic_views.RedirectView):
     # The lazy string resolves on first use, like a str.
     url = cast(str, reverse_lazy("login"))
 
@@ -129,7 +167,9 @@ class MontrekPasswordResetCompleteView(generic_views.RedirectView):
         return super().get(request, *args, **kwargs)
 
 
-class MontrekPasswordChangeView(auth_views.PasswordChangeView, MessageHandlerMixin):
+class MontrekPasswordChangeView(
+    PasswordLoginMixin, auth_views.PasswordChangeView, MessageHandlerMixin
+):
     form_class = forms.MontrekPasswordChangeForm
     template_name = "user/user_base.html"
     success_url = reverse_lazy("home")
