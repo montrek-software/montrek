@@ -283,6 +283,7 @@ TEMPLATES: list[dict[str, Any]] = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "user.context_processors.sign_in",
             ],
         },
     },
@@ -344,6 +345,14 @@ AUTH_USER_MODEL = "user.MontrekUser"
 ENABLE_KEYCLOAK = config("ENABLE_KEYCLOAK", default=False, cast=bool)
 ENABLE_OIDC = ENABLE_KEYCLOAK or config("ENABLE_OIDC", default=False, cast=bool)
 OIDC_ISSUER_URL = config("OIDC_ISSUER_URL", default="")
+# With OIDC, every sign-in goes through the provider and its second factor:
+# no password form, password reset or /rest_api/token/. ALLOW_PASSWORD_LOGIN
+# keeps the Django password as a fallback, through Django's admin login.
+ALLOW_PASSWORD_LOGIN = not ENABLE_OIDC or config(
+    "ALLOW_PASSWORD_LOGIN", default=False, cast=bool
+)
+# Self-registration at /user/signup/: by default only in development.
+ALLOW_SIGNUP = ALLOW_PASSWORD_LOGIN and config("ALLOW_SIGNUP", default=DEBUG, cast=bool)
 LOGIN_EXEMPT_PATHS = [
     r"^oidc/authenticate/?$",
     r"^oidc/callback/?$",
@@ -358,10 +367,11 @@ LOGIN_EXEMPT_PATHS = [
     r"^__debug__/.*$",
 ]
 if ENABLE_OIDC:
-    AUTHENTICATION_BACKENDS = (
+    AUTHENTICATION_BACKENDS: tuple[str, ...] = (
         "user.backends.MontrekOIDCAuthenticationBackend",
-        "django.contrib.auth.backends.ModelBackend",
     )
+    if ALLOW_PASSWORD_LOGIN:
+        AUTHENTICATION_BACKENDS += ("django.contrib.auth.backends.ModelBackend",)
     LOGIN_URL: StrOrPromise = "/oidc/authenticate/"
     OIDC_AUTHENTICATE_CLASS = "user.views.MontrekOIDCAuthenticationRequestView"
 

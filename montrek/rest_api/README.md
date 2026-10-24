@@ -39,9 +39,9 @@ refresh = tokens["refresh"]  # valid for 7 days
 
 ### b) OIDC login (`ENABLE_OIDC=true` or `ENABLE_KEYCLOAK=true`)
 
-Users who log in through the OpenID provider have **no Django password**, so
-`/rest_api/token/` answers `No active account found with the given
-credentials`. Get the token from the provider instead (its token endpoint is
+Every sign-in goes through the provider, so `/rest_api/token/` and its
+refresh and verify endpoints answer 404 (unless `ALLOW_PASSWORD_LOGIN` is set).
+Get the token from the provider instead (its token endpoint is
 `token_endpoint` in `<issuer>/.well-known/openid-configuration`). For Keycloak:
 
 ```python
@@ -80,7 +80,7 @@ Requirements in Keycloak:
 
 montrek checks Keycloak tokens against Keycloak's userinfo endpoint and maps
 them to the Django user with the same email, as the browser login does
-(`rest_api/authentication.py`). montrek's own tokens keep working alongside.
+(`rest_api/authentication.py`).
 
 ## 2. Call the API
 

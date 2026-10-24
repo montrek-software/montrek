@@ -44,6 +44,8 @@ class MontrekTestRunner(DiscoverRunner):
             "OIDC_ISSUER_URL": "",
             "LOGIN_URL": reverse_lazy("login"),
             "AUTHENTICATION_BACKENDS": ("django.contrib.auth.backends.ModelBackend",),
+            "ALLOW_PASSWORD_LOGIN": True,
+            "ALLOW_SIGNUP": True,
             # Add other test-specific settings here
             "ADMIN_NAME": "test_admin",
             "ADMIN_EMAIL": "test@admin.de",

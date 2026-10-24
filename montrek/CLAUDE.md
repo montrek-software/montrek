@@ -252,4 +252,4 @@ All configuration is via `.env` (one level up, in the project root). See `.env.t
 Supports two modes configured via `.env`:
 
 - **Django built-in** auth (default)
-- **OIDC** (`ENABLE_OIDC=true` + `OIDC_ISSUER_URL`) — any OpenID provider, endpoints from its discovery document (`user/modules/oidc_provider.py`), via `mozilla-django-oidc`. `ENABLE_KEYCLOAK=true` also runs Keycloak with the install and, without an issuer URL, uses its realm at `auth-<PROJECT_NAME>.<DEPLOY_HOST>`. Code checks `settings.ENABLE_OIDC`, not `ENABLE_KEYCLOAK`.
+- **OIDC** (`ENABLE_OIDC=true` + `OIDC_ISSUER_URL`) — any OpenID provider, endpoints from its discovery document (`user/modules/oidc_provider.py`), via `mozilla-django-oidc`. `ENABLE_KEYCLOAK=true` also runs Keycloak with the install and, without an issuer URL, uses its realm at `auth-<PROJECT_NAME>.<DEPLOY_HOST>`. Code checks `settings.ENABLE_OIDC`, not `ENABLE_KEYCLOAK`. With OIDC, the Django password is not accepted (no `ModelBackend`, password views and `/rest_api/token/` 404) unless `ALLOW_PASSWORD_LOGIN`; `/admin/login/` goes to the provider. `ALLOW_SIGNUP` (default `DEBUG`, never with OIDC alone) gates `/user/signup/`.
