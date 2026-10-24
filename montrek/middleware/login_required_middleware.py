@@ -1,9 +1,10 @@
 import re
-from urllib.parse import parse_qs
 
 from django.conf import settings
+from django.urls import Resolver404, resolve
 
 from baseclasses.utils import htmx_aware_redirect
+from baseclasses.views import MontrekApiViewMixin
 
 
 class LoginRequiredMiddleware:
@@ -24,8 +25,19 @@ class LoginRequiredMiddleware:
         return self.get_response(request)
 
     def is_rest_api(self, request) -> bool:
-        query_params = parse_qs(request.META.get("QUERY_STRING", ""))
-        return query_params.get("gen_rest_api") == ["true"]
+        # A REST request to an API view is left to the view: it checks the
+        # bearer token itself (MontrekApiViewMixin). Anything else, including
+        # ?gen_rest_api=true on a page that is no API view, needs the login.
+        try:
+            match = resolve(request.path_info)
+        except Resolver404:
+            return False
+        view_class = getattr(match.func, "view_class", None)
+        return (
+            isinstance(view_class, type)
+            and issubclass(view_class, MontrekApiViewMixin)
+            and view_class.is_rest_request(request)
+        )
 
     def is_login_exempt_path(self, request) -> bool:
         return is_login_exempt_path(request.path)
