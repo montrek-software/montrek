@@ -506,12 +506,19 @@ class TestOidcOnlySignIn(TestCase):
         self.user.is_staff = True
         self.user.save()
 
-        self.client.post(
+        response = self.client.post(
             reverse("admin:login"),
             {"username": self.user.email, "password": self.password},
         )
 
+        self.assertEqual(response.status_code, 405)
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_admin_login_allows_only_get_and_post(self):
+        for method in ("put", "patch", "delete"):
+            with self.subTest(method=method):
+                response = getattr(self.client, method)(reverse("admin:login"))
+                self.assertEqual(response.status_code, 405)
 
     def test_navbar_does_not_link_to_password_pages(self):
         self.client.force_login(self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
