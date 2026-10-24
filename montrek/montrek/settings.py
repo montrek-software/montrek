@@ -358,8 +358,6 @@ LOGIN_EXEMPT_PATHS = [
     r"^oidc/callback/?$",
     r"^oidc/logout/?$",
     r"^admin/.*$",
-    r"^api/.*$",
-    r".*/api/?$",
     r"^rest_api/token/.*$",
     # The user app's pages for signed-out users, by name: anything else under
     # user/, such as password_change, needs the login.
