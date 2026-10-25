@@ -11,3 +11,6 @@ class BaseclassesConfig(AppConfig):
         # view layer (and with it the models it imports).
         from baseclasses import checks  # noqa: F401
         from baseclasses import theme_checks  # noqa: F401
+        from baseclasses.field_encryption import use_field_encryption_key
+
+        use_field_encryption_key()

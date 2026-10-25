@@ -195,6 +195,12 @@ from the `docker` group. For encryption at rest, see below.
 - `DEBUG=1` with a non-local `DEPLOY_HOST` raises `ImproperlyConfigured` at
   startup rather than serving error pages full of settings and SQL. Override
   with `MONTREK_ALLOW_DEBUG=1` if you really mean it.
+- Encrypted model fields (e.g. SFTP credentials) take their key from
+  `FIELD_ENCRYPTION_KEY`, which defaults to `SECRET_KEY`. A database backup is
+  only readable with that key, so keep a copy of it outside the server.
+  `SECRET_KEY` can then be replaced on its own: set `FIELD_ENCRYPTION_KEY` to
+  the current `SECRET_KEY` first, or the existing encrypted values stay
+  unreadable.
 - After `make secrets-init`, check what is left in the container config:
   `docker compose -f docker-compose.yml -f secrets.yml config | grep -i -e password -e secret_key`
   should show only `/run/secrets/...` paths.
