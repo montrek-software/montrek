@@ -52,7 +52,11 @@ raise_for_invalid_settings(config)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
-SALT_KEY = SECRET_KEY
+# Encrypted model fields derive their key from this (baseclasses/field_encryption.py),
+# so it must survive a restore while SECRET_KEY may be replaced. Unset, it is
+# SECRET_KEY, which is what an install encrypted its existing data with.
+FIELD_ENCRYPTION_KEY = config("FIELD_ENCRYPTION_KEY", default="") or SECRET_KEY
+SALT_KEY = FIELD_ENCRYPTION_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
