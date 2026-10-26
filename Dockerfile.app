@@ -13,7 +13,8 @@
 # A requirements.txt in the build context is installed as it is: that is how a
 # lock produced elsewhere (CI, a client deployment) gets in. Without one the
 # requirements.in files are compiled here, and the result stays in the image
-# as /montrek/requirements.txt.
+# as /montrek/requirements.txt. Either way every requirement must carry its
+# sha256 (--generate-hashes), so only the locked files are installed.
 ARG BASE_IMAGE=forgejo.montrek-software.de/montrek-software/montrek-base:latest
 FROM ${BASE_IMAGE}
 
@@ -29,10 +30,10 @@ ENV VIRTUAL_ENV=/montrek/.venv \
 # requirements.txt optional.
 COPY requirements.in requirements.tx[t] ./
 RUN if [ ! -f requirements.txt ]; then \
-  uv pip compile requirements.in --output-file requirements.txt; \
+  uv pip compile --generate-hashes requirements.in --output-file requirements.txt; \
   fi \
   && uv venv "$VIRTUAL_ENV" --python "$(command -v python3)" \
-  && uv pip sync requirements.txt
+  && uv pip sync --require-hashes requirements.txt
 
 COPY bin ./bin
 COPY montrek ./montrek

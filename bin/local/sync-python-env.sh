@@ -11,7 +11,7 @@ temporary_requirements_file="all_requirements.in"
 find . -name 'requirements.in' -exec sh -c 'cat "$1"; echo' _ {} \; >>"$temporary_requirements_file"
 
 # Compile and sync using uv
-uv pip compile "$temporary_requirements_file" --output-file requirements.txt
+uv pip compile --generate-hashes "$temporary_requirements_file" --output-file requirements.txt
 uv pip sync requirements.txt
 
 rm "$temporary_requirements_file"
