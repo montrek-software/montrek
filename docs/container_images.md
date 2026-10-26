@@ -8,6 +8,19 @@ Forgejo package registry (`forgejo.montrek-software.de/montrek-software/...`).
 | `montrek-base` | `Dockerfile` | system packages (TeX, Chromium, pandoc, Node, Postgres client, fonts, gosu) and the entrypoint | when `Dockerfile` or the entrypoint changes, weekly, or by hand |
 | `montrek-app` | `Dockerfile.app` | `montrek-base` plus the code, the locked Python dependencies and the collected static files | on every push to `main` and on version tags |
 
+`montrek-base` is signed with cosign, keyless: the certificate names
+`.github/workflows/images.yml` on `refs/heads/main` of
+`montrek-software/montrek` as the signer, and the signature is in Sigstore's
+public transparency log. Client builds use a base only with that signature, so
+a base built from another branch, or pushed by hand, is refused. To check one:
+
+```bash
+cosign verify \
+  --certificate-identity https://github.com/montrek-software/montrek/.github/workflows/images.yml@refs/heads/main \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  forgejo.montrek-software.de/montrek-software/montrek-base:latest
+```
+
 `montrek-app` is tagged `latest` (main), `sha-<commit>` and `<version>` for a
 `v<version>` tag; its `org.opencontainers.image.base.name` label names the
 base digest it was built and smoke-tested on.
