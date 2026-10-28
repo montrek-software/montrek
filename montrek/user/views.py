@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.views import redirect_to_login
 from django.http import Http404, HttpResponseNotAllowed
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import views as auth_views
@@ -100,13 +100,18 @@ class MontrekLoginView(generic_views.FormView, MessageHandlerMixin):
 @require_http_methods(["GET", "POST"])
 def admin_login(request, extra_context=None):
     """Django's admin login, or the provider's when the password is not
-    accepted. A user who is signed in but no staff member gets the admin's own
-    page, which says so, rather than being sent round to the provider again.
-    The admin's login view protects its form against CSRF."""
+    accepted. A user who is signed in but no staff member gets a page in the
+    admin that says so and offers to sign out, rather than being sent round to
+    the provider again or shown a password form that is not accepted. The
+    admin's login view protects its form against CSRF."""
     if request.method == "POST" and not settings.ALLOW_PASSWORD_LOGIN:
         return HttpResponseNotAllowed(["GET"])
-    if settings.ALLOW_PASSWORD_LOGIN or request.user.is_authenticated:
+    if settings.ALLOW_PASSWORD_LOGIN or request.user.is_staff:
         return admin.site.login(request, extra_context)
+    if request.user.is_authenticated:
+        return render(
+            request, "user/admin_no_access.html", admin.site.each_context(request)
+        )
     return redirect_to_login(
         request.GET.get("next") or reverse("admin:index"), settings.LOGIN_URL
     )
