@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% comment %}
+  Django's admin login for a signed-in user without staff access, when the
+  provider handles the sign-in: the admin's own message, without the password
+  form, and a way to sign in with a different account.
+{% endcomment %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+{% block usertools %}{% endblock %}
+{% block nav-global %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+
+{% block content %}
+  <p class="errornote">
+    {% blocktranslate trimmed with username=request.user %}
+      You are authenticated as {{ username }}, but are not authorized to
+      access this page. Would you like to login to a different account?
+    {% endblocktranslate %}
+  </p>
+  <form action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <div class="submit-row">
+      <input type="submit" value="{% translate 'Log out' %}">
+    </div>
+  </form>
+{% endblock %}

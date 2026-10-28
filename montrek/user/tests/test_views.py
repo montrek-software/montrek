@@ -496,7 +496,21 @@ class TestOidcOnlySignIn(TestCase):
         response = self.client.get(reverse("admin:login"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/login.html")
+        self.assertTemplateUsed(response, "user/admin_no_access.html")
+        self.assertContains(response, "test@example.com")
+        self.assertNotContains(response, 'name="password"')
+        self.assertContains(response, f'action="{reverse("logout")}"')
+
+    def test_admin_login_for_a_signed_in_staff_member_goes_to_the_admin(self):
+        self.user.is_staff = True
+        self.user.save()
+        self.client.force_login(self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
+
+        response = self.client.get(reverse("admin:login"))
+
+        self.assertRedirects(
+            response, reverse("admin:index"), fetch_redirect_response=False
+        )
 
     def test_admin_login_does_not_accept_the_password(self):
         self.user.is_staff = True
