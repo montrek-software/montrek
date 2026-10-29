@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+import multiprocessing
 import os
 import sys
 
@@ -7,6 +8,11 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "montrek.settings")
+    if sys.argv[1:2] == ["test"] and multiprocessing.get_start_method() == "forkserver":
+        # Python 3.14 starts processes with forkserver on Linux. Django's
+        # parallel test runner supports only fork and spawn and otherwise runs
+        # every test in one process, without a word.
+        multiprocessing.set_start_method("fork", force=True)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
