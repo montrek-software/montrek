@@ -6,7 +6,7 @@ Forgejo package registry (`forgejo.montrek-software.de/montrek-software/...`).
 | Image | Built from | Contains | Rebuilt |
 | --- | --- | --- | --- |
 | `montrek-base` | `Dockerfile` | system packages (TeX, Chromium, pandoc, Node, Postgres client, fonts, gosu) and the entrypoint | when `Dockerfile` or the entrypoint changes, weekly, or by hand |
-| `montrek-app` | `Dockerfile.app` | `montrek-base` plus the code, the locked Python dependencies and the collected static files | on every push to `main` and on version tags |
+| `montrek-app` | `Dockerfile.app` | `montrek-base` plus the code, the locked Python dependencies and the collected static files | on every push to `main`, on version tags and after the weekly base rebuild |
 
 `montrek-base` is signed with cosign, keyless: the certificate names
 `.github/workflows/images.yml` on `refs/heads/main` of
@@ -23,7 +23,9 @@ cosign verify \
 
 `montrek-app` is tagged `latest` (main), `sha-<commit>` and `<version>` for a
 `v<version>` tag; its `org.opencontainers.image.base.name` label names the
-base digest it was built and smoke-tested on.
+base digest it was built and smoke-tested on. The weekly rebuild moves `latest`
+and the `sha-<commit>` tag of main's head to the new base, so the extensions'
+tests run on the base client images are built from.
 
 `montrek-container`, which the compose setup on a VM pulls, is the same build
 as `montrek-base` and is still built with `make git-build-montrek-container`
