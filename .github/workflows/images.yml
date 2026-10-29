@@ -3,8 +3,10 @@ name: Container images
 # montrek-base (Dockerfile): the system packages. Rebuilt when its inputs change,
 # weekly for security updates, or by hand.
 # montrek-app (Dockerfile.app): montrek-base plus code, locked dependencies and
-# static files. Built on every push to main and on version tags, from the exact
-# base digest it was tested with.
+# static files. Built on every push to main, on version tags and after the
+# weekly base rebuild, from the exact base digest it was tested with. The weekly
+# build makes latest, which the extensions' tests run on, follow the base that
+# client images are built from; it moves latest and the sha tag of main's head.
 #
 # montrek-base is signed with cosign, keyless: the signature names this
 # workflow on refs/heads/main as its signer (GitHub's OIDC token, Sigstore's
@@ -107,9 +109,8 @@ jobs:
 
   app:
     needs: [changes, base]
-    # Runs when the base was skipped, not when it failed. The weekly run only
-    # refreshes the base.
-    if: ${{ !cancelled() && needs.base.result != 'failure' && github.event_name != 'schedule' }}
+    # Runs when the base was skipped, not when it failed.
+    if: ${{ !cancelled() && needs.base.result != 'failure' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
