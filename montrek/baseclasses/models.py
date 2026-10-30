@@ -128,6 +128,7 @@ class HubValueDate(models.Model):
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
 
     id: int
+    hub_id: int
     objects: ClassVar[models.Manager[Any]]
 
     def __str__(self):

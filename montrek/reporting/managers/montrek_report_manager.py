@@ -13,7 +13,6 @@ from reporting.lib.protocols import ReportElementProtocol
 
 class MontrekReportManager(MontrekManager):
     document_name = "document"
-    document_title = "Montrek Report"
     send_mail_url = "send_mail"
     draft = False
     # Name of a .tex file under any app's templates/latex_templates/ that this
@@ -23,6 +22,10 @@ class MontrekReportManager(MontrekManager):
     def __init__(self, session_data: dict[str, str], **kwargs) -> None:
         super().__init__(session_data=session_data, **kwargs)
         self._report_elements: list[ReportElementProtocol] = []
+
+    @property
+    def document_title(self) -> str:
+        return "Montrek Report"
 
     @property
     def footer_text(self) -> ReportElementProtocol:
