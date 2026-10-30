@@ -80,7 +80,7 @@ class FieldMapFunctionManager:
 
 
 class FieldMapManagerABC(MontrekTableManager):
-    field_map_function_manager_class = FieldMapFunctionManager
+    field_map_function_manager_class: type = FieldMapFunctionManager
     repository_class = FieldMapRepositoryABC
     update_url = ""
     delete_url = ""
