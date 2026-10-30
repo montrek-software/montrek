@@ -318,6 +318,11 @@ DATABASES = {
         "PORT": config(
             "DB_PORT", default=5432, cast=int
         ),  # in docker setup: internal docker container port
+        # Keeps a connection per gunicorn thread or worker process for that
+        # many seconds instead of opening one per request; the health check
+        # replaces one the database has dropped meanwhile.
+        "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 if db_engine == "postgres_ext":

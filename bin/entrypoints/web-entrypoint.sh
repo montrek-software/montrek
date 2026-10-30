@@ -28,11 +28,15 @@ esac
 # Several workers with threads, so one slow request (e.g. the risk values
 # report and its summary refresh) no longer blocks every other user. Gunicorn
 # defaults to a single sync worker. Tunable via .env without a rebuild.
+# A worker is replaced after GUNICORN_MAX_REQUESTS requests (plus up to 10 %
+# jitter, so they are not all replaced at once), which bounds memory leaks.
+# Container health checks count as requests too. 0 never replaces one.
+max_requests="${GUNICORN_MAX_REQUESTS:-5000}"
 exec python -m gunicorn --chdir montrek montrek.wsgi:application \
   --bind 0.0.0.0:${APP_PORT} \
   --workers "${GUNICORN_WORKERS:-4}" \
   --worker-class gthread \
   --threads "${GUNICORN_THREADS:-2}" \
   --timeout "${GUNICORN_TIMEOUT:-120}" \
-  --max-requests 500 \
-  --max-requests-jitter 50
+  --max-requests "${max_requests}" \
+  --max-requests-jitter "$((max_requests / 10))"
