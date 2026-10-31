@@ -1066,6 +1066,65 @@ class LabelTableElement(AttrTableElement):
         )
 
 
+# Query parameters of a live row's refresh request, see LiveLabelTableElement.
+LIVE_ROW_PARAM = "live_row"
+LIVE_SHOWN_PARAM = "live_shown"
+# Session data key under which a list view offers its path for row refreshes.
+LIVE_ROWS_PATH_KEY = "live_rows_path"
+
+
+@dataclass
+class LiveLabelTableElement(LabelTableElement, GetDottetAttrsOrArgMixin):
+    """A label that keeps its table row up to date while its value is active.
+
+    While the value is one of ``active_values`` the label asks ``rows_path``
+    every ``poll_interval`` seconds for its row and swaps it in. ``rows_path``
+    is the path of the list view showing the table, which answers a
+    ``live_row`` request with that one row. Once the value leaves
+    ``active_values`` the returned label carries no trigger and the polling
+    stops; a server error stops it as well. Without a ``rows_path`` the label
+    stays still.
+
+    The poll sends the shown value as ``live_shown``; the view hands it back as
+    ``previous_value``, so a label whose value changed since can mark itself for
+    the change animation.
+    """
+
+    rows_path: str = ""
+    row_id_attr: str = "id"
+    active_values: Iterable[str] = field(default_factory=tuple)
+    poll_interval: int = 3
+    previous_value: str | None = None
+    field_template: ClassVar[str | None] = "live_label"
+
+    def get_field_context_data(self, value: Any, obj: Any) -> dict[str, Any]:
+        context = super().get_field_context_data(value, obj)
+        is_active = str(value) in self.active_values
+        context.update(
+            {
+                "is_active": is_active,
+                "changed": self.previous_value not in (None, str(value)),
+                # Stable across swaps, so htmx settles the old attributes first
+                # and the colour change transitions instead of jumping.
+                "label_id": f"id_live_label_{self.attr}_{self.get_row_id(obj)}",
+                "poll_url": self.get_poll_url(value, obj) if is_active else "",
+                "poll_interval": self.poll_interval,
+            }
+        )
+        return context
+
+    def get_row_id(self, obj: Any) -> str:
+        return str(self.get_dotted_attr_or_arg(obj, self.row_id_attr))
+
+    def get_poll_url(self, value: Any, obj: Any) -> str:
+        if not self.rows_path:
+            return ""
+        return f"{self.rows_path}?{urlencode(self.get_poll_params(value, obj))}"
+
+    def get_poll_params(self, value: Any, obj: Any) -> dict[str, str]:
+        return {LIVE_ROW_PARAM: self.get_row_id(obj), LIVE_SHOWN_PARAM: str(value)}
+
+
 @dataclass
 class CompData:
     num: int

@@ -1,0 +1,4 @@
+<span id="{{ label_id }}"
+      class="badge mt-live-label{% if is_active %} mt-live-label-active{% endif %}{% if changed %} mt-live-label-changed{% endif %}"
+      style="background-color:{{ color }};color:{{ font_color }};--mt-live-label-color:{{ color }};"
+      {% if poll_url %}hx-get="{{ poll_url }}" hx-trigger="every {{ poll_interval }}s [document.visibilityState === 'visible']" hx-target="closest tr" hx-swap="outerHTML" hx-on:htmx:response-error="const still = this.cloneNode(true); still.removeAttribute('hx-get'); still.classList.remove('mt-live-label-active'); this.replaceWith(still);"{% endif %}>{{ value }}</span>

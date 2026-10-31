@@ -3,10 +3,21 @@
 Uploads and exports show the same thing — what ran, how it went, and what came
 out of it — so the column building blocks live here. Subclasses name the status
 and message fields and assemble the columns in whatever order suits them.
+
+Shown by a list view, the status label of a run that is still active refreshes
+its row, message included, as the background worker moves the run on (see
+``LiveLabelTableElement``); set ``live_status = False`` to keep it still.
 """
 
 from process_pipeline.constants import RegistryStatusTextChoices
+from process_pipeline.dataclasses.registry_table_elements import (
+    LIVE_SHOWN_MESSAGE_PARAM,
+    RegistryMessageTableElement,
+    RegistryStatusTableElement,
+)
 from reporting.dataclasses.table_elements import (
+    LIVE_ROWS_PATH_KEY,
+    LIVE_SHOWN_PARAM,
     DateTimeTableElement,
     LabelTableElement,
     LinkTableElement,
@@ -34,20 +45,44 @@ class PipelineRegistryManagerABC(MontrekTableManager):
     history_url: str = ""
     revoke_url: str = ""
     revoke_hover_text: str = "Revoke Task"
+    live_status: bool = True
+    status_poll_interval: int = 3
 
     # ---- column building blocks ----
 
     @property
     def status_element(self) -> LabelTableElement:
-        return LabelTableElement(
+        if not self.live_status:
+            return LabelTableElement(
+                name=self.status_column_name,
+                attr=self.status_attr,
+                color_codes=self.registry_status_text_choices.label_colors(),
+            )
+        return RegistryStatusTableElement(
             name=self.status_column_name,
             attr=self.status_attr,
             color_codes=self.registry_status_text_choices.label_colors(),
+            rows_path=self.session_data.get(LIVE_ROWS_PATH_KEY, ""),
+            active_values=self.registry_status_text_choices.active_labels(),
+            poll_interval=self.status_poll_interval,
+            previous_value=self._get_shown_param(LIVE_SHOWN_PARAM),
+            message_attr=self.message_attr,
         )
 
     @property
     def message_element(self) -> TextTableElement:
-        return TextTableElement(name=self.message_column_name, attr=self.message_attr)
+        return RegistryMessageTableElement(
+            name=self.message_column_name,
+            attr=self.message_attr,
+            previous_digest=self._get_shown_param(LIVE_SHOWN_MESSAGE_PARAM),
+        )
+
+    def _get_shown_param(self, key: str) -> str | None:
+        """What a polling status label last showed; None outside a poll."""
+        value = self.session_data.get(key)
+        if isinstance(value, list | tuple):
+            value = value[0] if value else None
+        return None if value is None else str(value)
 
     @property
     def date_element(self) -> DateTimeTableElement:
