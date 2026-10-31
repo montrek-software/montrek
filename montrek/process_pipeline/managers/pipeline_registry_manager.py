@@ -16,7 +16,6 @@ from process_pipeline.dataclasses.registry_table_elements import (
     RegistryStatusTableElement,
 )
 from reporting.dataclasses.table_elements import (
-    LIVE_ROWS_PATH_KEY,
     LIVE_SHOWN_PARAM,
     DateTimeTableElement,
     LabelTableElement,
@@ -62,7 +61,7 @@ class PipelineRegistryManagerABC(MontrekTableManager):
             name=self.status_column_name,
             attr=self.status_attr,
             color_codes=self.registry_status_text_choices.label_colors(),
-            rows_path=self.session_data.get(LIVE_ROWS_PATH_KEY, ""),
+            rows_path=self.live_rows_path,
             active_values=self.registry_status_text_choices.active_labels(),
             poll_interval=self.status_poll_interval,
             previous_value=self._get_shown_param(LIVE_SHOWN_PARAM),

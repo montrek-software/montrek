@@ -5,6 +5,7 @@ from baseclasses.pages import MontrekPage
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpRequest, HttpResponse
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
@@ -266,6 +267,28 @@ class TestFileUploadRegistryViewLiveRow(TestCase):
         with patch.object(FileUploadRegistryView, "show_messages") as show_messages:
             self._get_row()
         show_messages.assert_not_called()
+
+    def test_refresh_does_not_write_the_session(self):
+        self.client.get(self.url)
+        with patch.object(SessionStore, "save") as save:
+            self._get_row()
+        save.assert_not_called()
+
+    def test_page_request_still_writes_the_session(self):
+        with patch.object(SessionStore, "save") as save:
+            self.client.get(self.url)
+        save.assert_called()
+
+    def test_refresh_is_answered_before_get(self):
+        with patch.object(FileUploadRegistryView, "get") as get:
+            response = self._get_row()
+        get.assert_not_called()
+        self.assertTrue(response.content.decode().lstrip().startswith("<tr"))
+
+    def test_refresh_needs_the_list_permission(self):
+        with patch.object(FileUploadRegistryView, "has_permission", return_value=False):
+            response = self._get_row()
+        self.assertFalse(response.content.decode().lstrip().startswith("<tr"))
 
 
 class TestMontrekDownloadFileView(MontrekFileResponseTestCase):

@@ -1069,8 +1069,6 @@ class LabelTableElement(AttrTableElement):
 # Query parameters of a live row's refresh request, see LiveLabelTableElement.
 LIVE_ROW_PARAM = "live_row"
 LIVE_SHOWN_PARAM = "live_shown"
-# Session data key under which a list view offers its path for row refreshes.
-LIVE_ROWS_PATH_KEY = "live_rows_path"
 
 
 @dataclass

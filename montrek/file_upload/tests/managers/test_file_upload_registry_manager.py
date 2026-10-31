@@ -15,7 +15,8 @@ class StillFileUploadRegistryManager(FileUploadRegistryManager):
 
 class TestFileUploadRegistryManagerLiveStatus(TestCase):
     def test_status_is_live_by_default(self):
-        manager = FileUploadRegistryManager({"live_rows_path": "/file_upload/"})
+        manager = FileUploadRegistryManager({})
+        manager.live_rows_path = "/file_upload/"
         element = manager.status_element
         self.assertIsInstance(element, RegistryStatusTableElement)
         self.assertEqual(element.rows_path, "/file_upload/")

@@ -36,7 +36,7 @@ from info.managers.download_registry_storage_managers import (
 )
 from info.models.download_registry_sat_models import DownloadType
 from reporting.constants import PdfGenMethod
-from reporting.dataclasses.table_elements import LIVE_ROW_PARAM, LIVE_ROWS_PATH_KEY
+from reporting.dataclasses.table_elements import LIVE_ROW_PARAM
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.weasyprint_pdf_manager import WeasyPrintPdfManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
@@ -44,6 +44,7 @@ from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
     MontrekDataFrameTableManager,
     MontrekTableManager,
+    MontrekTableManagerABC,
 )
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -183,7 +184,11 @@ class MontrekViewMixin:
     def manager(self):
         if self._manager is None:
             self._manager = self.manager_class(self.session_data)
+            self.configure_manager(self._manager)
         return self._manager
+
+    def configure_manager(self, manager: Any) -> None:
+        """Hook to hand a new manager what the view knows beyond session data."""
 
     @property
     def session_data(self) -> SessionDataType:
@@ -380,9 +385,56 @@ class MontrekApiViewMixin(APIView):
         return [AllowAny()]
 
 
+class MontrekLiveRowMixin:
+    """Lets the live elements of the view's table refresh their rows.
+
+    Hands the table manager the view's path as ``live_rows_path`` and answers a
+    ``live_row`` request with that one row, see ``LiveLabelTableElement``. Put
+    it right behind the permission gate: the row is then checked like the page,
+    and answered before ``get()``, so a view overriding ``get()`` cannot send
+    its whole page into the row.
+    """
+
+    if TYPE_CHECKING:
+        request: Any
+
+        @property
+        def manager(self) -> MontrekTableManagerABC: ...
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == "GET" and self.is_live_row_request(request):
+            return self.refresh_live_row()
+        return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
+
+    def configure_manager(self, manager: Any) -> None:
+        super().configure_manager(manager)  # type: ignore[misc]
+        manager.live_rows_path = self.request.path
+
+    @staticmethod
+    def is_live_row_request(request) -> bool:
+        return LIVE_ROW_PARAM in request.GET
+
+    def refresh_live_row(self) -> HttpResponse:
+        """Answer a live table element with its re-rendered row alone.
+
+        Skips the page around the row, so the request neither runs the table
+        query for the page nor consumes the user's messages.
+        """
+        try:
+            row_id = int(self.request.GET[LIVE_ROW_PARAM])
+        except ValueError:
+            return HttpResponseBadRequest()
+        row = self.manager.get_table_row(row_id)
+        if row is None:
+            # The empty body drops the row, which has left the table.
+            return HttpResponse(status=HTMX_STOP_POLLING)
+        return HttpResponse(self.manager.render_single_row(row))
+
+
 class MontrekListView(
     MontrekApiViewMixin,
     MontrekPermissionRequiredMixin,
+    MontrekLiveRowMixin,
     ListView,
     MontrekPageViewMixin,
     MontrekViewMixin,
@@ -396,9 +448,7 @@ class MontrekListView(
         q = request.GET
         response = None
 
-        if LIVE_ROW_PARAM in q:
-            response = self.refresh_live_row()
-        elif q.get("gen_csv") == "true":
+        if q.get("gen_csv") == "true":
             response = self.list_to_csv()
         elif q.get("gen_excel") == "true":
             response = self.list_to_excel()
@@ -437,27 +487,13 @@ class MontrekListView(
     def view_dependent_session_data(
         self, session_data: SessionDataType
     ) -> SessionDataType:
-        table_meta_session_data = TableMetaSessionData(self.request)
-        session_data = table_meta_session_data.update_session_data(session_data)
-        session_data[LIVE_ROWS_PATH_KEY] = self.request.path
-        return session_data
-
-    def refresh_live_row(self) -> HttpResponse:
-        """Answer a live table element with its re-rendered row alone.
-
-        Skips the page around the row, so the request neither runs the table
-        query for the page nor consumes the user's messages. See
-        ``LiveLabelTableElement``.
-        """
-        try:
-            row_id = int(self.request.GET[LIVE_ROW_PARAM])
-        except ValueError:
-            return HttpResponseBadRequest()
-        row = self.manager.get_table_row(row_id)
-        if row is None:
-            # The empty body drops the row, which has left the table.
-            return HttpResponse(status=HTMX_STOP_POLLING)
-        return HttpResponse(self.manager.render_single_row(row))
+        # A live row refresh only reads the table state: it polls every few
+        # seconds, and writing the session each time could overwrite a filter
+        # the user changed meanwhile.
+        table_meta_session_data = TableMetaSessionData(
+            self.request, persist=not self.is_live_row_request(self.request)
+        )
+        return table_meta_session_data.update_session_data(session_data)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

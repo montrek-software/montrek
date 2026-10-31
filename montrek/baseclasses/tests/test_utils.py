@@ -419,6 +419,20 @@ class TestTableMetaSessionData(TestCase):
         self.assertIn("is_compact_format", self.request.session)
         self.assertIn("order_fields", self.request.session)
 
+    def test_update_session_data_without_persisting(self):
+        table_meta = TableMetaSessionData(self.request, persist=False)
+        session_data = {
+            "filter_field": ["name"],
+            "filter_lookup": ["icontains"],
+            "filter_value": ["test"],
+        }
+
+        session_data = table_meta.update_session_data(session_data)
+
+        self.assertEqual(session_data["current_paginate_by"], 10)
+        self.assertIn("/test-path/", session_data["filter"])
+        self.assertEqual(dict(self.request.session), {})
+
     def test_update_session_data_empty_input(self):
         """Test update with empty session data"""
         table_meta = TableMetaSessionData(self.request)

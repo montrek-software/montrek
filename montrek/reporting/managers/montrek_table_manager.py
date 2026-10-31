@@ -63,6 +63,9 @@ class MontrekTableManagerABC(
     # Set on first use by ``get_display_field_names``; class level so subclasses
     # with their own ``__init__`` signature cannot miss it.
     _table_element_field_names: dict[str, str] | None = None
+    # Path of the list view showing the table, which refreshes single rows for
+    # live table elements; empty where no view does. Set by that view.
+    live_rows_path: str = ""
     # Set per subclass by ``MontrekTableMetaClass``.
     download_task: ClassVar[DownloadTableTask]
     refresh_data_task: ClassVar[RefreshDataTask]

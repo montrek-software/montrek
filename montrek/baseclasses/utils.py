@@ -146,14 +146,20 @@ def to_date(value: Any) -> datetime.date | None:
 class TableMetaSessionDataElement(ABC):
     field: str = ""
 
-    def __init__(self, session_data: SessionDataType, request) -> None:
+    def __init__(
+        self, session_data: SessionDataType, request, persist: bool = True
+    ) -> None:
         self.session_data = session_data
         self.request = request
         self.request_path = request.path
+        # Without it the table state is only read: the user's session is not
+        # written, so the request cannot overwrite a change made meanwhile.
+        self.persist = persist
 
     def process(self):
         self.session_data.update(self.apply_data())
-        self.request.session[self.field] = self.session_data.get(self.field, {})
+        if self.persist:
+            self.request.session[self.field] = self.session_data.get(self.field, {})
 
     @abstractmethod
     def apply_data(self) -> SessionDataType: ...
@@ -287,12 +293,13 @@ class TableMetaSessionData:
         IsCompactFormatMetaSessionDataElement,
     ]
 
-    def __init__(self, request) -> None:
+    def __init__(self, request, persist: bool = True) -> None:
         self.request = request
+        self.persist = persist
 
     def update_session_data(self, session_data: SessionDataType) -> SessionDataType:
         for element_class in self.meta_session_data_elements:
-            element = element_class(session_data, self.request)
+            element = element_class(session_data, self.request, self.persist)
             element.process()
             session_data = element.session_data
 
