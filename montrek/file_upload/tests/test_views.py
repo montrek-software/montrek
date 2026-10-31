@@ -1,15 +1,18 @@
+import datetime
 from typing import cast
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from baseclasses.pages import MontrekPage
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpRequest, HttpResponse
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepositoryABC,
 )
@@ -22,7 +25,14 @@ from file_upload.views import (
     MontrekDownloadLogFileView,
     MontrekUploadFileView,
 )
+from baseclasses.repositories.montrek_repository import (
+    INVALID_REFERENCE_DATE_TEXT,
+)
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
+from process_pipeline.dataclasses.registry_table_elements import (
+    RegistryMessageTableElement,
+)
+from testing.decorators.add_logged_in_user import add_logged_in_user
 from testing.test_cases.view_test_cases import (
     MontrekFileResponseTestCase,
     MontrekListViewTestCase,
@@ -195,6 +205,120 @@ class TestFileUploadRegistryView(MontrekListViewTestCase):
 
     def build_factories(self):
         FileUploadRegistryStaticSatelliteFactory.create_batch(3)
+
+
+class TestFileUploadRegistryViewLiveRow(TestCase):
+    @add_logged_in_user
+    def setUp(self):
+        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
+            upload_status="in_progress", upload_message="Step 1 of 3"
+        )
+        self.url = reverse("montrek_upload_file")
+        self.row_id = self.registrysat.get_hub_value_date().pk
+
+    def _get_row(self, **params):
+        return self.client.get(
+            self.url, query_params={"live_row": self.row_id, **params}
+        )
+
+    def test_list_offers_live_rows(self):
+        content = self.client.get(self.url).content.decode()
+        self.assertIn(
+            f'hx-get="{self.url}?live_row={self.row_id}&amp;live_shown=in_progress',
+            content,
+        )
+
+    def test_list_pinned_to_a_reference_date_does_not_poll(self):
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        response = self.client.get(
+            self.url, query_params={"reference_date": tomorrow.isoformat()}
+        )
+        content = response.content.decode()
+        self.assertIn("mt-live-label", content)
+        self.assertNotIn("live_row=", content)
+
+    def test_active_row_keeps_polling(self):
+        content = self._get_row().content.decode()
+        self.assertTrue(content.lstrip().startswith("<tr"))
+        self.assertNotIn("<html", content)
+        self.assertIn("hx-get", content)
+        self.assertIn("mt-live-label-active", content)
+        self.assertIn("Step 1 of 3", content)
+
+    def test_changes_since_last_shown_are_marked(self):
+        content = self._get_row(
+            live_shown="pending", live_shown_message="0"
+        ).content.decode()
+        self.assertIn("mt-live-label-changed", content)
+        self.assertIn("mt-live-cell-changed", content)
+
+    def test_unchanged_row_is_not_marked(self):
+        content = self._get_row(
+            live_shown="in_progress",
+            live_shown_message=RegistryMessageTableElement.digest("Step 1 of 3"),
+        ).content.decode()
+        self.assertNotIn("mt-live-label-changed", content)
+        self.assertNotIn("mt-live-cell-changed", content)
+
+    def test_finished_row_stops_polling(self):
+        self.registrysat.upload_status = "processed"
+        self.registrysat.save()
+        content = self._get_row().content.decode()
+        self.assertNotIn("hx-get", content)
+        self.assertNotIn("mt-live-label-active", content)
+
+    def test_missing_row_stops_polling(self):
+        response = self.client.get(self.url, query_params={"live_row": 0})
+        self.assertEqual(response.status_code, 286)
+        self.assertEqual(response.content, b"")
+
+    def test_malformed_row_id_is_rejected(self):
+        response = self.client.get(self.url, query_params={"live_row": "abc"})
+        self.assertEqual(response.status_code, 400)
+
+    def test_refresh_leaves_the_messages_alone(self):
+        with patch.object(FileUploadRegistryView, "show_messages") as show_messages:
+            self._get_row()
+        show_messages.assert_not_called()
+
+    def test_refresh_does_not_write_the_session(self):
+        self.client.get(self.url)
+        with patch.object(SessionStore, "save") as save:
+            self._get_row()
+        save.assert_not_called()
+
+    def test_page_request_still_writes_the_session(self):
+        with patch.object(SessionStore, "save") as save:
+            self.client.get(self.url)
+        save.assert_called()
+
+    def test_refresh_is_answered_before_get(self):
+        with patch.object(FileUploadRegistryView, "get") as get:
+            response = self._get_row()
+        get.assert_not_called()
+        self.assertTrue(response.content.decode().lstrip().startswith("<tr"))
+
+    def test_refresh_needs_the_list_permission(self):
+        with patch.object(FileUploadRegistryView, "has_permission", return_value=False):
+            response = self._get_row()
+        self.assertFalse(response.content.decode().lstrip().startswith("<tr"))
+
+
+class TestFileUploadRegistryViewInvalidReferenceDate(TestCase):
+    @add_logged_in_user
+    def setUp(self):
+        self.url = reverse("montrek_upload_file")
+
+    def test_invalid_reference_date_is_reported_to_the_user(self):
+        response = self.client.get(
+            self.url, query_params={"reference_date": "abc"}, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("home"))
+        self.assertIn(
+            str(INVALID_REFERENCE_DATE_TEXT).format(value="abc"),
+            [str(m) for m in get_messages(response.wsgi_request)],
+        )
 
 
 class TestMontrekDownloadFileView(MontrekFileResponseTestCase):

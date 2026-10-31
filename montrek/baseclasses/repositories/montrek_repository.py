@@ -8,6 +8,7 @@ from collections.abc import Callable, Mapping
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessage
 from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.forms import LocalizedText
 from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
@@ -59,6 +60,12 @@ logger = logging.getLogger(__name__)
 FROZEN_REFERENCE_DATE_WRITE_MESSAGE = (
     "Die Ansicht zeigt einen eingefrorenen Datenstand. "
     "In diesem Zustand können keine Daten gespeichert werden."
+)
+INVALID_REFERENCE_DATE_TEXT = LocalizedText(
+    en="'{value}' is not a valid date for the data state (reference_date). "
+    "Please use the format YYYY-MM-DD.",
+    de="„{value}“ ist kein gültiges Datum für den Datenstand (reference_date). "
+    "Bitte im Format JJJJ-MM-TT angeben.",
 )
 
 
@@ -387,9 +394,32 @@ class MontrekRepository:
             reference_date = reference_date[0] if reference_date else None
         if reference_date is None:
             return None
+        if isinstance(reference_date, str) and not reference_date.strip():
+            # An emptied date field in the URL: no pin, like no field at all.
+            return None
         if isinstance(reference_date, str):
-            reference_date = datetime_to_montrek_time(pd.to_datetime(reference_date))
+            reference_date = datetime_to_montrek_time(
+                self._parse_reference_date(reference_date)
+            )
         return reference_date
+
+    @staticmethod
+    def _parse_reference_date(value: str) -> datetime.datetime:
+        # pandas timestamps only reach 2262, so a date typed in beyond that
+        # would overflow; other formats than ISO are left to pandas.
+        try:
+            return datetime.datetime.fromisoformat(value)
+        except ValueError:
+            pass
+        message = str(INVALID_REFERENCE_DATE_TEXT).format(value=value[:50])
+        try:
+            parsed = pd.to_datetime(value)
+        except ValueError as error:
+            # The value usually comes from the URL, so the user can correct it.
+            raise MontrekError(message) from error
+        if pd.isna(parsed):
+            raise MontrekError(message)
+        return parsed
 
     @property
     def session_end_date(self) -> datetime.datetime:

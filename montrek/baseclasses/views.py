@@ -1,5 +1,6 @@
 import logging
-from functools import wraps
+from collections.abc import Callable
+from functools import partial, wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -7,7 +8,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.http import FileResponse, HttpResponse, HttpResponseRedirect
+from django.http import (
+    FileResponse,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -30,6 +36,7 @@ from info.managers.download_registry_storage_managers import (
 )
 from info.models.download_registry_sat_models import DownloadType
 from reporting.constants import PdfGenMethod
+from reporting.dataclasses.table_elements import LIVE_ROW_PARAM
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.weasyprint_pdf_manager import WeasyPrintPdfManager
 from reporting.managers.montrek_details_manager import MontrekDetailsManager
@@ -37,6 +44,7 @@ from reporting.managers.montrek_table_manager import (
     HistoryDataTableManager,
     MontrekDataFrameTableManager,
     MontrekTableManager,
+    MontrekTableManagerABC,
 )
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -70,6 +78,9 @@ logger = logging.getLogger(__name__)
 # editor row (see tables/partials/inline_edit_row.html) reads it to know it may
 # remove itself once the re-rendered data row has been swapped in above it.
 INLINE_EDIT_DONE_HEADER = "HX-Inline-Edit-Done"
+
+# htmx stops polling an element whose request is answered with this status.
+HTMX_STOP_POLLING = 286
 
 # Query parameter that switches a view from its HTML behaviour to the DRF
 # (JWT authenticated) one. Set on the request by API clients, see
@@ -173,7 +184,11 @@ class MontrekViewMixin:
     def manager(self):
         if self._manager is None:
             self._manager = self.manager_class(self.session_data)
+            self.configure_manager(self._manager)
         return self._manager
+
+    def configure_manager(self, manager: Any) -> None:
+        """Hook to hand a new manager what the view knows beyond session data."""
 
     @property
     def session_data(self) -> SessionDataType:
@@ -370,9 +385,56 @@ class MontrekApiViewMixin(APIView):
         return [AllowAny()]
 
 
+class MontrekLiveRowMixin:
+    """Lets the live elements of the view's table refresh their rows.
+
+    Hands the table manager the view's path as ``live_rows_path`` and answers a
+    ``live_row`` request with that one row, see ``LiveLabelTableElement``. Put
+    it right behind the permission gate: the row is then checked like the page,
+    and answered before ``get()``, so a view overriding ``get()`` cannot send
+    its whole page into the row.
+    """
+
+    if TYPE_CHECKING:
+        request: Any
+
+        @property
+        def manager(self) -> MontrekTableManagerABC: ...
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == "GET" and self.is_live_row_request(request):
+            return self.refresh_live_row()
+        return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
+
+    def configure_manager(self, manager: Any) -> None:
+        super().configure_manager(manager)  # type: ignore[misc]
+        manager.live_rows_path = self.request.path
+
+    @staticmethod
+    def is_live_row_request(request) -> bool:
+        return LIVE_ROW_PARAM in request.GET
+
+    def refresh_live_row(self) -> HttpResponse:
+        """Answer a live table element with its re-rendered row alone.
+
+        Skips the page around the row, so the request neither runs the table
+        query for the page nor consumes the user's messages.
+        """
+        try:
+            row_id = int(self.request.GET[LIVE_ROW_PARAM])
+        except ValueError:
+            return HttpResponseBadRequest()
+        row = self.manager.get_table_row(row_id)
+        if row is None:
+            # The empty body drops the row, which has left the table.
+            return HttpResponse(status=HTMX_STOP_POLLING)
+        return HttpResponse(self.manager.render_single_row(row))
+
+
 class MontrekListView(
     MontrekApiViewMixin,
     MontrekPermissionRequiredMixin,
+    MontrekLiveRowMixin,
     ListView,
     MontrekPageViewMixin,
     MontrekViewMixin,
@@ -400,22 +462,24 @@ class MontrekListView(
             response = self.list_to_rest_api()
         elif q.get("refresh_data") == "true":
             response = self.refresh_data()
-        elif q.get("action") == "reset":
-            response = self.reset_filter()
-        elif q.get("action") == "add_filter":
-            response = self.add_filter()
-        elif q.get("action") == "add_paginate_by":
-            response = self.add_paginate_by()
-        elif q.get("action") == "sub_paginate_by":
-            response = self.sub_paginate_by()
-        elif q.get("action") == "is_compact_format_true":
-            response = self.set_is_compact_format(True)
-        elif q.get("action") == "is_compact_format_false":
-            response = self.set_is_compact_format(False)
+        elif (action := q.get("action")) in self.table_layout_actions:
+            response = self.table_layout_actions[action]()
         elif "order_action" in q:
             response = self.set_order_field(q.get("order_action"))
 
         return response or super().get(request, *args, **kwargs)
+
+    @property
+    def table_layout_actions(self) -> dict[str, Callable[[], HttpResponse]]:
+        """The filter and layout changes requested by the ``action`` parameter."""
+        return {
+            "reset": self.reset_filter,
+            "add_filter": self.add_filter,
+            "add_paginate_by": self.add_paginate_by,
+            "sub_paginate_by": self.sub_paginate_by,
+            "is_compact_format_true": partial(self.set_is_compact_format, True),
+            "is_compact_format_false": partial(self.set_is_compact_format, False),
+        }
 
     def get_queryset(self):
         return self.manager.get_table()
@@ -423,7 +487,12 @@ class MontrekListView(
     def view_dependent_session_data(
         self, session_data: SessionDataType
     ) -> SessionDataType:
-        table_meta_session_data = TableMetaSessionData(self.request)
+        # A live row refresh only reads the table state: it polls every few
+        # seconds, and writing the session each time could overwrite a filter
+        # the user changed meanwhile.
+        table_meta_session_data = TableMetaSessionData(
+            self.request, persist=not self.is_live_row_request(self.request)
+        )
         return table_meta_session_data.update_session_data(session_data)
 
     def get_context_data(self, **kwargs):

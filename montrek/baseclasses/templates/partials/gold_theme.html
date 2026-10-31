@@ -698,6 +698,111 @@
     opacity: 1;
   }
 
+  /* Live labels (LiveLabelTableElement): while a background job is active
+     its label pulses in its own colour under a moving sheen. A label whose
+     value changed pops once; its new colour fades in, as the label keeps its
+     id across the row swap and htmx settles the old attributes first. A cell
+     whose content changed fades in from an accent tint. */
+
+  .mt-live-label {
+    position: relative;
+    overflow: hidden;
+    transition:
+      background-color 0.6s ease,
+      color 0.6s ease;
+  }
+
+  .mt-live-label-active {
+    animation: mt-live-pulse 1.5s ease-out infinite;
+  }
+
+  .mt-live-label-active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      110deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 65%
+    );
+    background-size: 250% 100%;
+    animation: mt-live-sheen 1.5s linear infinite;
+    pointer-events: none;
+  }
+
+  .mt-live-label-changed {
+    animation: mt-live-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .mt-live-label-active.mt-live-label-changed {
+    animation:
+      mt-live-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+      mt-live-pulse 1.5s ease-out 0.7s infinite;
+  }
+
+  td.mt-live-cell-changed {
+    animation: mt-live-tint 1.8s ease-out;
+  }
+
+  @keyframes mt-live-pulse {
+    from {
+      box-shadow: 0 0 0 0
+        color-mix(in srgb, var(--mt-live-label-color) 55%, transparent);
+    }
+    to {
+      box-shadow: 0 0 0 0.45rem transparent;
+    }
+  }
+
+  @keyframes mt-live-sheen {
+    from {
+      background-position: 150% 0;
+    }
+    to {
+      background-position: -50% 0;
+    }
+  }
+
+  @keyframes mt-live-pop {
+    from {
+      transform: scale(1);
+      box-shadow: 0 0 0 0
+        color-mix(in srgb, var(--mt-live-label-color) 70%, transparent);
+    }
+    40% {
+      transform: scale(1.18);
+      box-shadow: 0 0 0.6rem 0.2rem
+        color-mix(in srgb, var(--mt-live-label-color) 45%, transparent);
+    }
+    to {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @keyframes mt-live-tint {
+    from {
+      background-color: color-mix(in srgb, var(--mt-accent) 16%, transparent);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mt-live-label,
+    .mt-live-label-active.mt-live-label-changed,
+    td.mt-live-cell-changed {
+      animation: none;
+      transition: none;
+    }
+
+    .mt-live-label-active::after {
+      display: none;
+    }
+  }
+
   .mt-htmx-link.htmx-request .mt-prominent-icon {
     display: none;
   }

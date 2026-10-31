@@ -2089,3 +2089,51 @@ class TestHistoryStringTableElementStyling(TestCase):
                 field = self._display_field({1: {"field": state}})
                 self.assertEqual(field.style_attrs_str, "")
                 self.assertEqual(field.td_classes_str, f"fw-bold {colour_class}")
+
+
+class TestLiveLabelTableElement(TestCase):
+    def _element(self, **kwargs) -> te.LiveLabelTableElement:
+        kwargs.setdefault("rows_path", "/example/list")
+        return te.LiveLabelTableElement(
+            name="Status",
+            attr="status",
+            color_codes={"running": ReportingColors.YELLOW},
+            active_values=("running",),
+            **kwargs,
+        )
+
+    def _html(self, element: te.LiveLabelTableElement, status: str) -> str:
+        obj = {"id": 7, "status": status}
+        return str(element.get_display_field(obj).display_value)
+
+    def test_active_label_polls_its_row(self):
+        html = self._html(self._element(poll_interval=5), "running")
+        self.assertIn('hx-get="/example/list?live_row=7&amp;live_shown=running"', html)
+        self.assertIn("every 5s", html)
+        self.assertIn('hx-target="closest tr"', html)
+        self.assertIn("hx-on:htmx:response-error", html)
+        self.assertIn("mt-live-label-active", html)
+        self.assertIn('id="id_live_label_status_7"', html)
+
+    def test_inactive_label_stops_polling(self):
+        html = self._html(self._element(), "done")
+        self.assertNotIn("hx-get", html)
+        self.assertNotIn("mt-live-label-active", html)
+        self.assertIn('id="id_live_label_status_7"', html)
+
+    def test_label_without_rows_path_stays_still(self):
+        html = self._html(self._element(rows_path=""), "running")
+        self.assertNotIn("hx-get", html)
+        self.assertIn("mt-live-label-active", html)
+
+    def test_changed_value_is_marked(self):
+        for previous_value, is_changed in (
+            (None, False),
+            ("running", False),
+            ("pending", True),
+        ):
+            with self.subTest(previous_value=previous_value):
+                html = self._html(
+                    self._element(previous_value=previous_value), "running"
+                )
+                self.assertEqual("mt-live-label-changed" in html, is_changed)

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from functools import cached_property
 from collections.abc import Callable, Mapping
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
@@ -63,6 +63,9 @@ class MontrekTableManagerABC(
     # Set on first use by ``get_display_field_names``; class level so subclasses
     # with their own ``__init__`` signature cannot miss it.
     _table_element_field_names: dict[str, str] | None = None
+    # Path of the list view showing the table, which refreshes single rows for
+    # live table elements; empty where no view does. Set by that view.
+    live_rows_path: str = ""
     # Set per subclass by ``MontrekTableMetaClass``.
     download_task: ClassVar[DownloadTableTask]
     refresh_data_task: ClassVar[RefreshDataTask]
@@ -187,6 +190,14 @@ class MontrekTableManagerABC(
             for table_element in self.table_elements
         ]
         return render_to_string("tables/partials/table_row.html", {"cells": cells})
+
+    def get_table_row(self, _row_id: int) -> Any | None:
+        """The row ``row_id`` of the full table, or None if it is not in it.
+
+        Backs the row refreshes of live table elements; tables that cannot
+        look up a single row answer None and the refreshes stop.
+        """
+        return None
 
     def get_all_fields(self) -> list[str]:
         if not self.has_table_elements_filter_field:
@@ -412,6 +423,11 @@ class MontrekTableManager(MontrekTableManagerABC):
     def get_full_table(self) -> QuerySet:
         self.set_order_field()
         return self.repository.receive()
+
+    def get_table_row(self, row_id: int) -> Any | None:
+        rows = list(self.get_full_table().filter(pk=row_id)[:1])
+        self._preload_container(rows)
+        return rows[0] if rows else None
 
     def get_df(self) -> pd.DataFrame:
         queryset = self.repository.receive()
