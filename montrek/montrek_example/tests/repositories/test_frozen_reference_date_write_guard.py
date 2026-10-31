@@ -10,12 +10,14 @@ caller.
 import datetime
 
 import pandas as pd
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.utils import montrek_time
 from baseclasses.repositories.montrek_repository import (
     FROZEN_REFERENCE_DATE_WRITE_MESSAGE,
+    INVALID_REFERENCE_DATE_TEXT,
 )
 from montrek_example.models import example_models as me_models
 from montrek_example.repositories.hub_a_repository import HubARepository
@@ -158,3 +160,51 @@ class TestExplicitReferenceDate(FrozenReferenceDateWriteGuardTestCaseBase):
         repository.reference_date = set_reference_date
         self.assertEqual(repository.explicit_reference_date, set_reference_date)
         self.assertEqual(repository.reference_date, set_reference_date)
+
+    def test_a_date_beyond_the_pandas_range_is_read(self):
+        repository = self.build_repository(reference_date=["2999-12-31"])
+        self.assertEqual(repository.explicit_reference_date, montrek_time(2999, 12, 31))
+        self.assertEqual(repository.receive().count(), 0)
+
+    def test_an_iso_datetime_string_is_read(self):
+        repository = self.build_repository(reference_date="2024-01-31T10:30:00")
+        self.assertEqual(
+            repository.explicit_reference_date, montrek_time(2024, 1, 31, 10, 30)
+        )
+
+    def test_a_date_in_another_format_is_still_read(self):
+        repository = self.build_repository(reference_date="01/31/2024")
+        self.assertEqual(repository.explicit_reference_date, montrek_time(2024, 1, 31))
+
+    def test_an_invalid_date_is_reported_to_the_user(self):
+        for value in ("abc", "2024-13-45", "NaT"):
+            with self.subTest(value=value):
+                repository = self.build_repository(reference_date=[value])
+                with self.assertRaises(MontrekError) as context:
+                    repository.receive()
+                self.assertEqual(
+                    str(context.exception),
+                    str(INVALID_REFERENCE_DATE_TEXT).format(value=value),
+                )
+
+    def test_the_invalid_date_message_follows_the_language_code(self):
+        for language_code, expected in (
+            ("en-us", INVALID_REFERENCE_DATE_TEXT.en),
+            ("de", INVALID_REFERENCE_DATE_TEXT.de),
+            ("de-de", INVALID_REFERENCE_DATE_TEXT.de),
+            ("fr", INVALID_REFERENCE_DATE_TEXT.en),
+        ):
+            with (
+                self.subTest(language_code=language_code),
+                override_settings(LANGUAGE_CODE=language_code),
+            ):
+                repository = self.build_repository(reference_date=["abc"])
+                with self.assertRaises(MontrekError) as context:
+                    repository.receive()
+                self.assertEqual(str(context.exception), expected.format(value="abc"))
+
+    def test_an_emptied_date_field_is_no_pin(self):
+        for value in ("", "  "):
+            with self.subTest(value=value):
+                repository = self.build_repository(reference_date=[value])
+                self.assertIsNone(repository.explicit_reference_date)

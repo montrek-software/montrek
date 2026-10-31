@@ -6,7 +6,8 @@ and message fields and assemble the columns in whatever order suits them.
 
 Shown by a list view, the status label of a run that is still active refreshes
 its row, message included, as the background worker moves the run on (see
-``LiveLabelTableElement``); set ``live_status = False`` to keep it still.
+``LiveLabelTableElement``); set ``live_status = False`` to keep it still. A
+table pinned to a reference date stays still as well.
 """
 
 from process_pipeline.constants import RegistryStatusTextChoices
@@ -51,7 +52,7 @@ class PipelineRegistryManagerABC(MontrekTableManager):
 
     @property
     def status_element(self) -> LabelTableElement:
-        if not self.live_status:
+        if not self._is_live_status:
             return LabelTableElement(
                 name=self.status_column_name,
                 attr=self.status_attr,
@@ -75,6 +76,12 @@ class PipelineRegistryManagerABC(MontrekTableManager):
             attr=self.message_attr,
             previous_digest=self._get_shown_param(LIVE_SHOWN_MESSAGE_PARAM),
         )
+
+    @property
+    def _is_live_status(self) -> bool:
+        # A table pinned to a reference date shows a past state the worker no
+        # longer changes, and the refresh would render the row as of now.
+        return self.live_status and self.repository.explicit_reference_date is None
 
     def _get_shown_param(self, key: str) -> str | None:
         """What a polling status label last showed; None outside a poll."""

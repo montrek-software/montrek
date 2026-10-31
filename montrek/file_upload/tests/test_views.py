@@ -1,3 +1,4 @@
+import datetime
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -23,6 +24,9 @@ from file_upload.views import (
     MontrekDownloadFileView,
     MontrekDownloadLogFileView,
     MontrekUploadFileView,
+)
+from baseclasses.repositories.montrek_repository import (
+    INVALID_REFERENCE_DATE_TEXT,
 )
 from info.repositories.download_registry_repositories import DownloadRegistryRepository
 from process_pipeline.dataclasses.registry_table_elements import (
@@ -224,6 +228,15 @@ class TestFileUploadRegistryViewLiveRow(TestCase):
             content,
         )
 
+    def test_list_pinned_to_a_reference_date_does_not_poll(self):
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        response = self.client.get(
+            self.url, query_params={"reference_date": tomorrow.isoformat()}
+        )
+        content = response.content.decode()
+        self.assertIn("mt-live-label", content)
+        self.assertNotIn("live_row=", content)
+
     def test_active_row_keeps_polling(self):
         content = self._get_row().content.decode()
         self.assertTrue(content.lstrip().startswith("<tr"))
@@ -289,6 +302,23 @@ class TestFileUploadRegistryViewLiveRow(TestCase):
         with patch.object(FileUploadRegistryView, "has_permission", return_value=False):
             response = self._get_row()
         self.assertFalse(response.content.decode().lstrip().startswith("<tr"))
+
+
+class TestFileUploadRegistryViewInvalidReferenceDate(TestCase):
+    @add_logged_in_user
+    def setUp(self):
+        self.url = reverse("montrek_upload_file")
+
+    def test_invalid_reference_date_is_reported_to_the_user(self):
+        response = self.client.get(
+            self.url, query_params={"reference_date": "abc"}, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse("home"))
+        self.assertIn(
+            str(INVALID_REFERENCE_DATE_TEXT).format(value="abc"),
+            [str(m) for m in get_messages(response.wsgi_request)],
+        )
 
 
 class TestMontrekDownloadFileView(MontrekFileResponseTestCase):

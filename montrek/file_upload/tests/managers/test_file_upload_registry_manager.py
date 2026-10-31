@@ -32,6 +32,11 @@ class TestFileUploadRegistryManagerLiveStatus(TestCase):
         element = StillFileUploadRegistryManager({}).status_element
         self.assertIs(type(element), LabelTableElement)
 
+    def test_status_pinned_to_a_reference_date_stays_still(self):
+        manager = FileUploadRegistryManager({"reference_date": ["2024-01-31"]})
+        manager.live_rows_path = "/file_upload/"
+        self.assertIs(type(manager.status_element), LabelTableElement)
+
     def test_poll_params_reach_the_elements(self):
         manager = FileUploadRegistryManager(
             {"live_shown": ["pending"], "live_shown_message": ["ab12"]}
