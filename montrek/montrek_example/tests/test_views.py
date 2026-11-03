@@ -98,6 +98,26 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         self.assertRedirects(response, url)
         self.assertEqual(len(obj_list), 2)
 
+    def test_filter_that_cannot_be_applied_shows_no_rows_and_an_error(self):
+        me_factories.SatA1Factory()
+        HubARepository().store_in_view_model()
+        url = reverse("montrek_example_a_list")
+        query_params = {
+            "filter_field": "field_a1_int",
+            "filter_lookup": "in",
+            "filter_negate": False,
+            "filter_value": "1.0,2",
+        }
+        response = self.client.get(url, data=query_params)
+        self.assertEqual(len(response.context_data["object_list"]), 0)
+        messages = [
+            str(message)
+            for message in response.context["messages"]
+            if message.level_tag == "error"
+        ]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Filter could not be applied", messages[0])
+
     def test_overview(self):
         response = self.client.get(self.url)
         overview_html = response.context_data["overview"]

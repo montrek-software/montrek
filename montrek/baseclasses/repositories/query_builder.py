@@ -5,7 +5,7 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessage,
     MontrekMessageError,
 )
-from django.core.exceptions import FieldError
+from django.core.exceptions import FieldError, ValidationError
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
 from django.db.models import (
@@ -47,11 +47,13 @@ class QueryBuilder:
         session_start_date: datetime.datetime | None = None,
         session_end_date: datetime.datetime | None = None,
         hub_scope_pk: int | None = None,
+        messages: list[MontrekMessage] | None = None,
     ):
         self.annotator = annotator
         self.hub_class = annotator.hub_class
         self.session_data = session_data
-        self.messages: list[MontrekMessage] = []
+        # Pass the owner's list to have the messages reach it.
+        self.messages: list[MontrekMessage] = [] if messages is None else messages
         self.latest_ts = latest_ts
         self.hub_scope_pk = hub_scope_pk
         self.session_start_date = (
@@ -125,11 +127,15 @@ class QueryBuilder:
         return queryset
 
     def _apply_filter(self, queryset: QuerySet) -> QuerySet:
+        """A filter that cannot be applied yields no rows: falling back to the
+        unfiltered rows would pass them off as the filtered ones."""
         try:
-            queryset = queryset.filter(self.query_filter)
-        except (FieldError, ValueError) as e:
-            self.messages.append(MontrekMessageError(str(e)))
-        return queryset
+            return queryset.filter(self.query_filter)
+        except (FieldError, ValueError, ValidationError) as e:
+            message = MontrekMessageError(f"Filter could not be applied: {e}")
+            if message not in self.messages:
+                self.messages.append(message)
+            return queryset.none()
 
     def _apply_order(
         self, queryset: QuerySet, order_fields: tuple[str, ...]
