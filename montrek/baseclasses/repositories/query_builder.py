@@ -9,14 +9,33 @@ from django.core.exceptions import FieldError
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.filter_decoder import FilterDecoder
 from django.db.models import (
+    BooleanField,
     Exists,
     F,
+    Func,
     OuterRef,
     Q,
     QuerySet,
     Window,
 )
 from django.db.models.functions import Rank
+
+
+class IsTrue(Func):
+    """``(<condition>) IS TRUE``, to keep an ``IN (subquery)`` from becoming a join.
+
+    Postgres pulls an ``IN (subquery)`` that stands directly in the ``WHERE``
+    up into a semi join, and picks its strategy from the number of outer rows
+    it expects. Behind a dozen satellite and link joins that estimate can drop
+    to a single row; the planner then chooses a nested loop and re-runs the
+    subquery for every outer row. Inside ``IS TRUE`` the subquery is not pulled
+    up: it stays a hashed SubPlan, run once and probed per row, whatever the
+    estimate. For an ``IN`` on a non-null column the result is the same, as
+    ``IS TRUE`` only differs from the bare condition on NULL.
+    """
+
+    template = "(%(expressions)s) IS TRUE"
+    output_field = BooleanField()
 
 
 class QueryBuilder:
@@ -119,7 +138,7 @@ class QueryBuilder:
 
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
         if self.latest_ts:
-            return queryset.filter(id__in=self._latest_hub_value_date_ids())
+            return queryset.filter(IsTrue(Q(id__in=self._latest_hub_value_date_ids())))
         # Use hub_id (direct FK column) instead of the hub_entity_id annotation
         # (which is itself a subquery) to avoid unnecessary nesting.
         non_null_value_date_exists = self.hub_value_date.objects.filter(
