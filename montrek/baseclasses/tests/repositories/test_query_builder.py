@@ -383,8 +383,54 @@ class TestQueryBuilder(TestCase):
             }
         }
         query_builder = QueryBuilder(self.annotator, session_data=filter_dict)
-        query_builder.build_queryset(self.reference_date)
+        test_query = query_builder.build_queryset(self.reference_date)
         self.assertEqual(query_builder.messages[0].message_type, "error")
+        self.assertEqual(test_query.count(), 0)
+
+    def _build_with_failing_filter(
+        self, filter_key: str, filter_value: str, messages: list | None = None
+    ):
+        TestMontrekSatelliteFactory.create(test_name="Test Name 0")
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name", "test_date"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+        filter_dict = {
+            "filter": {
+                "": {
+                    filter_key: {
+                        "filter_value": filter_value,
+                        "filter_negate": False,
+                    }
+                }
+            }
+        }
+        query_builder = QueryBuilder(
+            self.annotator, session_data=filter_dict, messages=messages
+        )
+        return query_builder, query_builder.build_queryset(self.reference_date)
+
+    def test_filter_with_invalid_value_returns_no_rows(self):
+        query_builder, test_query = self._build_with_failing_filter("id__in", ["1.0"])
+        self.assertEqual(test_query.count(), 0)
+        self.assertEqual(len(query_builder.messages), 1)
+        self.assertEqual(query_builder.messages[0].message_type, "error")
+        self.assertIn("1.0", query_builder.messages[0].message)
+
+    def test_filter_with_invalid_date_returns_no_rows(self):
+        query_builder, test_query = self._build_with_failing_filter(
+            "test_date__exact", "no date"
+        )
+        self.assertEqual(test_query.count(), 0)
+        self.assertEqual(query_builder.messages[0].message_type, "error")
+
+    def test_failing_filter_reports_once_to_the_passed_messages(self):
+        messages: list = []
+        query_builder, _ = self._build_with_failing_filter(
+            "id__in", ["1.0"], messages=messages
+        )
+        query_builder.build_queryset(self.reference_date)
+        self.assertIs(query_builder.messages, messages)
+        self.assertEqual(len(messages), 1)
 
 
 class TestQueryBuilderLatestTs(TestCase):

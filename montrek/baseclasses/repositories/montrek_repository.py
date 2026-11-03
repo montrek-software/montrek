@@ -99,15 +99,16 @@ class MontrekRepository:
         self.annotator = Annotator(self.hub_class)
         self._ts_queryset_containers: list[TSQueryContainer] = []
         self.session_data = session_data if session_data is not None else {}
+        self.messages: list[MontrekMessage] = []
         self.query_builder = QueryBuilder(
             self.annotator,
             self.session_data,
             self.latest_ts,
             self.session_start_date,
             self.session_end_date,
+            messages=self.messages,
         )
         self._reference_date = None
-        self.messages: list[MontrekMessage] = []
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
         self.set_annotations()
@@ -299,6 +300,7 @@ class MontrekRepository:
                 self.latest_ts,
                 self.session_start_date,
                 self.session_end_date,
+                messages=self.messages,
             )
             query = query_builder._apply_order(query, self.order_fields())
             query = query_builder._apply_filter(query)
