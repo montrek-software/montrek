@@ -459,6 +459,13 @@ class TestQueryBuilderLatestTs(TestCase):
             {**hub_dates, undated_hub.pk: None},
         )
 
+    def test_latest_filter_is_not_left_to_the_semi_join_planner(self):
+        """A bare ``id IN (window)`` becomes a semi join that Postgres may run
+        as a nested loop, re-ranking the whole table for every outer row."""
+        sql = str(self._build_queryset().query)
+
+        self.assertRegex(sql, r"\(\S+\.\"id\" IN \(SELECT .+\) IS TRUE")
+
     def test_hub_scope_pk_keeps_the_latest_row_of_that_hub(self):
         sat = TestMontrekTimeSeriesSatelliteFactory.create(
             value_date=datetime.date(2024, 1, 15)
