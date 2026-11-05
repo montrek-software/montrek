@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 from dataclasses import dataclass
 from decimal import Decimal
@@ -391,6 +392,133 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_format_latex="bla &",
             expected_td_classes=["text-start"],
         )
+
+    def test_int_table_element_without_thousands_separator(self):
+        """A year must read 2024, not 2,024."""
+        test_element = te.IntTableElement(name="test", attr="test_value", thousands="")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=2024,
+            expected_format="2024",
+            expected_format_latex="\\color{textdark} 2024 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=-1234567,
+            expected_format="-1234567",
+            expected_format_latex="\\color{red} -1234567 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={"color": "#BE0D3E"},
+        )
+
+    def test_int_table_element_with_underscore_thousands_separator(self):
+        test_element = te.IntTableElement(name="test", attr="test_value", thousands="_")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234567,
+            expected_format="1_234_567",
+            expected_format_latex="\\color{textdark} 1_234_567 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+
+    def test_float_table_element_without_thousands_separator(self):
+        test_element = te.FloatTableElement(
+            name="test", attr="test_value", thousands=""
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1234.568",
+            expected_format_latex="\\color{textdark} 1234.568 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+
+    def test_euro_table_element_without_thousands_separator(self):
+        test_element = te.EuroTableElement(name="test", attr="test_value", thousands="")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=1234.5678,
+            expected_format="1234.57€",
+            expected_format_latex="\\color{textdark} 1234.57€ &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+
+    def test_percent_table_element_groups_thousands_by_default(self):
+        """The HTML groups a percentage of 1000 or more, so the Excel format
+        has to as well."""
+        test_element = te.PercentTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=12.345,
+            expected_format="1,234.50%",
+            expected_format_latex="\\color{textdark} 1,234.50\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+        self.assertEqual(test_element.excel_format_str, "#,##0.00%")
+
+    def test_percent_table_element_without_thousands_separator(self):
+        test_element = te.PercentTableElement(
+            name="test", attr="test_value", thousands=""
+        )
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=12.345,
+            expected_format="1234.50%",
+            expected_format_latex="\\color{textdark} 1234.50\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+
+    @override_settings(NUMBER_FORMATTING=SystemFormatting.DE)
+    def test_int_table_element_without_thousands_separator_de(self):
+        """Without grouping there is no separator for the German localisation
+        to swap, so a year reads the same in both formats."""
+        test_element = te.IntTableElement(name="test", attr="test_value", thousands="")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=2024,
+            expected_format="2024",
+            expected_format_latex="\\color{textdark} 2024 &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+
+    def test_thousands_separator_is_keyword_only(self):
+        """A positional field would shift the positional arguments of every
+        number table element subclass."""
+        thousands_field = next(
+            field
+            for field in dataclasses.fields(te.IntTableElement)
+            if field.name == "thousands"
+        )
+
+        self.assertTrue(thousands_field.kw_only)
+
+    def test_number_excel_format_follows_the_thousands_separator(self):
+        cases = [
+            (te.IntTableElement(name="t", attr="a"), "#,##0"),
+            (te.IntTableElement(name="t", attr="a", thousands=""), "0"),
+            (te.IntTableElement(name="t", attr="a", thousands="_"), "#,##0"),
+            (te.FloatTableElement(name="t", attr="a"), "#,##0.000"),
+            (te.FloatTableElement(name="t", attr="a", thousands=""), "0.000"),
+            (te.EuroTableElement(name="t", attr="a"), "#,##0.00"),
+            (te.EuroTableElement(name="t", attr="a", thousands=""), "0.00"),
+            (te.PercentTableElement(name="t", attr="a"), "#,##0.00%"),
+            (te.PercentTableElement(name="t", attr="a", thousands=""), "0.00%"),
+            (te.PercentTableElement(name="t", attr="a", thousands="_"), "#,##0.00%"),
+        ]
+        for table_element, expected_format in cases:
+            with self.subTest(
+                element=type(table_element).__name__,
+                thousands=table_element.thousands,
+            ):
+                self.assertEqual(table_element.excel_format_str, expected_format)
 
     def test_euro_table_elements(self):
         test_element = te.EuroTableElement(name="test", attr="test_value")
