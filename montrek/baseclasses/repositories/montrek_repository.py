@@ -279,11 +279,13 @@ class MontrekRepository:
             and self.explicit_reference_date is None
         ):
             return self.get_view_model_query(apply_filter=apply_filter)
+        # A query that bypassed the view model for a pinned reference date
+        # holds a past state, so it must never be written back into the view
+        # model: that would rewrite the whole table and hand the past state to
+        # every later present-state read.
         query = self.query_builder.build_queryset(
             self.reference_date, self.order_fields(), apply_filter=apply_filter
         )
-        if self.view_model and not update_view_model:
-            self.view_model_repository.store_query_in_view_model(query, "all")
         self._debug_logging("End receive")
         return query
 

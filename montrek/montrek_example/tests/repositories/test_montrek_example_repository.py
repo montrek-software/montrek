@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.repositories.view_model_repository import ViewModelRepository
 from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
     LinkedHubCountSubqueryBuilder,
@@ -3860,6 +3861,66 @@ class TestRepositoryViewModel(TestCase):
         with patch.object(HubARepository, "get_view_model_query") as mock_method:
             repo.receive()
             mock_method.assert_not_called()
+
+    def build_pinned_repository(self) -> HubARepository:
+        """Pinned to a day before setUp's data was written."""
+        reference_date = timezone.now() - datetime.timedelta(days=1)
+        return HubARepository(
+            {"user_id": self.user.id, "reference_date": reference_date.isoformat()}
+        )
+
+    def get_view_model_values(self) -> list[str | None]:
+        # Unfiltered, so the rows are what the view model actually holds.
+        query = self.repo.get_view_model_query(apply_filter=False)
+        return list(query.values_list("field_a1_str", flat=True))
+
+    def test_a_pinned_receive_does_not_store_in_the_view_model(self):
+        with patch.object(
+            ViewModelRepository, "store_query_in_view_model"
+        ) as mock_store:
+            list(self.build_pinned_repository().receive())
+
+        mock_store.assert_not_called()
+
+    def test_a_receive_pinned_through_the_setter_does_not_store_either(self):
+        repo = HubARepository({"user_id": self.user.id})
+        repo.reference_date = timezone.now() - datetime.timedelta(days=1)
+
+        with patch.object(
+            ViewModelRepository, "store_query_in_view_model"
+        ) as mock_store:
+            list(repo.receive())
+
+        mock_store.assert_not_called()
+
+    def test_a_pinned_receive_leaves_the_view_model_alone(self):
+        """The view model holds the present state for every later read, so a
+        past state must not end up in it."""
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+
+        list(self.build_pinned_repository().receive())
+
+        self.assertEqual(self.get_view_model_values(), ["Present"])
+
+    def test_a_pinned_receive_reads_the_past_state(self):
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+
+        values = [row.field_a1_str for row in self.build_pinned_repository().receive()]
+
+        self.assertNotIn("Present", values)
+
+    def test_the_present_reads_the_view_model_after_a_pinned_receive(self):
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+        list(self.build_pinned_repository().receive())
+
+        repo = HubARepository({"user_id": self.user.id})
+        with patch.object(
+            HubARepository, "get_view_model_query", wraps=repo.get_view_model_query
+        ) as mock_view_model_query:
+            values = [row.field_a1_str for row in repo.receive()]
+
+        mock_view_model_query.assert_called()
+        self.assertEqual(values, ["Present"])
 
     def test_view_model_with_filter(self):
         me_factories.SatA1Factory.create(field_a1_str="Test")
