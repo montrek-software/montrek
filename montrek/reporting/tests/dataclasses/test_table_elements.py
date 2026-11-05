@@ -6,6 +6,7 @@ from functools import wraps
 from types import SimpleNamespace
 from typing import Any, Protocol
 from unittest import mock
+from urllib.parse import parse_qs, urlparse
 from montrek.utils import SystemFormatting
 
 import reporting.dataclasses.table_elements as te
@@ -2265,3 +2266,117 @@ class TestLiveLabelTableElement(TestCase):
                     self._element(previous_value=previous_value), "running"
                 )
                 self.assertEqual("mt-live-label-changed" in html, is_changed)
+
+
+class TestLinkTableElementQueryKwargs(TestCase):
+    """``query_kwargs`` add query parameters read off the row."""
+
+    def setUp(self):
+        self.row = {
+            "pk": 1,
+            "company": {"hub_id": 42},
+            "year": 2024,
+            "timestamp": datetime.datetime(
+                2026, 11, 5, 9, 3, 12, 345678, tzinfo=datetime.UTC
+            ),
+            "value_date": datetime.date(2024, 12, 31),
+            "name": "Beta SE",
+            "empty": None,
+        }
+
+    def build_element(self, **kwargs) -> te.LinkTableElement:
+        return te.LinkTableElement(
+            name="name",
+            url="dummy_detail",
+            kwargs={"pk": "pk"},
+            icon="chevron-right",
+            **kwargs,
+        )
+
+    def get_query(self, table_element: te.LinkTableElement) -> dict[str, list[str]]:
+        url = table_element.get_url(self.row)
+        return parse_qs(urlparse(url).query)
+
+    def test_without_query_kwargs_the_url_has_no_query(self):
+        self.assertEqual(
+            self.build_element().get_url(self.row), "/baseclasses/1/details"
+        )
+
+    def test_query_parameters_are_read_off_the_row(self):
+        table_element = self.build_element(
+            query_kwargs={"company": "company.hub_id", "year": "year"}
+        )
+
+        self.assertEqual(
+            table_element.get_url(self.row),
+            "/baseclasses/1/details?company=42&year=2024",
+        )
+
+    def test_a_value_the_row_does_not_have_is_left_out(self):
+        table_element = self.build_element(
+            query_kwargs={"year": "year", "empty": "empty", "missing": "no_such"}
+        )
+
+        self.assertEqual(self.get_query(table_element), {"year": ["2024"]})
+
+    def test_a_datetime_goes_out_as_iso_and_parses_back(self):
+        """A reference date in the query string is parsed with
+        ``fromisoformat``, so the link has to round-trip exactly."""
+        table_element = self.build_element(query_kwargs={"reference_date": "timestamp"})
+
+        value = self.get_query(table_element)["reference_date"][0]
+
+        self.assertEqual(datetime.datetime.fromisoformat(value), self.row["timestamp"])
+
+    def test_a_date_goes_out_as_iso(self):
+        table_element = self.build_element(query_kwargs={"value_date": "value_date"})
+
+        self.assertEqual(self.get_query(table_element), {"value_date": ["2024-12-31"]})
+
+    def test_values_are_url_encoded(self):
+        table_element = self.build_element(query_kwargs={"name": "name"})
+
+        self.assertTrue(table_element.get_url(self.row).endswith("?name=Beta%20SE"))
+
+    def test_query_kwargs_and_the_filter_share_the_query_string(self):
+        table_element = te.LinkTableElement(
+            name="name",
+            url="dummy_detail",
+            kwargs={"pk": "pk", "filter": "name"},
+            query_kwargs={"year": "year"},
+        )
+
+        self.assertEqual(
+            self.get_query(table_element),
+            {
+                "year": ["2024"],
+                "filter_field": ["name"],
+                "filter_lookup": ["in"],
+                "filter_value": ["Beta SE"],
+            },
+        )
+
+    def test_query_kwargs_do_not_reach_the_path(self):
+        table_element = self.build_element(query_kwargs={"year": "year"})
+
+        self.assertEqual(table_element.get_url_kwargs(self.row), {"pk": "1"})
+
+    def test_the_link_is_rendered_with_the_query(self):
+        table_element = self.build_element(query_kwargs={"year": "year"})
+
+        display_field = table_element.get_display_field(self.row)
+
+        self.assertIn(
+            'href="/baseclasses/1/details?year=2024"', display_field.display_value
+        )
+
+    def test_query_kwargs_is_keyword_only(self):
+        """A positional field would shift the positional arguments of every
+        link table element subclass."""
+        query_kwargs_field = next(
+            field
+            for field in dataclasses.fields(te.LinkTableElement)
+            if field.name == "query_kwargs"
+        )
+
+        self.assertTrue(query_kwargs_field.kw_only)
