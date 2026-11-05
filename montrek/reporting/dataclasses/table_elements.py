@@ -305,6 +305,11 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
     url: str = field(default="")
     kwargs: dict = field(default_factory=dict)
     static_kwargs: dict = field(default_factory=dict)
+    # Query parameters of the link, read off the row like ``kwargs``:
+    # {"year": "snapshot_year"} adds ?year=<the row's snapshot_year>.
+    # Keyword-only so it does not shift the positional arguments of any
+    # subclass.
+    query_kwargs: dict = field(default_factory=dict, kw_only=True)
 
     def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
         if tag == "html":
@@ -361,9 +366,26 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
             )
         except NoReverseMatch:
             return ""
-        filter_params = self.get_filter(obj)
-        query = urlencode(filter_params, doseq=True, quote_via=quote)
+        query_params = self.get_query_params(obj) | self.get_filter(obj)
+        query = urlencode(query_params, doseq=True, quote_via=quote)
         return f"{url}?{query}" if query else url
+
+    def get_query_params(self, obj: Any) -> dict[str, Any]:
+        """The row's values for ``query_kwargs``.
+
+        A value the row does not have is left out rather than sent as "None".
+        Dates go out as ISO strings, which is what a ``reference_date`` read
+        back from the URL is parsed with.
+        """
+        query_params = {}
+        for key, attr in self.query_kwargs.items():
+            value = self.get_dotted_attr_or_arg(obj, attr)
+            if value is None:
+                continue
+            if isinstance(value, datetime.date):
+                value = value.isoformat()
+            query_params[key] = value
+        return query_params
 
     def get_filter(self, obj: Any) -> dict[str, Any]:
         filter_value_field = self.kwargs.get("filter")
