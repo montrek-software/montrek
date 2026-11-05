@@ -791,7 +791,7 @@ class PercentTableElement(NumberTableElement):
 
     @property
     def excel_format_str(self) -> str:
-        return "0.00%"
+        return super().excel_format_str + "%"
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value * 100, 2, self.thousands) + "%"

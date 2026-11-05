@@ -448,6 +448,20 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             expected_style_attrs={},
         )
 
+    def test_percent_table_element_groups_thousands_by_default(self):
+        """The HTML groups a percentage of 1000 or more, so the Excel format
+        has to as well."""
+        test_element = te.PercentTableElement(name="test", attr="test_value")
+        self.table_element_test_assertions_from_value(
+            table_element=test_element,
+            value=12.345,
+            expected_format="1,234.50%",
+            expected_format_latex="\\color{textdark} 1,234.50\\% &",
+            expected_td_classes=["text-end"],
+            expected_style_attrs={},
+        )
+        self.assertEqual(test_element.excel_format_str, "#,##0.00%")
+
     def test_percent_table_element_without_thousands_separator(self):
         test_element = te.PercentTableElement(
             name="test", attr="test_value", thousands=""
@@ -495,6 +509,9 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
             (te.FloatTableElement(name="t", attr="a", thousands=""), "0.000"),
             (te.EuroTableElement(name="t", attr="a"), "#,##0.00"),
             (te.EuroTableElement(name="t", attr="a", thousands=""), "0.00"),
+            (te.PercentTableElement(name="t", attr="a"), "#,##0.00%"),
+            (te.PercentTableElement(name="t", attr="a", thousands=""), "0.00%"),
+            (te.PercentTableElement(name="t", attr="a", thousands="_"), "#,##0.00%"),
         ]
         for table_element, expected_format in cases:
             with self.subTest(
