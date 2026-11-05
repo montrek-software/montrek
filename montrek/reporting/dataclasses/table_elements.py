@@ -671,6 +671,10 @@ class NumberTableElement(AttrTableElement):
     attr: str
     shortener: NumberShortenerABC = NoShortening()
     numerical_type: type = float
+    # Digit grouping: "," or "_", or "" to turn it off, e.g. for a year.
+    # Keyword-only so it does not shift the positional arguments of any
+    # subclass.
+    thousands: str = field(default=",", kw_only=True)
     serializer_field_class: ClassVar = serializers.FloatField
     th_classes: ClassVar[TdClassesType | None] = ["text-end"]
     _excel_decimal_places: ClassVar[int] = 2
@@ -678,9 +682,11 @@ class NumberTableElement(AttrTableElement):
     @property
     def excel_format_str(self) -> str:
         dec = self._excel_decimal_places
+        # Excel groups by the locale's separator, so any grouping maps to ",".
+        integer_part = "#,##0" if self.thousands else "0"
         if not dec:
-            return "#,##0"
-        return "#,##0." + dec * "0"
+            return integer_part
+        return f"{integer_part}." + dec * "0"
 
     def get_display_field(self, obj: Any) -> DisplayField:
         value = self.get_attribute(obj, "html")
@@ -740,7 +746,7 @@ class NumberTableElement(AttrTableElement):
         return f"{color} {formatted_value} &"
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value, 2)
+        return self.shortener.shorten(value, 2, self.thousands)
 
     def get_value(self, obj: Any) -> Any:
         value = super().get_value(obj)
@@ -759,7 +765,7 @@ class FloatTableElement(NumberTableElement):
     _excel_decimal_places: ClassVar[int] = 3
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value, 3)
+        return self.shortener.shorten(value, 3, self.thousands)
 
     def get_value_len(self, obj: Any) -> int:
         return super().get_value_len(obj) + 4
@@ -775,7 +781,7 @@ class IntTableElement(NumberTableElement):
 
     def _format_value(self, value) -> str:
         value = round(value)
-        return self.shortener.shorten(value, 0)
+        return self.shortener.shorten(value, 0, self.thousands)
 
 
 @dataclass
@@ -788,7 +794,7 @@ class PercentTableElement(NumberTableElement):
         return "0.00%"
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value * 100, 2) + "%"
+        return self.shortener.shorten(value * 100, 2, self.thousands) + "%"
 
     def get_value_len(self, obj: Any) -> int:
         value = self.get_value(obj)
@@ -916,7 +922,7 @@ class MoneyTableElement(NumberTableElement):
         return {"ccy_symbol": self.ccy_symbol}
 
     def _format_value(self, value) -> str:
-        return self.shortener.shorten(value, 2)
+        return self.shortener.shorten(value, 2, self.thousands)
 
     def get_value_len(self, obj: Any) -> int:
         value = self.get_value(obj)
