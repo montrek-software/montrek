@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
 from baseclasses.repositories.montrek_repository import MontrekRepository
+from baseclasses.repositories.view_model_repository import ViewModelRepository
 from baseclasses.repositories.subquery_builder import (
     CrossSatelliteFilter,
     LinkedHubCountSubqueryBuilder,
@@ -3860,6 +3861,121 @@ class TestRepositoryViewModel(TestCase):
         with patch.object(HubARepository, "get_view_model_query") as mock_method:
             repo.receive()
             mock_method.assert_not_called()
+
+    def build_pinned_repository(
+        self, reference_date: datetime.datetime | None = None
+    ) -> HubARepository:
+        """Pinned to ``reference_date``, by default a day before the test's
+        own data is written."""
+        if reference_date is None:
+            reference_date = timezone.now() - datetime.timedelta(days=1)
+        return HubARepository(
+            {"user_id": self.user.id, "reference_date": reference_date.isoformat()}
+        )
+
+    def get_view_model_values(self) -> list[str | None]:
+        # Unfiltered, so the rows are what the view model actually holds.
+        query = self.repo.get_view_model_query(apply_filter=False)
+        return list(query.values_list("field_a1_str", flat=True))
+
+    def test_a_pinned_receive_does_not_store_in_the_view_model(self):
+        with patch.object(
+            ViewModelRepository, "store_query_in_view_model"
+        ) as mock_store:
+            list(self.build_pinned_repository().receive())
+
+        mock_store.assert_not_called()
+
+    def test_a_receive_pinned_through_the_setter_does_not_store_either(self):
+        repo = HubARepository({"user_id": self.user.id})
+        repo.reference_date = timezone.now() - datetime.timedelta(days=1)
+
+        with patch.object(
+            ViewModelRepository, "store_query_in_view_model"
+        ) as mock_store:
+            list(repo.receive())
+
+        mock_store.assert_not_called()
+
+    def test_a_pinned_receive_leaves_the_view_model_alone(self):
+        """The view model holds the present state for every later read, so a
+        past state must not end up in it."""
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+
+        list(self.build_pinned_repository().receive())
+
+        self.assertEqual(self.get_view_model_values(), ["Present"])
+
+    def test_a_pinned_receive_reads_the_past_state(self):
+        """The version valid at the pin comes back, the one written after it
+        does not - while the present still reads the later version."""
+        changed_at = timezone.now() - datetime.timedelta(days=1)
+        hub = me_factories.HubAFactory()
+        me_factories.SatA1Factory(
+            hub_entity=hub, field_a1_str="Past", state_date_end=changed_at
+        )
+        me_factories.SatA1Factory(
+            hub_entity=hub, field_a1_str="Present", state_date_start=changed_at
+        )
+        self.repo.store_in_view_model()
+
+        pinned_repo = self.build_pinned_repository(
+            changed_at - datetime.timedelta(hours=1)
+        )
+
+        self.assertEqual([row.field_a1_str for row in pinned_repo.receive()], ["Past"])
+        self.assertEqual([row.field_a1_str for row in self.repo.receive()], ["Present"])
+
+    def test_a_pinned_refresh_is_refused(self):
+        """A refresh would write the pinned past state into the view model."""
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+
+        with self.assertRaises(MontrekError):
+            self.build_pinned_repository().store_in_view_model()
+
+        self.assertEqual(self.get_view_model_values(), ["Present"])
+
+    def test_a_refresh_pinned_through_the_setter_is_refused(self):
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+        repo = HubARepository({"user_id": self.user.id})
+        repo.reference_date = timezone.now() - datetime.timedelta(days=1)
+
+        with self.assertRaises(MontrekError):
+            repo.store_in_view_model()
+
+        self.assertEqual(self.get_view_model_values(), ["Present"])
+
+    def test_an_incremental_pinned_refresh_is_refused(self):
+        """The refresh of only the rows a write touched reads them at the
+        repository's reference date as well."""
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+
+        with self.assertRaises(MontrekError):
+            self.build_pinned_repository().store_in_view_model(
+                self.repo.get_db_staller()
+            )
+
+        self.assertEqual(self.get_view_model_values(), ["Present"])
+
+    def test_a_present_refresh_still_stores_the_present(self):
+        me_factories.SatA1Factory(field_a1_str="Present")
+
+        self.repo.store_in_view_model()
+
+        self.assertEqual(self.get_view_model_values(), ["Present"])
+
+    def test_the_present_reads_the_view_model_after_a_pinned_receive(self):
+        self.repo.create_by_dict({"field_a1_str": "Present"})
+        list(self.build_pinned_repository().receive())
+
+        repo = HubARepository({"user_id": self.user.id})
+        with patch.object(
+            HubARepository, "get_view_model_query", wraps=repo.get_view_model_query
+        ) as mock_view_model_query:
+            values = [row.field_a1_str for row in repo.receive()]
+
+        mock_view_model_query.assert_called()
+        self.assertEqual(values, ["Present"])
 
     def test_view_model_with_filter(self):
         me_factories.SatA1Factory.create(field_a1_str="Test")
