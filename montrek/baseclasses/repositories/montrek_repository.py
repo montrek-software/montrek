@@ -171,6 +171,9 @@ class MontrekRepository:
     def store_in_view_model(self, db_staller: DbStaller | None = None):
         if not self.view_model:
             return
+        # The view model holds the present state for every later read; a
+        # refresh from a pinned repository would write its past state there.
+        self._raise_for_frozen_reference_date()
 
         # When storing in the view model, we want to include all data without applying filters,
         # so we explicitly set apply_filter=False.
