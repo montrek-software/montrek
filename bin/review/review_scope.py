@@ -99,6 +99,16 @@ class ReviewScope:
     def changed_files(self) -> list[str]:
         return sorted(self.changed_lines)
 
+    def file_statuses(self) -> dict[str, str]:
+        """Git's status letter (A, M, D, R, ...) for every file the diff
+        touches, deleted ones included, keyed by project-relative path."""
+        output = self.git("diff", "--name-status", "--find-renames", *self._revisions())
+        statuses = {}
+        for line in output.splitlines():
+            status, *paths = line.split("\t")
+            statuses[self.prefix + paths[-1]] = status[0]
+        return statuses
+
     @staticmethod
     def parse_changed_lines(diff: str) -> dict[str, set[int]]:
         """Map each added or modified file to its added line numbers.
@@ -151,15 +161,13 @@ class ReviewScope:
             raise ReviewScopeError(f"{repo_dir} is not a git checkout.")
         return repo_dir
 
+    def _revisions(self) -> list[str]:
+        if self.include_worktree:
+            return [self.merge_base]
+        return [self.merge_base, "HEAD"]
+
     def _diff(self) -> str:
-        revisions = (
-            [self.merge_base]
-            if self.include_worktree
-            else [
-                self.merge_base,
-                "HEAD",
-            ]
-        )
+        revisions = self._revisions()
         prefixes = []
         if self.prefix:
             prefixes = [
