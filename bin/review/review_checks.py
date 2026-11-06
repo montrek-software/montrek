@@ -149,21 +149,39 @@ class ReviewChecks:
         )
 
     def _coverage_lines(self, xml_path: Path) -> dict[str, dict[int, int]]:
+        """Line hits per changed file, keyed by its project-relative path.
+
+        Coverage names files relative to wherever it ran: the Django root
+        (``mt_example/...``, also CI's form), the extension itself, or
+        absolute. Each changed file is looked up under all of these names.
+        """
         tree = ElementTree.parse(xml_path)  # noqa: S314  # nosec B314 - see import
-        root = tree.getroot()
-        source = Path(root.findtext("sources/source") or self.scope.code_root)
-        try:
-            source_prefix = source.resolve().relative_to(self.scope.project_root)
-        except ValueError:
-            source_prefix = Path("montrek")
+        names = self._coverage_names()
         lines: dict[str, dict[int, int]] = {}
-        for cls in root.iter("class"):
-            path = (source_prefix / cls.get("filename", "")).as_posix()
-            lines[path] = {
-                int(line.get("number", 0)): int(line.get("hits", 0))
-                for line in cls.iter("line")
-            }
+        for cls in tree.getroot().iter("class"):
+            filename = cls.get("filename", "").replace("\\", "/")
+            path = names.get(filename) or next(
+                (p for p in self.scope.changed_files if filename.endswith(f"/{p}")),
+                None,
+            )
+            if path is not None:
+                lines[path] = {
+                    int(line.get("number", 0)): int(line.get("hits", 0))
+                    for line in cls.iter("line")
+                }
         return lines
+
+    def _coverage_names(self) -> dict[str, str]:
+        """Every name a coverage report may use for a changed file."""
+        names: dict[str, str] = {}
+        prefixes = ["", "montrek/"]
+        if self.scope.prefix:
+            prefixes.append(self.scope.prefix)
+        for path in self.scope.changed_files:
+            for prefix in prefixes:
+                if path.startswith(prefix):
+                    names.setdefault(path.removeprefix(prefix), path)
+        return names
 
     def _run(
         self, command: list[str], env: dict[str, str]

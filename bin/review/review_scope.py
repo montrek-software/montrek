@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess  # nosec B404 - runs git with fixed argument lists, no shell
 from pathlib import Path
@@ -27,6 +28,16 @@ TEXT_SUFFIXES = {
     ".yml",
 }
 TEXT_NAMES = {"Dockerfile", "Makefile", ".coveragerc"}
+SKIPPED_DIRECTORIES = {
+    ".git",
+    ".mypy_cache",
+    ".venv",
+    "__pycache__",
+    "htmlcov",
+    "node_modules",
+    "secrets",
+    "uploads",
+}
 MAX_FILE_BYTES = 400_000
 
 
@@ -41,10 +52,11 @@ class ReviewScope:
     file reads ``montrek/baseclasses/...`` and an extension file
     ``montrek/mt_example/...``, in the diff as well as in the tools.
 
-    Visible files are the git-tracked files of core and of the extensions in
-    scope: that keeps ``.env``, ``secrets/``, uploads and caches out by
-    construction. Extensions other than the reviewed one and those it imports
-    stay invisible, so a core review never sends extension code to the model.
+    Visible files are the git-tracked files of core (see _core_files when core
+    is no checkout) and of the extensions in scope: that keeps ``.env``,
+    ``secrets/``, uploads and caches out by construction. Extensions other
+    than the reviewed one and those it imports stay invisible, so a core
+    review never sends extension code to the model.
     """
 
     def __init__(
@@ -170,7 +182,7 @@ class ReviewScope:
         )
 
     def _visible_files(self) -> set[str]:
-        tracked = self.git("ls-files", repo_dir=self.project_root).splitlines()
+        tracked = self._core_files()
         for extension in self.extensions:
             tracked += [
                 f"montrek/{extension}/{path}"
@@ -179,6 +191,27 @@ class ReviewScope:
                 ).splitlines()
             ]
         return {path for path in tracked if self._is_readable_text(path)}
+
+    def _core_files(self) -> list[str]:
+        """Core's tracked files, or its files on disk when it is no checkout.
+
+        CI copies core out of the app image, so there is no git repository;
+        the image holds only what its .dockerignore lets through, and the
+        walk skips extensions and generated directories on top of that.
+        """
+        if (self.project_root / ".git").exists():
+            return self.git("ls-files", repo_dir=self.project_root).splitlines()
+        files = []
+        for directory, subdirectories, names in os.walk(self.project_root):
+            subdirectories[:] = sorted(
+                name
+                for name in subdirectories
+                if name not in SKIPPED_DIRECTORIES
+                and not (Path(directory) == self.code_root and name.startswith("mt_"))
+            )
+            relative = Path(directory).relative_to(self.project_root)
+            files += [(relative / name).as_posix() for name in names]
+        return files
 
     def _is_readable_text(self, path: str) -> bool:
         name = path.rsplit("/", 1)[-1]
