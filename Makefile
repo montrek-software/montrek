@@ -129,5 +129,9 @@ secrets-edit-env: # Edit the .env file
 .PHONY: claude-fix-sonarqube
 claude-fix-sonarqube: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS=true to skip tests)
 	@$(SECURE_WRAPPER) bin/claude/fix_sonarqube.sh  $(filter-out $@,$(MAKECMDGOALS))
+.PHONY: ai-review
+ai-review: # Review the current branch with an LLM (REPO=mt_x, BASE=, WORKTREE=true, TESTS=true, OUTPUT=, DRY_RUN=true, AI_REVIEW_PROVIDER=ionos)
+	@REPO="$(REPO)" BASE="$(BASE)" WORKTREE="$(WORKTREE)" TESTS="$(TESTS)" COVERAGE_XML="$(COVERAGE_XML)" OUTPUT="$(OUTPUT)" DRY_RUN="$(DRY_RUN)" \
+		$(SECURE_WRAPPER) bin/review/ai-review.sh
 %:
 	@:
