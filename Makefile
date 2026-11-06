@@ -133,5 +133,9 @@ claude-fix-sonarqube: # Run a SonarQube scan and open in SonarQube (Add NO_TESTS
 ai-review: # Review the current branch with an LLM (REPO=mt_x, BASE=, WORKTREE=true, TESTS=true, OUTPUT=, DRY_RUN=true, AI_REVIEW_PROVIDER=ionos)
 	@REPO="$(REPO)" BASE="$(BASE)" WORKTREE="$(WORKTREE)" TESTS="$(TESTS)" COVERAGE_XML="$(COVERAGE_XML)" OUTPUT="$(OUTPUT)" DRY_RUN="$(DRY_RUN)" \
 		$(SECURE_WRAPPER) bin/review/ai-review.sh
+.PHONY: contribution-check
+contribution-check: # Check the branch against CONTRIBUTION_CRITERIA.md; runs pre-commit (REPO=mt_x, BASE=, WORKTREE=true, COVERAGE_XML=, SKIP_PRE_COMMIT=true, OUTPUT=)
+	@REPO="$(REPO)" BASE="$(BASE)" WORKTREE="$(WORKTREE)" COVERAGE_XML="$(COVERAGE_XML)" SKIP_PRE_COMMIT="$(SKIP_PRE_COMMIT)" OUTPUT="$(OUTPUT)" \
+		$(SECURE_WRAPPER) bin/review/contribution-check.sh
 %:
 	@:

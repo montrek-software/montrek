@@ -117,6 +117,19 @@ class ReviewChecks:
             return report
 
     def patch_coverage(self, xml_path: Path) -> str:
+        covered_total, measurable_total, rows = self.patch_coverage_figures(xml_path)
+        if not measurable_total:
+            return "### Patch coverage\nNo measurable changed production lines."
+        percent = 100 * covered_total / measurable_total
+        details = "\n".join(rows) or "All changed production lines are covered."
+        return (
+            f"### Patch coverage: {percent:.0f}% "
+            f"({covered_total}/{measurable_total} changed lines)\n{details}"
+        )
+
+    def patch_coverage_figures(self, xml_path: Path) -> tuple[int, int, list[str]]:
+        """Covered and measurable changed production lines, and one row per
+        file with uncovered lines."""
         measured = self._coverage_lines(xml_path)
         rows = []
         covered_total = measurable_total = 0
@@ -139,14 +152,7 @@ class ReviewChecks:
                 rows.append(
                     f"- `{path}`: uncovered changed lines {self._ranges(uncovered)}"
                 )
-        if not measurable_total:
-            return "### Patch coverage\nNo measurable changed production lines."
-        percent = 100 * covered_total / measurable_total
-        details = "\n".join(rows) or "All changed production lines are covered."
-        return (
-            f"### Patch coverage: {percent:.0f}% "
-            f"({covered_total}/{measurable_total} changed lines)\n{details}"
-        )
+        return covered_total, measurable_total, rows
 
     def _coverage_lines(self, xml_path: Path) -> dict[str, dict[int, int]]:
         """Line hits per changed file, keyed by its project-relative path.
