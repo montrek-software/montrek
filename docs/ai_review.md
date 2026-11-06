@@ -33,6 +33,16 @@ Progress goes to stderr: every tool call, and per round the input, cached and
 output tokens and the duration. The last line is the usage and, when the price
 is known, a cost estimate; the same line ends the review.
 
+## In CI
+
+Extensions whose test workflow calls the `.forgejo` test template with
+`ai_review_enabled: true` (and passes `MISTRAL_API_KEY`) get a review when a
+pull request carries the `ai-review` label, and again on every push while the
+label stays. The job runs in the test image after the tests, uses their
+coverage report and posts the review as one comment on the pull request, which
+later runs update. It is advisory: a failed review never fails the workflow.
+The callers also listen to `labeled`; any other label is ignored.
+
 ## Configuration
 
 Set in `.env` or the environment:
