@@ -64,6 +64,48 @@ class HubDTSLinkAggRepositorySum(MontrekRepository):
         )
 
 
+class HubDTSLinkAggRepositoryMaxMin(MontrekRepository):
+    hub_class = me_models.HubD
+
+    def set_annotations(self):
+        for agg_func in ("max", "min"):
+            self.add_linked_satellites_field_annotations(
+                me_models.SatTSC2,
+                me_models.LinkHubCHubD,
+                ["field_tsc2_float"],
+                reversed_link=True,
+                agg_func=agg_func,
+                rename_field_map={"field_tsc2_float": f"{agg_func}_tsc2_float"},
+            )
+
+
+class HubDLinkedDateMaxMinRepository(MontrekRepository):
+    """Latest and earliest date of the linked HubBs, and the latest date of
+    only those HubBs whose field_b1_str matches."""
+
+    hub_class = me_models.HubD
+
+    def set_annotations(self):
+        for agg_func in ("max", "min"):
+            self.add_linked_satellites_field_annotations(
+                me_models.SatB1,
+                me_models.LinkHubBHubD,
+                ["field_b1_date"],
+                reversed_link=True,
+                agg_func=agg_func,
+                rename_field_map={"field_b1_date": f"{agg_func}_b1_date"},
+            )
+        self.add_linked_satellites_field_annotations(
+            me_models.SatB1,
+            me_models.LinkHubBHubD,
+            ["field_b1_date"],
+            reversed_link=True,
+            agg_func="max",
+            link_satellite_filter={"field_b1_str": "match"},
+            rename_field_map={"field_b1_date": "max_matching_b1_date"},
+        )
+
+
 class HubDTSLinkAggRepositoryWithLinkHubValueDateFilter(MontrekRepository):
     """Aggregates SatTSC2 across the reversed LinkHubCHubD link twice: once at
     the outer row's own value date (default behaviour) and once pinned to an

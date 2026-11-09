@@ -56,6 +56,7 @@ from montrek_example.repositories.hub_c_repository import (
     HubCRepositoryLastTS,
     HubCRepositoryLinkSatelliteQFilter,
     HubCRepositoryLinkSatelliteQOuterRefFilter,
+    HubCRepositoryMaxMin,
     HubCRepositoryMean,
     HubCRepositoryOnlyStatic,
     HubCRepositoryPreviousValueFiltered,
@@ -74,8 +75,10 @@ from montrek_example.repositories.hub_c_repository import (
 from montrek_example.repositories.hub_d_repository import (
     HubDRepository,
     HubDRepositoryReversedParentLink,
+    HubDLinkedDateMaxMinRepository,
     HubDLinkedHubCCountRepository,
     HubDRepositoryTSReverseLink,
+    HubDTSLinkAggRepositoryMaxMin,
     HubDTSLinkAggRepositorySum,
     HubDTSLinkAggRepositoryWithLinkHubValueDateFilter,
 )
@@ -2757,6 +2760,22 @@ class TestStaticAggFuncs(TestCase):
         self.assertEqual(test_query[0].a2_counter, 2)
         self.assertEqual(test_query[0].a2_counter_w_filter, 1)
 
+    def test_max_min(self):
+        repo = HubCRepositoryMaxMin()
+        test_query = repo.receive()
+        self.assertEqual(test_query.count(), 1)
+        entry = test_query[0]
+        self.assertEqual(entry.max_d1_int, 5)
+        self.assertEqual(entry.min_d1_int, 2)
+        # The NULL field_a2_float is ignored, as by every SQL aggregate.
+        self.assertAlmostEqual(entry.max_a2_float, 3.0)
+        self.assertAlmostEqual(entry.min_a2_float, 2.5)
+
+    def test_max_min_keep_field_type(self):
+        field_type_map = HubCRepositoryMaxMin().annotator.get_annotated_field_map()
+        self.assertIsInstance(field_type_map["max_d1_int"], models.IntegerField)
+        self.assertIsInstance(field_type_map["min_a2_float"], models.FloatField)
+
 
 class TestTSAggFuncs(TestCase):
     def setUp(self) -> None:
@@ -2794,6 +2813,16 @@ class TestTSAggFuncs(TestCase):
         self.assertEqual(first_entry.field_tsc2_float, 6)
         self.assertEqual(second_entry.field_tsc2_float, 4.5)
 
+    def test_max_min(self):
+        repo = HubDTSLinkAggRepositoryMaxMin()
+        test_query = repo.receive()
+        first_entry = test_query.get(pk=self.hvd_1.pk)
+        second_entry = test_query.get(pk=self.hvd_2.pk)
+        self.assertEqual(first_entry.max_tsc2_float, 3.5)
+        self.assertEqual(first_entry.min_tsc2_float, 2.5)
+        self.assertEqual(second_entry.max_tsc2_float, 4.5)
+        self.assertEqual(second_entry.min_tsc2_float, 4.5)
+
     def test_link_hub_value_date_filter_decouples_linked_value_date_from_outer_row(
         self,
     ):
@@ -2825,6 +2854,53 @@ class TestTSAggFuncs(TestCase):
         test_query = repo.receive()
         entry = test_query.get()
         self.assertAlmostEqual(entry.prev_field_tsc2_float_sum, 6.0)
+
+
+class TestLinkedDateMaxMin(TestCase):
+    def setUp(self) -> None:
+        self.hub_d = me_factories.SatD1Factory().hub_entity
+        for field_b1_str, field_b1_date in (
+            ("match", datetime.date(2026, 3, 1)),
+            ("match", datetime.date(2026, 1, 1)),
+            ("other", datetime.date(2026, 5, 1)),
+        ):
+            sat_b1 = cast(
+                me_models.SatB1,
+                me_factories.SatB1Factory(
+                    field_b1_str=field_b1_str, field_b1_date=field_b1_date
+                ),
+            )
+            sat_b1.hub_entity.link_hub_b_hub_d.add(self.hub_d)
+
+    def test_max_min_of_linked_dates(self):
+        entry = HubDLinkedDateMaxMinRepository().receive().get()
+        self.assertEqual(entry.max_b1_date, datetime.date(2026, 5, 1))
+        self.assertEqual(entry.min_b1_date, datetime.date(2026, 1, 1))
+
+    def test_max_with_link_satellite_filter(self):
+        entry = HubDLinkedDateMaxMinRepository().receive().get()
+        self.assertEqual(entry.max_matching_b1_date, datetime.date(2026, 3, 1))
+
+    def test_max_ignores_ended_link(self):
+        latest_link = me_models.LinkHubBHubD.objects.get(
+            hub_in__satb1__field_b1_date=datetime.date(2026, 5, 1)
+        )
+        latest_link.state_date_end = montrek_time(2025, 1, 1)
+        latest_link.save()
+        entry = HubDLinkedDateMaxMinRepository().receive().get()
+        self.assertEqual(entry.max_b1_date, datetime.date(2026, 3, 1))
+
+    def test_max_is_none_without_linked_hubs(self):
+        me_models.LinkHubBHubD.objects.all().delete()
+        entry = HubDLinkedDateMaxMinRepository().receive().get()
+        self.assertIsNone(entry.max_b1_date)
+
+    def test_max_min_keep_date_type(self):
+        field_type_map = (
+            HubDLinkedDateMaxMinRepository().annotator.get_annotated_field_map()
+        )
+        self.assertIsInstance(field_type_map["max_b1_date"], models.DateField)
+        self.assertIsInstance(field_type_map["min_b1_date"], models.DateField)
 
 
 class TestLinkedHubCount(TestCase):

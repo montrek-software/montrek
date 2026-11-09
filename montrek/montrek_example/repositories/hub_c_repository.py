@@ -294,6 +294,28 @@ class HubCRepositoryMean(MontrekRepository):
         )
 
 
+class HubCRepositoryMaxMin(MontrekRepository):
+    hub_class = me_models.HubC
+
+    def set_annotations(self):
+        for agg_func in ("max", "min"):
+            self.add_linked_satellites_field_annotations(
+                me_models.SatD1,
+                me_models.LinkHubCHubD,
+                ["field_d1_int"],
+                agg_func=agg_func,
+                rename_field_map={"field_d1_int": f"{agg_func}_d1_int"},
+            )
+            self.add_linked_satellites_field_annotations(
+                me_models.SatA2,
+                me_models.LinkHubAHubC,
+                ["field_a2_float"],
+                reversed_link=True,
+                agg_func=agg_func,
+                rename_field_map={"field_a2_float": f"{agg_func}_a2_float"},
+            )
+
+
 class HubCRepositoryCount(MontrekRepository):
     hub_class = me_models.HubC
 
