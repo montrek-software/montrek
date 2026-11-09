@@ -703,6 +703,18 @@ class AggregationMixin:
             }
         ).values(self.field + "agg")
 
+    def _annotate_max(self, query: QuerySet) -> QuerySet:
+        return self._annotate_extremum(query, "Max")
+
+    def _annotate_min(self, query: QuerySet) -> QuerySet:
+        return self._annotate_extremum(query, "Min")
+
+    def _annotate_extremum(self, query: QuerySet, function: str) -> QuerySet:
+        # Keeps the satellite field's type, so MAX of a date is a date.
+        return query.annotate(
+            **{self.field + "agg": Func(self.field + "sub", function=function)}
+        ).values(self.field + "agg")
+
     def _annotate_count(self, query: QuerySet) -> QuerySet:
         return query.annotate(
             **{
@@ -1254,6 +1266,8 @@ class LinkedSatelliteSubqueryBuilderBase(
             LinkAggFunctionEnum.JSON_AGG: lambda q: self._annotate_json_agg(q),
             LinkAggFunctionEnum.LATEST: lambda q: self._annotate_latest(q),
             LinkAggFunctionEnum.MEAN: lambda q: self._annotate_mean(q),
+            LinkAggFunctionEnum.MAX: lambda q: self._annotate_max(q),
+            LinkAggFunctionEnum.MIN: lambda q: self._annotate_min(q),
             LinkAggFunctionEnum.COUNT: lambda q: self._annotate_count(q),
             LinkAggFunctionEnum.ALL: lambda q: self._annotate_all(q),
         }
@@ -1643,6 +1657,8 @@ class LinkAggFunctionEnum(Enum):
     JSON_AGG = "json_agg"
     LATEST = "latest"
     MEAN = "mean"
+    MAX = "max"
+    MIN = "min"
     COUNT = "count"
     ALL = "all"
 
@@ -1654,6 +1670,8 @@ LINK_AGG_FIELD_TYPE_MAP = {
     LinkAggFunctionEnum.JSON_AGG.value: models.CharField,
     LinkAggFunctionEnum.LATEST.value: None,
     LinkAggFunctionEnum.MEAN.value: models.FloatField,
+    LinkAggFunctionEnum.MAX.value: None,
+    LinkAggFunctionEnum.MIN.value: None,
     LinkAggFunctionEnum.COUNT.value: models.IntegerField,
     LinkAggFunctionEnum.ALL.value: models.BooleanField,
 }
