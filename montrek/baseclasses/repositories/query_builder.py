@@ -8,18 +8,16 @@ from baseclasses.dataclasses.montrek_message import (
 )
 from django.core.exceptions import FieldError, ValidationError
 from baseclasses.repositories.annotator import Annotator
+from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
 from baseclasses.repositories.filter_decoder import FilterDecoder
 from django.db.models import (
     BooleanField,
     Exists,
-    F,
     Func,
     OuterRef,
     Q,
     QuerySet,
-    Window,
 )
-from django.db.models.functions import Rank
 
 
 class IsTrue(Func):
@@ -145,7 +143,7 @@ class QueryBuilder:
 
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
         if self.latest_ts:
-            return queryset.filter(IsTrue(Q(id__in=self._latest_hub_value_date_ids())))
+            return queryset.filter(IsTrue(self._latest_hub_value_dates()))
         # Use hub_id (direct FK column) instead of the hub_entity_id annotation
         # (which is itself a subquery) to avoid unnecessary nesting.
         non_null_value_date_exists = self.hub_value_date.objects.filter(
@@ -160,40 +158,28 @@ class QueryBuilder:
             )
         return filtered_query
 
-    def _latest_hub_value_date_ids(self) -> QuerySet:
-        """Ids of the rows that are their hub's latest one.
+    def _latest_hub_value_dates(self) -> Q:
+        """The rows that are their hub's latest ones.
 
-        The latest row of a hub is its newest dated row, or its undated row if
-        it has no dated one. Ranked once over the whole table with a window
-        function instead of looked up per row by a correlated subquery, which
-        Postgres evaluates for every row of every hub before any other filter
-        applies - with a long time series that dominates the whole query.
+        The latest rows of a hub are its rows on its newest date, or its
+        undated rows if it has no dated one (see
+        ``HubValueDateCopy.latest_rows``). Looked up per hub in an index
+        instead of ranking every row of the table, so the cost grows with the
+        number of hubs, not with the length of their time series.
 
-        Filters applied to the outer queryset do not reach into this inner
-        query, so it ranks the whole table unless a hub scope narrows it to
-        the rows of the scoped hubs.
-
-        Built from the bare model so none of the annotation subqueries are
-        dragged into this inner query. ``RANK`` rather than ``ROW_NUMBER``
-        keeps all tied rows, as a comparison of the value dates would; the
-        null ordering is emulated by Django on databases without NULLS LAST.
+        Filters applied to the outer queryset do not reach into these inner
+        queries, so they cover all hubs unless a hub scope narrows them to the
+        scoped hubs.
         """
-        ranked = self.hub_value_date.objects.all()
+        hubs = self.hub_class.objects.all()
         if self.hub_scope_pk is not None:
-            ranked = ranked.filter(self._hub_scope_filter())
-        ranked = ranked.annotate(
-            _latest_rank=Window(
-                expression=Rank(),
-                partition_by=F("hub_id"),
-                order_by=F("value_date_list__value_date").desc(nulls_last=True),
-            )
-        )
-        return ranked.filter(_latest_rank=1).values("id")
+            hubs = hubs.filter(self._hub_scope_filter(field="pk"))
+        return HubValueDateCopy.latest_rows(self.hub_value_date, hubs)
 
-    def _hub_scope_filter(self) -> Q:
+    def _hub_scope_filter(self, field: str = "hub_id") -> Q:
         if isinstance(self.hub_scope_pk, int):
-            return Q(hub_id=self.hub_scope_pk)
-        return Q(hub_id__in=list(self.hub_scope_pk or ()))
+            return Q(**{field: self.hub_scope_pk})
+        return Q(**{f"{field}__in": list(self.hub_scope_pk or ())})
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():

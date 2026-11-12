@@ -177,6 +177,8 @@ class ViewModelRepository:
     def _try_store_query_in_view_model(self, query: models.QuerySet, mode: str = "all"):
         data = list(query.values())
         for row in data:
+            # Internal to the latest row lookup; ``value_date`` holds the date
+            row.pop("value_date_copy", None)
             if row["value_date"]:
                 row["value_date"] = timezone.make_aware(
                     datetime.datetime.combine(row["value_date"], datetime.time()),
