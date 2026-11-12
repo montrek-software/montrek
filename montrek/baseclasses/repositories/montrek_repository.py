@@ -3,7 +3,7 @@ import logging
 import warnings
 from dataclasses import dataclass
 from typing import Any, ClassVar, cast
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Collection, Iterable, Mapping
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessage
@@ -121,13 +121,16 @@ class MontrekRepository:
             f"set_annotations is not implemented for {self.__class__.__name__}"
         )
 
-    def set_hub_scope(self, hub_pk: int | None) -> None:
-        """Scope this instance's queryset to a single hub BEFORE annotations
-        are built, so queryset-aware subquery builders only precompute data
-        for that hub instead of the entire table. Callers may only use this
-        when the hub pk is known to belong to this repository's own hub class
-        — e.g. a detail view resolving its URL pk, or a details page after
-        get_hub_by_id."""
+    def set_hub_scope(self, hub_pk: int | Collection[int] | None) -> None:
+        """Scope this instance's queryset to one hub, or to several, BEFORE
+        annotations are built, so queryset-aware subquery builders only
+        precompute data for these hubs instead of the entire table. With
+        ``latest_ts`` the latest row is then only looked up among the rows of
+        these hubs: filtering ``receive()`` on the hub ids afterwards gives the
+        same rows, but still ranks the whole table. Callers may only use this
+        when the hub pks are known to belong to this repository's own hub
+        class — e.g. a detail view resolving its URL pk, a details page after
+        get_hub_by_id, or ids read from a link to this hub."""
         self.query_builder.hub_scope_pk = hub_pk
 
     def save_db_staller(self, db_staller: DbStaller):
@@ -198,6 +201,25 @@ class MontrekRepository:
 
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.receive_raw(apply_filter, False).select_related("hub")
+
+    def receive_for_hubs(
+        self, hub_pks: int | Collection[int], apply_filter: bool = True
+    ) -> QuerySet:
+        """``receive()`` for the given hubs of this repository's hub class,
+        with the hub scope set while the queryset is built (see
+        ``set_hub_scope``). Prefer it to filtering ``receive()`` on hub ids:
+        the result is the same, but the latest time series rows and
+        queryset-aware annotations are only computed for these hubs. The
+        scope the instance had before is restored."""
+        hub_pk_list = [hub_pks] if isinstance(hub_pks, int) else list(hub_pks)
+        previous_scope = self.query_builder.hub_scope_pk
+        self.set_hub_scope(hub_pk_list)
+        try:
+            queryset = self.receive(apply_filter)
+        finally:
+            self.set_hub_scope(previous_scope)
+        # A view model is read as it is, without the scope.
+        return queryset.filter(hub_id__in=hub_pk_list)
 
     def filter_by_linked_hub(
         self,

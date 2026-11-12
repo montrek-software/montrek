@@ -540,3 +540,58 @@ class TestQueryBuilderLatestTs(TestCase):
             [(row.hub_id, row.value_date) for row in rows],
             [(hub.pk, datetime.date(2024, 1, 20))],
         )
+
+    def _latest_ts_builder(self, hub_scope_pk) -> QueryBuilder:
+        annotator = Annotator(TestMontrekHub)
+        annotator.subquery_builder_to_annotations(
+            ["test_decimal"], TestMontrekTimeSeriesSatellite, TSSatelliteSubqueryBuilder
+        )
+        return QueryBuilder(annotator, {}, latest_ts=True, hub_scope_pk=hub_scope_pk)
+
+    def test_hub_scope_of_several_hubs_keeps_the_latest_row_of_each(self):
+        hub_dates = {}
+        for latest in (datetime.date(2024, 1, 20), datetime.date(2024, 1, 10)):
+            sat = TestMontrekTimeSeriesSatelliteFactory.create(
+                value_date=latest - datetime.timedelta(days=5)
+            )
+            hub = sat.hub_value_date.hub
+            hvd = TestHubValueDateFactory.create(
+                hub=hub, value_date_list=ValueDateListFactory.create(value_date=latest)
+            )
+            TestMontrekTimeSeriesSatelliteFactory.create(hub_value_date=hvd)
+            hub_dates[hub.pk] = latest
+        undated_hub = TestMontrekHubFactory.create()
+        TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 2, 1)
+        )
+
+        rows = self._latest_ts_builder([*hub_dates, undated_hub.pk]).build_queryset(
+            timezone.now()
+        )
+
+        self.assertEqual(
+            {row.hub_id: row.value_date for row in rows},
+            {**hub_dates, undated_hub.pk: None},
+        )
+
+    def test_hub_scope_narrows_the_ranking(self):
+        sat = TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 1, 15)
+        )
+        hub_id = sat.hub_value_date.hub_id
+
+        sql = str(
+            self._latest_ts_builder([hub_id]).build_queryset(timezone.now()).query
+        )
+
+        ranking = sql[sql.index("RANK()") :]
+        self.assertIn(f'"hub_id" IN ({hub_id})', ranking)
+
+    def test_empty_hub_scope_returns_no_rows(self):
+        TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 1, 15)
+        )
+
+        rows = self._latest_ts_builder([]).build_queryset(timezone.now())
+
+        self.assertEqual(list(rows), [])

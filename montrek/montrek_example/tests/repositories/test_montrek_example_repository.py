@@ -5839,3 +5839,62 @@ class TestPreviousTSValueBuilderMechanics(TestCase):
         df = HubCRepositoryPreviousValueLatest().get_df()
         self.assertIn("previous_float", df.columns)
         self.assertIn("relative_change", df.columns)
+
+
+class TestReceiveForHubs(TestCase):
+    """receive_for_hubs on a latest_ts repository (HubCRepositoryLastTS)."""
+
+    def setUp(self):
+        self.hub_dates = {}
+        for latest in (datetime.date(2024, 1, 20), datetime.date(2024, 1, 10)):
+            older = me_factories.SatTSC2Factory(
+                value_date=latest - datetime.timedelta(days=5)
+            )
+            hub = older.hub_value_date.hub
+            me_factories.SatTSC2Factory(
+                hub_value_date=me_factories.CHubValueDateFactory(
+                    hub=hub,
+                    value_date_list=ValueDateListFactory(value_date=latest),
+                )
+            )
+            self.hub_dates[hub.pk] = latest
+        self.other_hub = me_factories.SatTSC2Factory(
+            value_date=datetime.date(2024, 2, 1)
+        ).hub_value_date.hub
+        self.ref = timezone.now()
+
+    def _repository(self):
+        return HubCRepositoryLastTS({"reference_date": self.ref})
+
+    def test_returns_the_latest_row_of_each_given_hub(self):
+        rows = self._repository().receive_for_hubs(list(self.hub_dates))
+
+        self.assertEqual({row.hub_id: row.value_date for row in rows}, self.hub_dates)
+
+    def test_accepts_a_single_hub_pk(self):
+        hub_pk, latest = next(iter(self.hub_dates.items()))
+
+        rows = self._repository().receive_for_hubs(hub_pk)
+
+        self.assertEqual(
+            [(row.hub_id, row.value_date) for row in rows], [(hub_pk, latest)]
+        )
+
+    def test_same_rows_as_filtering_receive(self):
+        repository = self._repository()
+        hub_pks = list(self.hub_dates)
+
+        self.assertCountEqual(
+            repository.receive_for_hubs(hub_pks).values_list("pk", flat=True),
+            repository.receive()
+            .filter(hub_id__in=hub_pks)
+            .values_list("pk", flat=True),
+        )
+
+    def test_restores_the_previous_scope(self):
+        repository = self._repository()
+        repository.receive_for_hubs(list(self.hub_dates))
+
+        self.assertIn(
+            self.other_hub.pk, repository.receive().values_list("hub_id", flat=True)
+        )
