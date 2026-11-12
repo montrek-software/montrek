@@ -1,6 +1,8 @@
 import datetime
 import hashlib
 import time
+from collections.abc import Iterable
+from typing import cast
 
 from baseclasses.models import (
     LinkTestMontrekTestLink,
@@ -16,7 +18,10 @@ from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekSatelliteFactory,
 )
 from baseclasses.utils import montrek_time
-from django.test import TestCase
+from django.apps import apps
+from django.conf import settings
+from django.db import models
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 
@@ -193,3 +198,65 @@ class TestMontrekLink(TestCase):
             LinkTestMontrekTestLink.get_related_hub_class("hub_out"),
             TestLinkHub,
         )
+
+
+class TestNoDuplicateIndexes(SimpleTestCase):
+    """No model of the project has two indexes on the same columns.
+
+    Django already indexes foreign keys and unique fields; a ``Meta.indexes``
+    entry or a unique constraint on the same columns only costs space and
+    write time. Indexes with a condition, expressions, operator classes or
+    included columns are not compared.
+    """
+
+    @staticmethod
+    def _index_keys(model: type[models.Model]) -> list[tuple[str, ...]]:
+        meta = model._meta
+
+        def columns(field_names: Iterable[str]) -> tuple[str, ...]:
+            return tuple(
+                ("-" if name.startswith("-") else "")
+                + str(cast(models.Field, meta.get_field(name.lstrip("-"))).column)
+                for name in field_names
+            )
+
+        keys: list[tuple[str, ...]] = [
+            (str(field.column),)
+            for field in meta.local_concrete_fields
+            if field.primary_key or field.unique or getattr(field, "db_index", False)
+        ]
+        keys += [
+            columns(index.fields)
+            for index in meta.indexes
+            if index.fields
+            and index.condition is None
+            and not index.opclasses
+            and not index.include
+        ]
+        keys += [
+            columns(constraint.fields)
+            for constraint in meta.constraints
+            if isinstance(constraint, models.UniqueConstraint)
+            and constraint.fields
+            and constraint.condition is None
+            and not getattr(constraint, "opclasses", ())
+            and not getattr(constraint, "include", ())
+        ]
+        keys += [columns(fields) for fields in meta.unique_together]
+        return keys
+
+    def test_no_model_has_duplicate_indexes(self):
+        base_dir = str(settings.BASE_DIR)
+        duplicates = []
+        for model in apps.get_models():
+            if not model.__module__ or not model._meta.managed:
+                continue
+            if not apps.get_app_config(model._meta.app_label).path.startswith(base_dir):
+                continue
+            keys = self._index_keys(model)
+            duplicates += [
+                f"{model._meta.label}: {', '.join(key)}"
+                for key in sorted(set(keys))
+                if keys.count(key) > 1
+            ]
+        self.assertEqual(duplicates, [])
