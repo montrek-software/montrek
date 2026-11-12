@@ -124,10 +124,10 @@ class HubValueDate(models.Model):
     hub = HubForeignKey(MontrekHubABC)
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
     # value_date_list.value_date, next to the hub id so that one index covers
-    # both. A value date row never changes its date and a row never changes
-    # its value date row, so the copy is set once, when the row is created.
-    # Querysets of repositories annotate ``value_date`` already, so the copy
-    # cannot carry that name.
+    # both. A value date row never changes its date, so save() keeps the copy
+    # in step; writes that bypass it (bulk_create, update()) must set it
+    # themselves. Querysets of repositories annotate ``value_date`` already,
+    # so the copy cannot carry that name.
     value_date_copy = models.DateField(null=True, blank=True, editable=False)
 
     id: int
@@ -140,6 +140,12 @@ class HubValueDate(models.Model):
 
     def save(self, *args, **kwargs):
         self.value_date_copy = self.value_date_list.value_date
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and {
+            "value_date_list",
+            "value_date_list_id",
+        } & set(update_fields):
+            kwargs["update_fields"] = {*update_fields, "value_date_copy"}
         super().save(*args, **kwargs)
 
 

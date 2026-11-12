@@ -1,17 +1,17 @@
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import cast
 
 from django.apps import apps
-from django.db import connection
+from django.db import connection, models
 from django.db.models import (
-    Count,
+    Exists,
     F,
     OuterRef,
     Q,
     QuerySet,
     Subquery,
 )
-from django.db.models.functions import Coalesce
 
 from baseclasses.models import HubValueDate, ValueDateList
 
@@ -22,16 +22,10 @@ class HubValueDateCopyFinding:
     has_column: bool
     # Rows whose copy differs from their value date row
     stale_copies: int = 0
-    # Hubs with more than one row on the same date, or more than one undated row
-    hubs_with_duplicate_dates: int = 0
 
     @property
     def is_consistent(self) -> bool:
-        return (
-            self.has_column
-            and not self.stale_copies
-            and not self.hubs_with_duplicate_dates
-        )
+        return self.has_column and not self.stale_copies
 
 
 class HubValueDateCopy:
@@ -49,26 +43,30 @@ class HubValueDateCopy:
         ]
 
     @staticmethod
-    def latest_row_ids(
-        hub_value_date_model: type[HubValueDate], hubs: QuerySet
-    ) -> QuerySet:
-        """Id of the latest row of each of the hubs: the newest dated row, or
-        the undated row if the hub has no dated one. One lookup per hub in the
-        index on ``(hub, value_date_copy)``."""
-        rows_of_hub = hub_value_date_model.objects.filter(hub_id=OuterRef("pk"))
-        latest_dated = (
-            rows_of_hub.filter(value_date_copy__isnull=False)
-            .order_by("-value_date_copy")
-            .values("id")[:1]
+    def latest_rows(hub_value_date_model: type[HubValueDate], hubs: QuerySet) -> Q:
+        """The latest rows of each of the hubs: its rows on its newest date, or
+        its undated rows if it has no dated one. Two id sets, as one condition
+        covering both cases keeps Postgres from looking the rows up per hub in
+        the index on ``(hub, value_date_copy)``."""
+        hub_field = cast(models.ForeignKey, hub_value_date_model._meta.get_field("hub"))
+        rows = hub_field.related_query_name()
+        dated_rows_of_hub = hub_value_date_model.objects.filter(
+            hub_id=OuterRef("pk"), value_date_copy__isnull=False
         )
+        latest_date = dated_rows_of_hub.order_by("-value_date_copy").values(
+            "value_date_copy"
+        )[:1]
+        on_latest_date = hubs.filter(
+            **{f"{rows}__value_date_copy": Subquery(latest_date)}
+        ).values(f"{rows}__id")
         undated = (
-            rows_of_hub.filter(value_date_copy__isnull=True)
-            .order_by("id")
-            .values("id")[:1]
+            hubs.filter(~Exists(dated_rows_of_hub))
+            .filter(
+                **{f"{rows}__isnull": False, f"{rows}__value_date_copy__isnull": True}
+            )
+            .values(f"{rows}__id")
         )
-        return hubs.annotate(
-            latest_id=Coalesce(Subquery(latest_dated), Subquery(undated))
-        ).values("latest_id")
+        return Q(id__in=on_latest_date) | Q(id__in=undated)
 
     @staticmethod
     def has_column(model: type[HubValueDate]) -> bool:
@@ -102,8 +100,8 @@ class HubValueDateCopy:
         return [self._check_model(model) for model in self.models]
 
     def _check_model(self, model: type[HubValueDate]) -> HubValueDateCopyFinding:
-        # Without stale copies and duplicate dates, ordering by the copy picks
-        # the same latest row per hub as ordering by the value date row.
+        # Without stale copies, the latest rows by copy are those by value
+        # date row.
         if not self.has_column(model):
             return HubValueDateCopyFinding(model=model, has_column=False)
         date = "value_date_list__value_date"
@@ -115,17 +113,8 @@ class HubValueDateCopy:
                 & ~Q(value_date_copy=F(date))
             )
         ).count()
-        hubs_with_duplicate_dates = (
-            model.objects.values("hub_id", "value_date_copy")
-            .annotate(rows=Count("id"))
-            .filter(rows__gt=1)
-            .values("hub_id")
-            .distinct()
-            .count()
-        )
         return HubValueDateCopyFinding(
             model=model,
             has_column=True,
             stale_copies=stale_copies,
-            hubs_with_duplicate_dates=hubs_with_duplicate_dates,
         )

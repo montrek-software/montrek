@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from django.test import TestCase
 from django.utils import timezone
@@ -462,6 +463,29 @@ class TestQueryBuilderLatestTs(TestCase):
         dates = list(hub_rows.values_list("value_date", flat=True))
         self.assertNotIn(datetime.date(2024, 1, 15), dates)
 
+    def test_all_rows_on_the_latest_date_are_returned(self):
+        sat = TestMontrekTimeSeriesSatelliteFactory.create(
+            value_date=datetime.date(2024, 1, 15)
+        )
+        hub_value_date = sat.hub_value_date
+        TestHubValueDateFactory.create(
+            hub=hub_value_date.hub, value_date_list=hub_value_date.value_date_list
+        )
+
+        hub_rows = self._build_queryset().filter(hub=hub_value_date.hub)
+
+        self.assertEqual(hub_rows.count(), 2)
+
+    def test_all_undated_rows_of_a_hub_without_dated_rows_are_returned(self):
+        hub = TestMontrekHubFactory.create()
+        TestHubValueDateFactory.create(
+            hub=hub, value_date_list=ValueDateListFactory.create(value_date=None)
+        )
+
+        hub_rows = self._build_queryset().filter(hub=hub)
+
+        self.assertEqual(hub_rows.count(), 2)
+
     def test_hub_with_only_null_value_date_is_included(self):
         """A hub that has no non-null value_date rows is still returned with value_date=None."""
         hub = TestMontrekHubFactory.create()
@@ -584,11 +608,13 @@ class TestQueryBuilderLatestTs(TestCase):
             self._latest_ts_builder([hub_id]).build_queryset(timezone.now()).query
         )
 
-        latest_lookup = sql[sql.index("COALESCE(") :]
-        self.assertRegex(
-            latest_lookup,
-            rf'FROM "baseclasses_testmontrekhub" (\w+) WHERE \1\."id" IN \({hub_id}\)',
+        # Both the dated and the undated lookup are narrowed to the scope
+        scoped_lookups = re.findall(
+            rf'FROM "baseclasses_testmontrekhub" (\w+) INNER JOIN [^)]*\) '
+            rf'WHERE \(\1\."id" IN \({hub_id}\)',
+            sql,
         )
+        self.assertEqual(len(scoped_lookups), 2)
 
     def test_empty_hub_scope_returns_no_rows(self):
         TestMontrekTimeSeriesSatelliteFactory.create(

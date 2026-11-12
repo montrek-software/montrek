@@ -143,7 +143,7 @@ class QueryBuilder:
 
     def _filter_ts_rows(self, queryset: QuerySet) -> QuerySet:
         if self.latest_ts:
-            return queryset.filter(IsTrue(Q(id__in=self._latest_hub_value_date_ids())))
+            return queryset.filter(IsTrue(self._latest_hub_value_dates()))
         # Use hub_id (direct FK column) instead of the hub_entity_id annotation
         # (which is itself a subquery) to avoid unnecessary nesting.
         non_null_value_date_exists = self.hub_value_date.objects.filter(
@@ -158,24 +158,23 @@ class QueryBuilder:
             )
         return filtered_query
 
-    def _latest_hub_value_date_ids(self) -> QuerySet:
-        """Ids of the rows that are their hub's latest one.
+    def _latest_hub_value_dates(self) -> Q:
+        """The rows that are their hub's latest ones.
 
-        The latest row of a hub is its newest dated row, or its undated row if
-        it has no dated one (see ``HubValueDateCopy.latest_row_ids``). Looked
-        up per hub in an index instead of ranking every row of the table, so
-        the cost grows with the number of hubs, not with the length of their
-        time series. Of several rows of a hub on the same date only one is
-        kept; the same goes for several undated rows.
+        The latest rows of a hub are its rows on its newest date, or its
+        undated rows if it has no dated one (see
+        ``HubValueDateCopy.latest_rows``). Looked up per hub in an index
+        instead of ranking every row of the table, so the cost grows with the
+        number of hubs, not with the length of their time series.
 
-        Filters applied to the outer queryset do not reach into this inner
-        query, so it covers all hubs unless a hub scope narrows it to the
+        Filters applied to the outer queryset do not reach into these inner
+        queries, so they cover all hubs unless a hub scope narrows them to the
         scoped hubs.
         """
         hubs = self.hub_class.objects.all()
         if self.hub_scope_pk is not None:
             hubs = hubs.filter(self._hub_scope_filter(field="pk"))
-        return HubValueDateCopy.latest_row_ids(self.hub_value_date, hubs)
+        return HubValueDateCopy.latest_rows(self.hub_value_date, hubs)
 
     def _hub_scope_filter(self, field: str = "hub_id") -> Q:
         if isinstance(self.hub_scope_pk, int):

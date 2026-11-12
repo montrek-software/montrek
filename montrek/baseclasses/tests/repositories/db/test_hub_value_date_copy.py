@@ -36,6 +36,16 @@ class TestValueDateCopyIsWritten(TestCase):
         row.refresh_from_db()
         self.assertEqual(row.value_date_copy, DATE)
 
+    def test_saving_a_new_value_date_row_updates_the_copy(self):
+        row = dated_row(TestMontrekHubFactory())
+        later = DATE + datetime.timedelta(days=1)
+        row.value_date_list = ValueDateListFactory(value_date=later)
+
+        row.save(update_fields=["value_date_list"])
+
+        row.refresh_from_db()
+        self.assertEqual(row.value_date_copy, later)
+
     def test_undated_row_has_no_copy(self):
         hub = TestMontrekHubFactory()
 
@@ -117,14 +127,6 @@ class TestCheck(TestCase):
         TestHubValueDate.objects.filter(pk=row.pk).update(value_date_copy=None)
 
         self.assertEqual(self._finding().stale_copies, 1)
-
-    def test_two_rows_of_a_hub_on_one_date(self):
-        hub = TestMontrekHubFactory()
-        value_date_list = ValueDateListFactory(value_date=DATE)
-        TestHubValueDateFactory(hub=hub, value_date_list=value_date_list)
-        TestHubValueDateFactory(hub=hub, value_date_list=value_date_list)
-
-        self.assertEqual(self._finding().hubs_with_duplicate_dates, 1)
 
 
 class TestModels(TestCase):

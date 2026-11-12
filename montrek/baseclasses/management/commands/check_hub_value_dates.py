@@ -7,8 +7,8 @@ from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
 class Command(BaseCommand):
     help = (
         "Check value_date_copy of all hub value date models: every copy equals "
-        "the date of its value date row and no hub has two rows on one date, "
-        "so the latest row of each hub is the same by copy as by value date row. "
+        "the date of its value date row, so the latest rows of each hub are the "
+        "same by copy as by value date row. "
         "Fails if any check fails."
     )
 
@@ -42,8 +42,5 @@ class Command(BaseCommand):
                     f"{label}: no value_date_copy column, its migration is missing"
                 )
                 continue
-            self.stdout.write(
-                f"{label}: {finding.stale_copies} stale copies, "
-                f"{finding.hubs_with_duplicate_dates} hubs with duplicate dates"
-            )
+            self.stdout.write(f"{label}: {finding.stale_copies} stale copies")
         raise CommandError(f"Inconsistent hub value dates in {len(failed)} model(s).")
