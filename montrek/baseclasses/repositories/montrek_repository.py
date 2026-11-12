@@ -3,7 +3,7 @@ import logging
 import warnings
 from dataclasses import dataclass
 from typing import Any, ClassVar, cast
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Iterable, Mapping
 
 import pandas as pd
 from baseclasses.dataclasses.montrek_message import MontrekMessage
@@ -121,13 +121,16 @@ class MontrekRepository:
             f"set_annotations is not implemented for {self.__class__.__name__}"
         )
 
-    def set_hub_scope(self, hub_pk: int | None) -> None:
-        """Scope this instance's queryset to a single hub BEFORE annotations
-        are built, so queryset-aware subquery builders only precompute data
-        for that hub instead of the entire table. Callers may only use this
-        when the hub pk is known to belong to this repository's own hub class
-        — e.g. a detail view resolving its URL pk, or a details page after
-        get_hub_by_id."""
+    def set_hub_scope(self, hub_pk: int | Collection[int] | None) -> None:
+        """Scope this instance's queryset to one hub, or to several, BEFORE
+        annotations are built, so queryset-aware subquery builders only
+        precompute data for these hubs instead of the entire table. With
+        ``latest_ts`` the latest row is then only looked up among the rows of
+        these hubs: filtering ``receive()`` on the hub ids afterwards gives the
+        same rows, but still ranks the whole table. Callers may only use this
+        when the hub pks are known to belong to this repository's own hub
+        class — e.g. a detail view resolving its URL pk, a details page after
+        get_hub_by_id, or ids read from a link to this hub."""
         self.query_builder.hub_scope_pk = hub_pk
 
     def save_db_staller(self, db_staller: DbStaller):
@@ -199,11 +202,30 @@ class MontrekRepository:
     def receive(self, apply_filter: bool = True) -> QuerySet:
         return self.receive_raw(apply_filter, False).select_related("hub")
 
+    def receive_for_hubs(
+        self, hub_pks: int | Collection[int], apply_filter: bool = True
+    ) -> QuerySet:
+        """``receive()`` for the given hubs of this repository's hub class,
+        with the hub scope set while the queryset is built (see
+        ``set_hub_scope``). Prefer it to filtering ``receive()`` on hub ids:
+        the result is the same, but the latest time series rows and
+        queryset-aware annotations are only computed for these hubs. The
+        scope the instance had before is restored."""
+        hub_pk_list = [hub_pks] if isinstance(hub_pks, int) else list(hub_pks)
+        previous_scope = self.query_builder.hub_scope_pk
+        self.set_hub_scope(hub_pk_list)
+        try:
+            queryset = self.receive(apply_filter)
+        finally:
+            self.set_hub_scope(previous_scope)
+        # A view model is read as it is, without the scope.
+        return queryset.filter(hub_id__in=hub_pk_list)
+
     def filter_by_linked_hub(
         self,
         queryset: QuerySet,
         link_class: type[MontrekLinkABC],
-        hub: MontrekHubABC | int,
+        hub: MontrekHubABC | int | Iterable[MontrekHubABC | int],
         *,
         reversed_link: bool = False,
         parent_link_classes: tuple[type[MontrekLinkABC], ...] = (),
@@ -214,7 +236,15 @@ class MontrekRepository:
         This is the ORM equivalent of filtering on a fund_id / hub_entity_id
         annotation that was built by LinkedSatelliteSubqueryBuilder.  Filtering
         on a Subquery annotation forces a correlated subquery per row (slow);
-        this method generates JOINs instead.
+        this method narrows on the hub id column instead.
+
+        The ids of the linked hubs are read first, by a query on the hub table
+        alone, and the queryset is narrowed on ``hub_id IN (<ids>)``. Joining
+        the link chain into the annotated queryset, or narrowing on a
+        subquery, leaves the planner unable to estimate the state date
+        conditions: it builds the annotations for the whole table before it
+        applies the filter, so the cost grows with the history of the table
+        instead of with the rows returned.
 
         The link_class, reversed_link and parent link conventions match those
         used in add_linked_satellites_field_annotations so the two always stay
@@ -223,15 +253,17 @@ class MontrekRepository:
             Target --link_class-- L0 --parent_link_classes[0]-- ... -- This hub
 
         Every link and every hub along the chain must be valid at the reference
-        date. A row is returned once per matching chain, so a hub reaching the
-        target through several valid chains appears several times.
+        date. A row is returned once, however many valid chains link its hub to
+        the target. The ids are read when this method is called, so the
+        returned queryset does not see links created afterwards.
 
         Args:
             queryset:      A queryset produced by receive().
             link_class:    The link model connecting the target hub to the hub
                            next to it in the chain (this repository's hub if
                            there are no parent links, e.g. LinkOrderCustomer).
-            hub:           The target hub instance, or its pk, to filter by.
+            hub:           The target hub instance, or its pk, to filter by, or
+                           several of them to keep rows linked to any.
             reversed_link: True when the target hub is on hub_in of link_class
                            (mirrors the reversed_link flag used in
                            add_linked_satellites_field_annotations).
@@ -259,15 +291,22 @@ class MontrekRepository:
             (link_class, reversed_link),
         ]
         filters: dict[str, Any] = {}
-        hub_path = "hub"
+        hub_path = ""
         for chain_link_class, is_reversed in chain:
-            link_path = f"{hub_path}__{chain_link_class.__name__.lower()}"
+            link_path = f"{hub_path}{chain_link_class.__name__.lower()}"
             hub_path = f"{link_path}__{'hub_in' if is_reversed else 'hub_out'}"
             for path in (link_path, hub_path):
                 filters[f"{path}__state_date_start__lte"] = self.reference_date
                 filters[f"{path}__state_date_end__gt"] = self.reference_date
-        filters[hub_path] = hub
-        return queryset.filter(**filters)
+            hub_path = f"{hub_path}__"
+        if isinstance(hub, MontrekHubABC | int):
+            filters[hub_path.removesuffix("__")] = hub
+        else:
+            filters[f"{hub_path}in"] = list(hub)
+        hub_ids = set(
+            self.hub_class.objects.filter(**filters).values_list("id", flat=True)
+        )
+        return queryset.filter(hub_id__in=hub_ids)
 
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False

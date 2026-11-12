@@ -4940,6 +4940,51 @@ class TestFilterByLinkedHub(TestCase):
         hub_ids = list(qs.values_list("hub_id", flat=True))
         self.assertNotIn(self.satd2.hub_entity_id, hub_ids)
 
+    # ------------------------------------------------------------------
+    # Several targets, several chains
+    # ------------------------------------------------------------------
+
+    def test_several_targets__returns_rows_linked_to_any(self):
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(),
+            me_models.LinkHubBHubD,
+            [self.satd1.hub_entity, self.satd2.hub_entity_id],
+        )
+        self.assertCountEqual(
+            qs.values_list("hub_id", flat=True),
+            [self.satb1.hub_entity_id, self.satb2.hub_entity_id],
+        )
+
+    def test_no_targets__returns_no_rows(self):
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(repo.receive(), me_models.LinkHubBHubD, [])
+        self.assertEqual(qs.count(), 0)
+
+    def test_two_valid_links__row_is_returned_once(self):
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        self.assertEqual(
+            list(qs.values_list("hub_id", flat=True)), [self.satb1.hub_entity_id]
+        )
+
+    def test_narrows_on_hub_ids_without_joining_the_link(self):
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        # The annotations read the link in their own subqueries; the filter
+        # must not join it into the outer query.
+        outer_where = str(qs.query).rsplit(" WHERE ", 1)[1]
+        self.assertNotIn("linkhubbhubd", outer_where.lower())
+        self.assertIn(f'"hub_id" IN ({self.satb1.hub_entity_id})', outer_where)
+
 
 class TestFilterByLinkedHubParentLinks(TestCase):
     """filter_by_linked_hub through parent links, along the chain
@@ -5794,3 +5839,62 @@ class TestPreviousTSValueBuilderMechanics(TestCase):
         df = HubCRepositoryPreviousValueLatest().get_df()
         self.assertIn("previous_float", df.columns)
         self.assertIn("relative_change", df.columns)
+
+
+class TestReceiveForHubs(TestCase):
+    """receive_for_hubs on a latest_ts repository (HubCRepositoryLastTS)."""
+
+    def setUp(self):
+        self.hub_dates = {}
+        for latest in (datetime.date(2024, 1, 20), datetime.date(2024, 1, 10)):
+            older = me_factories.SatTSC2Factory(
+                value_date=latest - datetime.timedelta(days=5)
+            )
+            hub = older.hub_value_date.hub
+            me_factories.SatTSC2Factory(
+                hub_value_date=me_factories.CHubValueDateFactory(
+                    hub=hub,
+                    value_date_list=ValueDateListFactory(value_date=latest),
+                )
+            )
+            self.hub_dates[hub.pk] = latest
+        self.other_hub = me_factories.SatTSC2Factory(
+            value_date=datetime.date(2024, 2, 1)
+        ).hub_value_date.hub
+        self.ref = timezone.now()
+
+    def _repository(self):
+        return HubCRepositoryLastTS({"reference_date": self.ref})
+
+    def test_returns_the_latest_row_of_each_given_hub(self):
+        rows = self._repository().receive_for_hubs(list(self.hub_dates))
+
+        self.assertEqual({row.hub_id: row.value_date for row in rows}, self.hub_dates)
+
+    def test_accepts_a_single_hub_pk(self):
+        hub_pk, latest = next(iter(self.hub_dates.items()))
+
+        rows = self._repository().receive_for_hubs(hub_pk)
+
+        self.assertEqual(
+            [(row.hub_id, row.value_date) for row in rows], [(hub_pk, latest)]
+        )
+
+    def test_same_rows_as_filtering_receive(self):
+        repository = self._repository()
+        hub_pks = list(self.hub_dates)
+
+        self.assertCountEqual(
+            repository.receive_for_hubs(hub_pks).values_list("pk", flat=True),
+            repository.receive()
+            .filter(hub_id__in=hub_pks)
+            .values_list("pk", flat=True),
+        )
+
+    def test_restores_the_previous_scope(self):
+        repository = self._repository()
+        repository.receive_for_hubs(list(self.hub_dates))
+
+        self.assertIn(
+            self.other_hub.pk, repository.receive().values_list("hub_id", flat=True)
+        )

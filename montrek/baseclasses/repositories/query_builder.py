@@ -1,4 +1,5 @@
 import datetime
+from collections.abc import Collection
 from typing import Any
 
 from baseclasses.dataclasses.montrek_message import (
@@ -46,7 +47,7 @@ class QueryBuilder:
         latest_ts: bool = False,
         session_start_date: datetime.datetime | None = None,
         session_end_date: datetime.datetime | None = None,
-        hub_scope_pk: int | None = None,
+        hub_scope_pk: int | Collection[int] | None = None,
         messages: list[MontrekMessage] | None = None,
     ):
         self.annotator = annotator
@@ -88,11 +89,11 @@ class QueryBuilder:
             Q(hub__state_date_start__lte=reference_date),
             Q(hub__state_date_end__gt=reference_date),
         )
-        # Scope to a single hub BEFORE annotations are built so that
+        # Scope to the hubs BEFORE annotations are built so that
         # queryset-aware subquery builders (which extract hub ids from the
-        # intermediate queryset) only precompute data for this hub.
+        # intermediate queryset) only precompute data for these hubs.
         if self.hub_scope_pk is not None:
-            queryset = queryset.filter(hub_id=self.hub_scope_pk)
+            queryset = queryset.filter(self._hub_scope_filter())
         if self.latest_ts:
             queryset = self._filter_ts_rows(queryset)
         satellite_aliases_dict: dict[str, Any] = {}
@@ -168,6 +169,10 @@ class QueryBuilder:
         Postgres evaluates for every row of every hub before any other filter
         applies - with a long time series that dominates the whole query.
 
+        Filters applied to the outer queryset do not reach into this inner
+        query, so it ranks the whole table unless a hub scope narrows it to
+        the rows of the scoped hubs.
+
         Built from the bare model so none of the annotation subqueries are
         dragged into this inner query. ``RANK`` rather than ``ROW_NUMBER``
         keeps all tied rows, as a comparison of the value dates would; the
@@ -175,7 +180,7 @@ class QueryBuilder:
         """
         ranked = self.hub_value_date.objects.all()
         if self.hub_scope_pk is not None:
-            ranked = ranked.filter(hub_id=self.hub_scope_pk)
+            ranked = ranked.filter(self._hub_scope_filter())
         ranked = ranked.annotate(
             _latest_rank=Window(
                 expression=Rank(),
@@ -184,6 +189,11 @@ class QueryBuilder:
             )
         )
         return ranked.filter(_latest_rank=1).values("id")
+
+    def _hub_scope_filter(self) -> Q:
+        if isinstance(self.hub_scope_pk, int):
+            return Q(hub_id=self.hub_scope_pk)
+        return Q(hub_id__in=list(self.hub_scope_pk or ()))
 
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():
