@@ -59,10 +59,12 @@ class UserAssignmentHubValueDate(HubValueDate):
 
 class UserAssignmentSatellite(MontrekSatelliteABC):
     hub_entity = models.ForeignKey(UserAssignmentHub, on_delete=models.CASCADE)
+    # Indexed by the unique constraint
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="user_assignment_satellites",
+        db_index=False,
     )
 
     identifier_fields = ["user_id"]
@@ -71,7 +73,6 @@ class UserAssignmentSatellite(MontrekSatelliteABC):
         indexes = [
             models.Index(fields=["hash_identifier"]),
             models.Index(fields=["hash_value"]),
-            models.Index(fields=["hub_entity"]),
         ]
         constraints = [
             models.UniqueConstraint(
