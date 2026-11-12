@@ -574,7 +574,7 @@ class TestQueryBuilderLatestTs(TestCase):
             {**hub_dates, undated_hub.pk: None},
         )
 
-    def test_hub_scope_narrows_the_ranking(self):
+    def test_hub_scope_narrows_the_latest_lookup(self):
         sat = TestMontrekTimeSeriesSatelliteFactory.create(
             value_date=datetime.date(2024, 1, 15)
         )
@@ -584,8 +584,11 @@ class TestQueryBuilderLatestTs(TestCase):
             self._latest_ts_builder([hub_id]).build_queryset(timezone.now()).query
         )
 
-        ranking = sql[sql.index("RANK()") :]
-        self.assertIn(f'"hub_id" IN ({hub_id})', ranking)
+        latest_lookup = sql[sql.index("COALESCE(") :]
+        self.assertRegex(
+            latest_lookup,
+            rf'FROM "baseclasses_testmontrekhub" (\w+) WHERE \1\."id" IN \({hub_id}\)',
+        )
 
     def test_empty_hub_scope_returns_no_rows(self):
         TestMontrekTimeSeriesSatelliteFactory.create(

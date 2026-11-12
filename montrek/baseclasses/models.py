@@ -115,17 +115,32 @@ class MontrekHubABC(TimeStampMixin, StateMixin, UserMixin):
 class HubValueDate(models.Model):
     class Meta:
         abstract = True
+        indexes = [
+            # The latest row of a hub is one lookup in this index
+            models.Index(fields=["hub", "value_date_copy"]),
+        ]
 
     # Both foreign keys are indexed by Django already
     hub = HubForeignKey(MontrekHubABC)
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
+    # value_date_list.value_date, next to the hub id so that one index covers
+    # both. A value date row never changes its date and a row never changes
+    # its value date row, so the copy is set once, when the row is created.
+    # Querysets of repositories annotate ``value_date`` already, so the copy
+    # cannot carry that name.
+    value_date_copy = models.DateField(null=True, blank=True, editable=False)
 
     id: int
     hub_id: int
+    value_date_list_id: int
     objects: ClassVar[models.Manager[Any]]
 
     def __str__(self):
         return f"hub: {self.hub} value_date_list: {self.value_date_list}"
+
+    def save(self, *args, **kwargs):
+        self.value_date_copy = self.value_date_list.value_date
+        super().save(*args, **kwargs)
 
 
 # Base Static Satellite Model ABC

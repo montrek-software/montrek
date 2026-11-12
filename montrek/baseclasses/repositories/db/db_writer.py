@@ -42,6 +42,12 @@ class DbWriter:
 
     def write_hub_value_dates(self):
         new_hub_value_dates = self.db_staller.get_hub_value_dates()
+        # bulk_create does not call HubValueDate.save(), which sets the copy
+        for hub_value_dates in new_hub_value_dates.values():
+            for hub_value_date in hub_value_dates:
+                hub_value_date.value_date_copy = (
+                    hub_value_date.value_date_list.value_date
+                )
         self._bulk_create(new_hub_value_dates)
 
     def write_links(self):
