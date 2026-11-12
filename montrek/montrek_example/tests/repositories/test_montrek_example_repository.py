@@ -4940,6 +4940,51 @@ class TestFilterByLinkedHub(TestCase):
         hub_ids = list(qs.values_list("hub_id", flat=True))
         self.assertNotIn(self.satd2.hub_entity_id, hub_ids)
 
+    # ------------------------------------------------------------------
+    # Several targets, several chains
+    # ------------------------------------------------------------------
+
+    def test_several_targets__returns_rows_linked_to_any(self):
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(),
+            me_models.LinkHubBHubD,
+            [self.satd1.hub_entity, self.satd2.hub_entity_id],
+        )
+        self.assertCountEqual(
+            qs.values_list("hub_id", flat=True),
+            [self.satb1.hub_entity_id, self.satb2.hub_entity_id],
+        )
+
+    def test_no_targets__returns_no_rows(self):
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(repo.receive(), me_models.LinkHubBHubD, [])
+        self.assertEqual(qs.count(), 0)
+
+    def test_two_valid_links__row_is_returned_once(self):
+        me_factories.LinkHubBHubDFactory.create(
+            hub_in=self.satb1.hub_entity,
+            hub_out=self.satd1.hub_entity,
+        )
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        self.assertEqual(
+            list(qs.values_list("hub_id", flat=True)), [self.satb1.hub_entity_id]
+        )
+
+    def test_narrows_on_hub_ids_without_joining_the_link(self):
+        repo = self._hub_b_repo()
+        qs = repo.filter_by_linked_hub(
+            repo.receive(), me_models.LinkHubBHubD, self.satd1.hub_entity
+        )
+        # The annotations read the link in their own subqueries; the filter
+        # must not join it into the outer query.
+        outer_where = str(qs.query).rsplit(" WHERE ", 1)[1]
+        self.assertNotIn("linkhubbhubd", outer_where.lower())
+        self.assertIn(f'"hub_id" IN ({self.satb1.hub_entity_id})', outer_where)
+
 
 class TestFilterByLinkedHubParentLinks(TestCase):
     """filter_by_linked_hub through parent links, along the chain
