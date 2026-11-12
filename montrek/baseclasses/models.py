@@ -120,6 +120,7 @@ class HubValueDate(models.Model):
             models.Index(fields=["hub", "value_date_copy"]),
         ]
 
+
     # Both foreign keys are indexed by Django already
     hub = HubForeignKey(MontrekHubABC)
     value_date_list = models.ForeignKey(ValueDateList, on_delete=models.CASCADE)
