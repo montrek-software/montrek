@@ -77,6 +77,22 @@ class TestMontrekTableManager(TestCase):
         self.assertEqual(len(rows), 3)
         self.assertEqual(manager.table_elements_reads, 1)
 
+    def test_to_html_shows_help_icon_for_columns_with_help_text(self):
+        soup = BeautifulSoup(MockMontrekTableManager().to_html(), "html.parser")
+        icons = soup.select("thead th .th-help-icon")
+        self.assertEqual(len(icons), 1)
+        self.assertEqual(icons[0].get("data-bs-title"), "Help for field B")
+        th = icons[0].find_parent("th")
+        self.assertEqual(
+            th.find("button")["onclick"],
+            "document.getElementById('form-order_by-action').value='field_b'",
+        )
+        self.assertIsNone(th.get("data-bs-toggle"))
+
+    def test_to_pdf_html_has_no_help_icons(self):
+        html = MockMontrekTableManager().to_pdf_html()
+        self.assertNotIn("th-help-icon", html)
+
     def test_to_html_reads_table_elements_once(self):
         manager = MockCountingTableElementsManager()
 
@@ -743,16 +759,10 @@ class TestHistoryDataTable(TestCase):
             "field_a1_str",
             "field_a1_int",
         ):
-            th = soup.find("th", attrs={"data-bs-title": col})
-            self.assertIsNotNone(th)
-
-            button = th.find("button", {"class": "btn-order-field"})
+            onclick = f"document.getElementById('form-order_by-action').value='{col}'"
+            button = soup.find("button", attrs={"onclick": onclick})
             self.assertIsNotNone(button)
-
-            self.assertEqual(
-                button["onclick"],
-                f"document.getElementById('form-order_by-action').value='{col}'",
-            )
+            self.assertIn("btn-order-field", button["class"])
 
             self.assertEqual(button.text.strip(), col)
 

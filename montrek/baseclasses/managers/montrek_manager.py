@@ -4,7 +4,6 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from typing import Any
 from collections.abc import Mapping
 from baseclasses.dataclasses.montrek_message import MontrekMessage
-from baseclasses.repositories.db.typing import DataDict
 
 
 class MontrekManager:
@@ -63,6 +62,11 @@ class MontrekManager:
 
     def get_display_field_names(self) -> Mapping[str, str]:
         return self.repository.display_field_names
+
+    def get_field_help_texts(self) -> Mapping[str, str]:
+        # Read from the class: managers whose table is not backed by the
+        # repository should not have to build one just for its help texts.
+        return self.repository_class.field_help_texts
 
     def collect_messages(self):
         if self._repository:

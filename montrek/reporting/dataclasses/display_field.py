@@ -9,3 +9,4 @@ class DisplayField:
     td_classes_str: str
     hover_text: str | None
     value: str | float | bool | None
+    help_text: str = ""

@@ -7,17 +7,17 @@
       <table class="table table-custom-striped table-bordered table-hover">
         <thead>
           <tr>
-            {% for table_element in table_elements %}
-          <th
-            class="{{ table_element.th_classes_str }}"
-            {% if table_element.attr %}data-bs-toggle="tooltip" data-bs-title="{{ table_element.attr }}"{% endif %}
-          >
+            {% for table_element, help_text in table_headers %}
+          <th class="{{ table_element.th_classes_str }}">
             {% if pdf_mode %}
               {{ table_element.name }}
             {% else %}
               <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
                 <div class="th-flex">
-                  {{ table_element.name }}
+                  <span>
+                    {{ table_element.name }}
+                    {% include "tables/partials/header_help_icon.html" %}
+                  </span>
                 {% if order_field is not None %}
                   {% if table_element.attr == order_field %}
                     {% if order_descending %}

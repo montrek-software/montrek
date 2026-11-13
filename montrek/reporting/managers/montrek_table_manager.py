@@ -161,6 +161,16 @@ class MontrekTableManagerABC(
             for query_object in self.get_table()
         ]
 
+    def get_table_headers(
+        self, table_elements: TableElementsType
+    ) -> list[tuple[te.TableElement, str]]:
+        """Each table element paired with the help text of its field."""
+        help_texts = self.get_field_help_texts()
+        return [
+            (element, help_texts.get(element.field_name, ""))
+            for element in table_elements
+        ]
+
     def to_html(self):
         template = get_template("tables/base_table.html")
         if self.order_descending and self.order_field is not None:
@@ -171,7 +181,7 @@ class MontrekTableManagerABC(
         return template.render(
             context={
                 "table_title": self.table_title,
-                "table_elements": table_elements,
+                "table_headers": self.get_table_headers(table_elements),
                 "display_fields": self.get_display_fields(table_elements),
                 "order_field": order_field,
                 "order_descending": self.order_descending,
@@ -240,7 +250,7 @@ class MontrekTableManagerABC(
         return template.render(
             context={
                 "table_title": self.table_title,
-                "table_elements": pdf_elements,
+                "table_headers": self.get_table_headers(pdf_elements),
                 "display_fields": self.get_all_display_fields(),
                 "order_field": None,
                 "order_descending": False,

@@ -88,6 +88,23 @@ class TestMontrekDetailsManager(TestCase):
         self.assertEqual(link_text_a.get("href"), "/home")
         self.assertEqual(link_text_a.get_text(strip=True), "a")
 
+    def test_to_html_shows_help_icon_for_fields_with_help_text(self):
+        soup = BeautifulSoup(MockMontrekDetailsManager().to_html(), "html.parser")
+        icons = soup.select("th .th-help-icon")
+        self.assertEqual(len(icons), 1)
+        self.assertEqual(icons[0].get("data-bs-title"), "Help for field B")
+        self.assertEqual(icons[0].get("data-bs-toggle"), "tooltip")
+        self.assertIn("Field B", icons[0].find_parent("th").get_text())
+
+    def test_get_details_data_sets_help_texts(self):
+        help_texts = {
+            field.name: field.help_text
+            for row in MockMontrekDetailsManager().get_details_data()
+            for field in row
+        }
+        self.assertEqual(help_texts["Field B"], "Help for field B")
+        self.assertEqual(help_texts["Field A"], "")
+
     def assertRegexPresent(self, text: str, pattern: str, msg: str = ""):
         """Helper that shows the missing pattern nicely on failure."""
         if not re.search(pattern, text, flags=re.DOTALL):

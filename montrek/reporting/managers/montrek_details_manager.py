@@ -1,3 +1,4 @@
+import dataclasses
 import math
 from collections.abc import Sequence
 from typing import Any, cast
@@ -48,9 +49,13 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
         return rt.ReportingText("Internal Report")
 
     def get_details_data(self) -> list[list[DisplayField]]:
+        help_texts = self.get_field_help_texts()
         return self.arrange_in_grid(
             [
-                table_element.get_display_field(self.object_query)
+                dataclasses.replace(
+                    table_element.get_display_field(self.object_query),
+                    help_text=help_texts.get(table_element.field_name, ""),
+                )
                 for table_element in self.table_elements
             ]
         )
