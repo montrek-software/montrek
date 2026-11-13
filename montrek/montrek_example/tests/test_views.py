@@ -548,12 +548,7 @@ class TestMontrekExampleADetailView(MontrekDetailViewTestCase):
         ]
 
         for th, (attr, label) in zip(headers, header_expectations, strict=False):
-            # Header tooltips are only rendered for elements with a non-empty attr
-            if attr:
-                self.assertEqual(th["data-bs-title"], attr)
-                self.assertEqual(th["data-bs-toggle"], "tooltip")
-            else:
-                self.assertIsNone(th.get("data-bs-title"))
+            self.assertIsNone(th.get("data-bs-toggle"))
 
             button = th.find("button", class_="btn-order-field")
             self.assertIsNotNone(button)

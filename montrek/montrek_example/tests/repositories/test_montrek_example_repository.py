@@ -2288,8 +2288,10 @@ class TestTimeSeries(TestCase):
                 "value_date": montrek_time(2024, 2, 6),
             }
         )
-        queryset = me_models.SatTSC2.objects.all()
-        self.assertEqual(queryset.count(), 2)
+        # Evaluated once in a fixed order: indexing an unordered queryset runs a
+        # new query each time, and Postgres may return the rows in any order.
+        queryset = list(me_models.SatTSC2.objects.order_by("value_date"))
+        self.assertEqual(len(queryset), 2)
         self.assertEqual(queryset[0].field_tsc2_float, 1.0)
         self.assertEqual(queryset[0].value_date, montrek_time(2024, 2, 5).date())
         self.assertEqual(queryset[1].field_tsc2_float, 3.0)
