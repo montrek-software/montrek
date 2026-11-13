@@ -241,6 +241,7 @@ class MockHubValueDate:
 
 class MockRepository:
     display_field_names = {"field_a": "Repository Field A"}
+    field_help_texts = {"field_b": "Help for field B"}
 
     def __init__(self, session_data: dict):
         self.session_data = session_data
@@ -293,6 +294,8 @@ class MockHtmlRepository(MockRepository):
 
 
 class MockLongRepository:
+    field_help_texts: dict[str, str] = {}
+
     def __init__(self, session_data: dict):
         self.session_data = session_data
         self._order_field = None

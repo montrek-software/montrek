@@ -60,6 +60,7 @@ class MockHub:
 class MockRepository:
     hub_class = MockHub
     display_field_names = {"item1": "Item 1"}
+    field_help_texts: dict[str, str] = {}
 
     def __init__(self, session_data):
         self.session_data = session_data

@@ -10,7 +10,10 @@
   {% for data_row in details_data %}
   <tr>
     {% for display_field in data_row %}
-      <th>{{display_field.name}}</th>
+      <th>
+        {{ display_field.name }}
+        {% include "tables/partials/header_help_icon.html" with help_text=display_field.help_text %}
+      </th>
       {% include "tables/partials/table_cell.html" with display_field=display_field %}
     {% endfor %} </tr>
   {% endfor %}
