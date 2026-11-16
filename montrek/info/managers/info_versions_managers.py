@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import pandas as pd
 from django.conf import settings
 
 from baseclasses.typing import TableElementsType
 from info.modules.git_info import GitInfo
+from info.modules.release_info import ReleaseInfo
 from reporting.dataclasses import table_elements as te
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.managers.montrek_table_manager import MontrekDataFrameTableManager
@@ -24,12 +27,43 @@ class GitVersionsManager(MontrekDataFrameTableManager):
         )
 
 
+class ReleaseVersionsManager(MontrekDataFrameTableManager):
+    @property
+    def table_elements(self) -> TableElementsType:
+        return (
+            te.StringTableElement(name="repo_name", attr="repo_name"),
+            te.StringTableElement(name="ref", attr="ref"),
+            te.StringTableElement(name="commit_hash", attr="commit_hash"),
+            te.StringTableElement(name="remote_url", attr="remote_url"),
+        )
+
+
 class InfoVersionsManager(MontrekReportManager):
     document_title = "Montrek Versions"
     git_info_class = GitInfo
 
+    def get_release_info(self) -> ReleaseInfo:
+        # The image build writes release.json next to manage.py and the
+        # image marker one level up (/montrek/.montrek-image).
+        base_dir = Path(settings.BASE_DIR)
+        return ReleaseInfo(
+            base_dir / "release.json", base_dir.parent / ".montrek-image"
+        )
+
     def collect_report_elements(self) -> None:
-        self.append_report_element(self.get_git_versions())
+        release_info = self.get_release_info()
+        if release_info.exists():
+            self.append_report_element(self.get_release_versions(release_info))
+        else:
+            self.append_report_element(self.get_git_versions())
+
+    def get_release_versions(
+        self, release_info: ReleaseInfo
+    ) -> MontrekDataFrameTableManager:
+        session_data = self.session_data | {
+            "df_data": release_info.to_dataframe().to_dict(orient="records")
+        }
+        return ReleaseVersionsManager(session_data)
 
     def get_git_versions(self) -> MontrekDataFrameTableManager:
         installed_repo_paths = self._get_installed_repo_paths()
