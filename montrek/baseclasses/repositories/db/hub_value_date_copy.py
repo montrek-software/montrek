@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from django.apps import apps
+from psycopg2 import sql
 from django.db import connection, models
 from django.db.models import (
     Exists,
@@ -95,6 +96,35 @@ class HubValueDateCopy:
                 value_date_list__value_date__isnull=False,
             ).update(value_date_copy=Subquery(value_date))
         return filled
+
+    def analyze(self) -> list[type[HubValueDate]]:
+        """Gather the statistics of the tables with rows but none on the copy.
+
+        Adding the column changes no row, so autovacuum does not analyze the
+        table, and Postgres guesses the share of undated rows, which queries
+        filtering on the copy rely on. Returns the models analyzed."""
+        analyzed = []
+        for model in self.models:
+            if not self.has_column(model) or self._has_copy_statistics(model):
+                continue
+            if not model.objects.exists():
+                continue
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    sql.SQL("ANALYZE {}").format(sql.Identifier(model._meta.db_table))
+                )
+            analyzed.append(model)
+        return analyzed
+
+    @staticmethod
+    def _has_copy_statistics(model: type[HubValueDate]) -> bool:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM pg_stats WHERE schemaname = current_schema() "
+                "AND tablename = %s AND attname = 'value_date_copy'",
+                [model._meta.db_table],
+            )
+            return cursor.fetchone() is not None
 
     def check(self) -> list[HubValueDateCopyFinding]:
         return [self._check_model(model) for model in self.models]

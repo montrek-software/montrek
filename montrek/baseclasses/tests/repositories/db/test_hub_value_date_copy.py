@@ -7,6 +7,7 @@ from django.test import TestCase
 
 from baseclasses.models import TestHubValueDate
 from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
+from baseclasses.signals import fill_hub_value_date_copies
 from baseclasses.tests.factories.baseclass_factories import (
     TestHubValueDateFactory,
     TestMontrekHubFactory,
@@ -91,6 +92,35 @@ class TestFill(TestCase):
         filled = HubValueDateCopy(["baseclasses"]).fill()
 
         self.assertEqual(filled[TestHubValueDate], 0)
+
+
+class TestAnalyze(TestCase):
+    def test_analyzes_a_table_without_statistics_on_the_copy(self):
+        dated_row(TestMontrekHubFactory())
+
+        analyzed = HubValueDateCopy(["baseclasses"]).analyze()
+
+        self.assertIn(TestHubValueDate, analyzed)
+
+    def test_leaves_analyzed_tables_alone(self):
+        dated_row(TestMontrekHubFactory())
+        hub_value_date_copy = HubValueDateCopy(["baseclasses"])
+        hub_value_date_copy.analyze()
+
+        self.assertNotIn(TestHubValueDate, hub_value_date_copy.analyze())
+
+    def test_leaves_empty_tables_alone(self):
+        self.assertNotIn(TestHubValueDate, HubValueDateCopy(["baseclasses"]).analyze())
+
+
+class TestFillAfterMigrate(TestCase):
+    def test_reports_the_analyzed_tables(self):
+        dated_row(TestMontrekHubFactory())
+        out = StringIO()
+
+        fill_hub_value_date_copies(sender=None, stdout=out)
+
+        self.assertIn("Analyzed baseclasses.TestHubValueDate", out.getvalue())
 
 
 class TestCheck(TestCase):
