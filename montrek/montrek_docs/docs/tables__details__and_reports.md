@@ -77,6 +77,27 @@ report_manager = MontrekReportManager(model=MyModel)
 html_report = report_manager.generate_report()
 ```
 
+## Sum Row
+
+A `MontrekTableManager` or `MontrekDataFrameTableManager` can show a row under the table with the sum of each numeric column. The sums cover all rows of the table, not only those of the current page.
+
+```python
+from reporting.dataclasses.summary_row_config import SummaryRowConfig
+
+class HubCTableManager(MontrekTableManager):
+    show_summary_row = True
+    summary_row_config = SummaryRowConfig(
+        exclude_attrs=("field_tsc3_int",),
+        label_attr="field_tsc3_str",
+    )
+```
+
+- Every `NumberTableElement` column is summed, except `PercentTableElement` and `ProgressBarTableElement` columns and those in `exclude_attrs`.
+- The label reads "Sum", or "Summe" if `LANGUAGE_CODE` is German. It is shown in the column `label_attr`, by default the first column that is not summed.
+- Columns of the queryset are summed in one SQL query. Columns whose table element computes its value in `get_value()` are summed in Python over all rows.
+- A table with `is_large = True` cannot show a sum row; defining such a manager raises `ImproperlyConfigured`.
+- The row is shown in the HTML and PDF table, not in LaTeX or in the exports.
+
 ## Summary
 
 In summary, Montrek provides a range of tools and classes for generating tables, details, and reports. These components can be used to display and manage data in a structured and meaningful way. By connecting these components to Django models or views, developers can create powerful and data-driven applications.
