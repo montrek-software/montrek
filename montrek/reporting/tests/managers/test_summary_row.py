@@ -48,6 +48,36 @@ class HubCComputedSummaryTableManager(HubCSummaryTableManager):
         )
 
 
+class HubCSameFieldSummaryTableManager(HubCSummaryTableManager):
+    @property
+    def table_elements(self):
+        return (
+            te.StringTableElement(name="Name", attr="field_tsc3_str"),
+            te.IntTableElement(name="Count", attr="field_tsc3_int"),
+            DoubledIntTableElement(name="Doubled", attr="field_tsc3_int"),
+        )
+
+
+class HubCFloatColumnSummaryTableManager(HubCSummaryTableManager):
+    @property
+    def table_elements(self):
+        return (
+            te.StringTableElement(name="Name", attr="field_tsc3_str"),
+            te.IntTableElement(name="Whole", attr="field_tsc2_float"),
+            te.FloatTableElement(name="Exact", attr="field_tsc2_float"),
+        )
+
+
+class MockSameFieldSummaryTableManager(MockSummaryRowTableManager):
+    @property
+    def table_elements(self):
+        return (
+            te.StringTableElement(name="Name", attr="field_a"),
+            te.IntTableElement(name="Count", attr="field_b"),
+            DoubledIntTableElement(name="Doubled", attr="field_b"),
+        )
+
+
 class HubASummaryTableManager(MontrekTableManager):
     repository_class = HubARepository
     show_summary_row = True
@@ -75,6 +105,12 @@ class TestSummaryRowOfMockRows(TestCase):
         self.assertAlmostEqual(values["Field C"], 6.0)
         self.assertAlmostEqual(values["Field E"], 6.2)
         self.assertIsNone(values["Field D"])
+
+    def test_columns_of_the_same_field_have_their_own_totals(self):
+        manager = MockSameFieldSummaryTableManager()
+        fields = manager.get_summary_fields(manager.table_elements)
+
+        self.assertEqual([field.value for field in fields[1:]], [6, 12])
 
     def test_label_in_the_first_column_not_summed(self):
         manager = MockSummaryRowTableManager()
@@ -176,6 +212,22 @@ class TestSummaryRowOfQuerysets(TestCase):
         fields = manager.get_summary_fields(manager.table_elements)
 
         self.assertEqual(fields[1].value, 14)
+
+    def test_columns_of_the_same_field_in_sql_and_python(self):
+        manager = HubCSameFieldSummaryTableManager({"user_id": self.user.id})
+        fields = manager.get_summary_fields(manager.table_elements)
+
+        self.assertEqual([field.value for field in fields[1:]], [7, 14])
+
+    def test_integers_of_a_float_column_sum_as_shown(self):
+        for _ in range(2):
+            me_factories.SatTSC2Factory(field_tsc2_float=1.8)
+        manager = HubCFloatColumnSummaryTableManager({"user_id": self.user.id})
+        fields = manager.get_summary_fields(manager.table_elements)
+
+        # Each row shows 1, so the column sums to 2, not to int(3.6)
+        self.assertEqual(fields[1].value, 2)
+        self.assertAlmostEqual(fields[2].value, 3.6)
 
     def test_repository_sums_only_numeric_columns(self):
         queryset = HubCRepository({}).receive()

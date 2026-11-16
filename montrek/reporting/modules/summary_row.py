@@ -32,17 +32,19 @@ class SummaryRow:
     @staticmethod
     def sum_rows(
         rows: Iterable[Any], elements: Sequence[te.NumberTableElement]
-    ) -> dict[str, Number | None]:
-        """Sums of the elements' values; empty and non-numeric values are left
-        out, and a column without any number sums to None, as SUM does."""
-        totals: dict[str, Number | None] = {element.attr: None for element in elements}
+    ) -> list[Number | None]:
+        """The sum of each element's values, in the order of the elements, as
+        two columns may show the same field differently. Empty and non-numeric
+        values are left out, and a column without any number sums to None, as
+        SUM does."""
+        totals: list[Number | None] = [None] * len(elements)
         for row in rows:
-            for element in elements:
+            for index, element in enumerate(elements):
                 value = element.get_value(row)
                 if not SummaryRow._is_number(value):
                     continue
-                total = totals[element.attr]
-                totals[element.attr] = value if total is None else total + value
+                total = totals[index]
+                totals[index] = value if total is None else total + value
         return totals
 
     @staticmethod
@@ -51,13 +53,19 @@ class SummaryRow:
             return False
         return not (isinstance(value, float) and math.isnan(value))
 
-    def display_fields(self, sums: Mapping[str, Any]) -> list[DisplayField]:
-        summed = {id(element): element for element in self.summed_elements}
+    def display_fields(self, sums: Sequence[Any]) -> list[DisplayField]:
+        """``sums`` holds the total of each of ``summed_elements``, in order."""
+        summed_elements = self.summed_elements
+        totals = {
+            id(element): total
+            for element, total in zip(summed_elements, sums, strict=True)
+        }
+        summed = {id(element): element for element in summed_elements}
         label_index = self._label_index(summed)
         fields = []
         for index, element in enumerate(self.table_elements):
             summed_element = summed.get(id(element))
-            total = None if summed_element is None else sums.get(summed_element.attr)
+            total = totals.get(id(element))
             if summed_element is not None and total is not None:
                 fields.append(summed_element.get_sum_display_field(total))
             elif index == label_index:

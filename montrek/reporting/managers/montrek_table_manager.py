@@ -214,8 +214,9 @@ class MontrekTableManagerABC(
             self.get_column_sums(summary_row.summed_elements)
         )
 
-    def get_column_sums(self, elements: list[te.NumberTableElement]) -> dict[str, Any]:
-        """Sums of the elements over all rows of the table, not only the page."""
+    def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
+        """The sum of each element over all rows of the table, not only the
+        page, in the order of the elements."""
         try:
             table = self.get_full_table()
         except NotImplementedError:
@@ -479,26 +480,49 @@ class MontrekTableManager(MontrekTableManagerABC):
         self.set_order_field()
         return self.repository.receive()
 
-    def get_column_sums(self, elements: list[te.NumberTableElement]) -> dict[str, Any]:
-        """Summed in SQL where the element shows a numeric column of the
-        queryset as it is; otherwise in Python over all rows."""
+    def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
+        """Summed in SQL where the sum of the column is the sum of the values
+        the element shows; otherwise in Python over all rows."""
         queryset = self.get_full_table()
         if not isinstance(queryset, QuerySet):
             return super().get_column_sums(elements)
-        sql_elements = [
-            element
-            for element in elements
-            if type(element).get_value is te.NumberTableElement.get_value
-        ]
-        sums = self.repository.get_column_sums(
-            queryset, [element.attr for element in sql_elements]
+        sql_sums = self.repository.get_column_sums(
+            queryset,
+            [
+                element.attr
+                for element in elements
+                if self._is_summed_in_sql(queryset, element)
+            ],
         )
-        python_elements = [element for element in elements if element.attr not in sums]
-        if python_elements:
+        totals: list[Any] = [None] * len(elements)
+        python_indexes = []
+        for index, element in enumerate(elements):
+            if self._is_summed_in_sql(queryset, element) and element.attr in sql_sums:
+                totals[index] = sql_sums[element.attr]
+            else:
+                python_indexes.append(index)
+        if python_indexes:
             rows = list(queryset)
             self._preload_container(rows)
-            sums.update(SummaryRow.sum_rows(rows, python_elements))
-        return sums
+            python_sums = SummaryRow.sum_rows(
+                rows, [elements[index] for index in python_indexes]
+            )
+            for index, total in zip(python_indexes, python_sums, strict=True):
+                totals[index] = total
+        return totals
+
+    def _is_summed_in_sql(
+        self, queryset: QuerySet, element: te.NumberTableElement
+    ) -> bool:
+        if type(element).get_value is not te.NumberTableElement.get_value:
+            return False
+        if element.numerical_type is float:
+            return True
+        # Values shown as integers are truncated one by one, which the sum of
+        # a float or decimal column is not
+        if element.numerical_type is int:
+            return self.repository.is_integer_column(queryset, element.attr)
+        return False
 
     def get_table_row(self, row_id: int) -> Any | None:
         rows = list(self.get_full_table().filter(pk=row_id)[:1])

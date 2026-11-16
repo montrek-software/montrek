@@ -318,32 +318,45 @@ class MontrekRepository:
         """
         summable = [
             field
-            for field in fields
-            if MontrekRepository._is_numeric_column(queryset, field)
+            for field in dict.fromkeys(fields)
+            if isinstance(
+                MontrekRepository._output_field(queryset, field),
+                models.IntegerField | models.FloatField | models.DecimalField,
+            )
         ]
         if not summable:
             return {}
-        return queryset.order_by().aggregate(
-            **{field: Sum(field) for field in summable}
+        # Aliases of their own: an aggregate named like the annotation it sums
+        # could take that annotation's place.
+        aliases = {}
+        for index, field in enumerate(summable):
+            alias = f"_sum_{index}"
+            while alias in queryset.query.annotations:
+                alias = f"_{alias}"
+            aliases[alias] = field
+        sums = queryset.order_by().aggregate(
+            **{alias: Sum(field) for alias, field in aliases.items()}
+        )
+        return {field: sums[alias] for alias, field in aliases.items()}
+
+    @staticmethod
+    def is_integer_column(queryset: QuerySet, field: str) -> bool:
+        return isinstance(
+            MontrekRepository._output_field(queryset, field), models.IntegerField
         )
 
     @staticmethod
-    def _is_numeric_column(queryset: QuerySet, field: str) -> bool:
+    def _output_field(queryset: QuerySet, field: str) -> models.Field | None:
         annotation = queryset.query.annotations.get(field)
         if annotation is not None:
             try:
-                output_field = annotation.output_field
+                return annotation.output_field
             except FieldError:
-                return False
-        else:
-            try:
-                output_field = queryset.model._meta.get_field(field)
-            except FieldDoesNotExist:
-                return False
-        return isinstance(
-            output_field,
-            models.IntegerField | models.FloatField | models.DecimalField,
-        )
+                return None
+        try:
+            return cast(models.Field, queryset.model._meta.get_field(field))
+        except FieldDoesNotExist:
+            return None
 
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False
