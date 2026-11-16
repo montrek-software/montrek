@@ -990,6 +990,9 @@ class MoneyTableElement(NumberTableElement):
             return super().get_value_len(obj)
         return len(self._format_value(value)) + len(self.ccy_symbol)
 
+    def get_sum_value_len(self, total: Any) -> int:
+        return super().get_sum_value_len(total) + len(self.ccy_symbol)
+
     def format_latex(self, value):
         formatted_value = super().format_latex(value)
         latex_ccy_symbol = (

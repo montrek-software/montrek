@@ -319,7 +319,11 @@ class MontrekTableManagerABC(
     def to_latex(self):
         table_elements = self.table_elements
         table = self.get_full_table()
-        summary = self._get_summary(table_elements) if len(table) else None
+        summary = (
+            self._get_summary(self._get_export_elements(table_elements))
+            if len(table)
+            else None
+        )
         return LatexTableConverter(
             self.table_title,
             table_elements,
@@ -336,7 +340,11 @@ class MontrekTableManagerABC(
         """The sheet's rows, and the summary row under them. CSV and JSON
         leave it out: programs reading them would count it as a row."""
         frame = self.get_output_df()
-        summary = None if frame.empty else self._get_summary(self.table_elements)
+        summary = (
+            None
+            if frame.empty
+            else self._get_summary(self._get_export_elements(self.table_elements))
+        )
         if summary is None:
             return frame
         summary_row, sums = summary
@@ -344,6 +352,18 @@ class MontrekTableManagerABC(
         frame = frame.copy()
         frame.loc[len(frame)] = [values.get(column) for column in frame.columns]
         return frame
+
+    @staticmethod
+    def _get_export_elements(
+        table_elements: TableElementsType,
+    ) -> list[te.TableElement]:
+        """The columns LaTeX and Excel write: without the link columns, so
+        that the summary row's label lands in one of them."""
+        return [
+            element
+            for element in table_elements
+            if not isinstance(element, te.LinkTableElement)
+        ]
 
     def get_excel_formatter(self) -> MontrekExcelFormatter:
         formatter = super().get_excel_formatter()

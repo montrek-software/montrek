@@ -83,6 +83,18 @@ class MockSameFieldSummaryTableManager(MockSummaryRowTableManager):
         )
 
 
+class MockLinkFirstSummaryTableManager(MockSummaryRowTableManager):
+    @property
+    def table_elements(self):
+        return (
+            te.LinkTableElement(
+                name="Details", url="home", kwargs={}, hover_text="Details", icon="eye"
+            ),
+            te.StringTableElement(name="Name", attr="field_a"),
+            te.IntTableElement(name="Count", attr="field_b"),
+        )
+
+
 class HubASummaryTableManager(MontrekTableManager):
     repository_class = HubARepository
     show_summary_row = True
@@ -378,6 +390,27 @@ class TestSummaryRowInExports(TestCase):
             repository_class = MockEmptyRepository
 
         self.assertNotIn("\\bfseries Sum", EmptyManager().to_latex())
+
+    def test_latex_label_after_a_leading_link_column(self):
+        latex = MockLinkFirstSummaryTableManager().to_latex()
+
+        self.assertIn("\\bfseries Sum &", latex)
+
+    def test_excel_label_after_a_leading_link_column(self):
+        sheet = self.excel_sheet(MockLinkFirstSummaryTableManager())
+
+        self.assertEqual([cell.value for cell in sheet[sheet.max_row]], ["Sum", 6])
+
+    def test_html_label_in_the_leading_link_column(self):
+        manager = MockLinkFirstSummaryTableManager()
+        fields = manager.get_summary_fields(manager.table_elements)
+
+        self.assertEqual(fields[0].display_value, "Sum")
+
+    def test_latex_width_of_a_currency_total_includes_the_symbol(self):
+        element = te.EuroTableElement(name="Amount", attr="amount")
+
+        self.assertEqual(element.get_sum_value_len(1000), len("1,000.00€"))
 
     def test_latex_column_fits_the_total(self):
         manager = MockLongSummaryRowTableManager()
