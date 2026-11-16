@@ -17,6 +17,8 @@ class MontrekExcelFormatter:
     NORMAL_FONT_MULTIPLIER = 1.1
     # Excel's own default, used when settings.FONT_NAME is empty
     DEFAULT_FONT_NAME = "Calibri"
+    # Whether the last row is a summary row, set by the table manager
+    summary_row: bool = False
 
     @classmethod
     def format_excel(
@@ -82,6 +84,7 @@ class MontrekExcelFormatter:
                 start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"
             ),
             "thin_border": Border(bottom=Side(style="thin", color="E0E0E0")),
+            "summary_border": Border(top=Side(style="medium", color=primary)),
             "normal_font": self._font(),
             "bold_font": self._font(bold=True),
             "negative_font": self._font(color=negative),
@@ -111,12 +114,22 @@ class MontrekExcelFormatter:
             if row_idx <= row_offset:
                 continue
             logical_row = row_idx - row_offset
+            is_summary_row = (
+                self.summary_row and logical_row > 1 and row_idx == worksheet.max_row
+            )
             for col_idx, cell in enumerate(row):
                 if logical_row == 1:
                     self._style_header_cell(cell, styles, col_idx)
-                else:
-                    self._style_data_cell(cell, logical_row, styles, row)
-                    self._format_data_cell(cell, col_formats.get(col_idx))
+                    continue
+                self._style_data_cell(cell, logical_row, styles, row)
+                if is_summary_row:
+                    self._style_summary_cell(cell, styles)
+                self._format_data_cell(cell, col_formats.get(col_idx))
+
+    def _style_summary_cell(self, cell, styles) -> None:
+        """Bold, under a line in the primary colour, as in the HTML table."""
+        cell.border = styles["summary_border"]
+        self._style_font(cell, styles, is_bold=True)
 
     def _style_header_cell(self, cell, styles, col_idx: int) -> None:
         """Apply styling to a header cell."""

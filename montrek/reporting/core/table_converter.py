@@ -14,6 +14,7 @@ class LatexTableConverter:
         rows_per_page: int = 25,
         max_cell_chars: int | None = None,
         long_table: bool = False,
+        summary_cells: list[tuple[str, int]] | None = None,
     ) -> None:
         self.table_title = table_title
         self.table_elements = table_elements
@@ -30,6 +31,8 @@ class LatexTableConverter:
         # it has to and repeats its header, instead of a float per
         # ``rows_per_page`` rows. Needed when row heights vary a lot.
         self.long_table = long_table
+        # The summary row under the last row: each cell's LaTeX and width
+        self.summary_cells = summary_cells or []
         self.column_sizer: dict[int, list[int]] = {}
         # Footnote numbers run on across the whole table, so a note repeated on
         # a later page keeps its number; each page lists the notes marked on it.
@@ -174,7 +177,26 @@ class LatexTableConverter:
 
     def get_rows_str(self) -> str:
         self._seed_column_sizer_from_headers()
-        return "".join(self._get_row_str(query_object) for query_object in self.table)
+        self._seed_column_sizer_from_summary()
+        rows_str = "".join(
+            self._get_row_str(query_object) for query_object in self.table
+        )
+        return rows_str + self._get_summary_row_str()
+
+    def _get_summary_row_str(self) -> str:
+        """Set off from the rows by a rule in the primary colour, as the header."""
+        if not self.summary_cells:
+            return ""
+        row_str = "".join(cell_str for cell_str, _ in self.summary_cells)
+        return (
+            "\\arrayrulecolor{primary}\\hline\\arrayrulecolor{bordercolor}\n"
+            + row_str[:-2]
+            + "\\\\\n\\hline\n"
+        )
+
+    def _seed_column_sizer_from_summary(self) -> None:
+        for col_idx, (_, value_len) in enumerate(self.summary_cells):
+            self.column_sizer.setdefault(col_idx, []).append(value_len)
 
     def _get_row_str(self, query_object: Any) -> str:
         row_str = ""
@@ -195,6 +217,7 @@ class LatexTableConverter:
     def get_table_str(self) -> str:
         table_str = ""
         self._seed_column_sizer_from_headers()
+        self._seed_column_sizer_from_summary()
         table_len = len(self.table)
 
         for i, query_object in enumerate(self.table):
@@ -203,7 +226,7 @@ class LatexTableConverter:
                 table_str += self.get_table_end_str()
                 table_str += "\\newpage\n"
                 table_str += self.get_table_start_str()
-        return table_str
+        return table_str + self._get_summary_row_str()
 
     def _seed_column_sizer_from_headers(self) -> None:
         col_idx = 0

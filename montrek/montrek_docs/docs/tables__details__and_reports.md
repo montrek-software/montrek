@@ -96,7 +96,7 @@ class HubCTableManager(MontrekTableManager):
 - The label reads "Sum", or "Summe" if `LANGUAGE_CODE` is German. It is shown in the column `label_attr`, by default the first column that is not summed.
 - Columns of the queryset are summed in one SQL query. Columns whose table element computes its value in `get_value()` are summed in Python over all rows.
 - A table with `is_large = True` cannot show a sum row; defining such a manager raises `ImproperlyConfigured`.
-- The row is shown in the HTML and PDF table, not in LaTeX or in the exports.
+- The row is shown in the HTML, PDF and LaTeX table and in the Excel download, with the totals as numbers. CSV and JSON leave it out, as programs reading them would count it as a row.
 
 ## Summary
 

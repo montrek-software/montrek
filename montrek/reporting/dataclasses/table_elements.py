@@ -802,6 +802,18 @@ class NumberTableElement(AttrTableElement):
             value=value,
         )
 
+    def get_sum_value(self, total: Any) -> Any:
+        """The total as the column's number type, as its values."""
+        return self._to_number(total)
+
+    def get_sum_latex(self, total: Any) -> str:
+        """LaTeX cell of the summary row, in bold."""
+        return f"\\bfseries {self.format_latex(self._to_number(total))}"
+
+    def get_sum_value_len(self, total: Any) -> int:
+        """Width of the summary row's cell, for the column sizes of LaTeX."""
+        return len(self._analyze_value(self._to_number(total)))
+
 
 @dataclass
 class FloatTableElement(NumberTableElement):
