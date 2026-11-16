@@ -10,8 +10,9 @@ class ReleaseInfo:
 
     A client image has no .git directories. Its build (montrek-deploy
     release_source.py) writes release.json next to manage.py instead: the
-    release name, core and every extension with repo, tag and commit, and the
-    sha256 of the locked requirements. /montrek/.montrek-image holds the commit
+    release name ("name"), core ("core") and every extension ("extensions",
+    each with its "name"), each with "repo", "ref" (the release tag from
+    release.yaml) and "commit", and the sha256 of the locked requirements. /montrek/.montrek-image holds the commit
     of the deployment repository the image was built from.
     """
 
