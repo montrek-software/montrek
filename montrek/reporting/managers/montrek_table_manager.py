@@ -207,12 +207,19 @@ class MontrekTableManagerABC(
         self, table_elements: TableElementsType
     ) -> list[DisplayField] | None:
         """The cells of the summary row, or None without one."""
+        summary = self._get_summary(table_elements)
+        if summary is None:
+            return None
+        summary_row, sums = summary
+        return summary_row.display_fields(sums)
+
+    def _get_summary(
+        self, table_elements: TableElementsType
+    ) -> tuple[SummaryRow, list[Any]] | None:
         if not self.show_summary_row:
             return None
         summary_row = SummaryRow(self.summary_row_config, table_elements)
-        return summary_row.display_fields(
-            self.get_column_sums(summary_row.summed_elements)
-        )
+        return summary_row, self.get_column_sums(summary_row.summed_elements)
 
     def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
         """The sum of each element over all rows of the table, not only the
@@ -310,17 +317,58 @@ class MontrekTableManagerABC(
         return serializer.serialize_all(export_manager.get_full_table())
 
     def to_latex(self):
+        table_elements = self.table_elements
+        table = self.get_full_table()
+        summary = (
+            self._get_summary(self._get_export_elements(table_elements))
+            if len(table)
+            else None
+        )
         return LatexTableConverter(
             self.table_title,
-            self.table_elements,
-            self.get_full_table(),
+            table_elements,
+            table,
             rows_per_page=self.latex_rows_per_page,
             max_cell_chars=self.latex_max_cell_chars,
             long_table=self.latex_long_table,
+            summary_cells=(
+                None if summary is None else summary[0].latex_cells(summary[1])
+            ),
         ).to_latex()
 
     def get_excel_frame(self) -> pd.DataFrame:
-        return self.get_output_df()
+        """The sheet's rows, and the summary row under them. CSV and JSON
+        leave it out: programs reading them would count it as a row."""
+        frame = self.get_output_df()
+        summary = (
+            None
+            if frame.empty
+            else self._get_summary(self._get_export_elements(self.table_elements))
+        )
+        if summary is None:
+            return frame
+        summary_row, sums = summary
+        values = summary_row.excel_values(sums)
+        frame = frame.copy()
+        frame.loc[len(frame)] = [values.get(column) for column in frame.columns]
+        return frame
+
+    @staticmethod
+    def _get_export_elements(
+        table_elements: TableElementsType,
+    ) -> list[te.TableElement]:
+        """The columns LaTeX and Excel write: without the link columns, so
+        that the summary row's label lands in one of them."""
+        return [
+            element
+            for element in table_elements
+            if not isinstance(element, te.LinkTableElement)
+        ]
+
+    def get_excel_formatter(self) -> MontrekExcelFormatter:
+        formatter = super().get_excel_formatter()
+        formatter.summary_row = self.show_summary_row
+        return formatter
 
     def get_excel_col_formats(self) -> dict[int, str | None]:
         elements = [

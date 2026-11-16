@@ -1,8 +1,9 @@
 import math
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
+from reporting.core.text_converter import HtmlLatexConverter
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
 from reporting.dataclasses.summary_row_config import SummaryRowConfig
@@ -54,7 +55,57 @@ class SummaryRow:
         return not (isinstance(value, float) and math.isnan(value))
 
     def display_fields(self, sums: Sequence[Any]) -> list[DisplayField]:
-        """``sums`` holds the total of each of ``summed_elements``, in order."""
+        """``sums`` holds the total of each of ``summed_elements``, in order,
+        as for ``excel_values`` and ``latex_cells``."""
+        fields = []
+        for element, total, is_label in self._columns(sums):
+            if total is not None:
+                fields.append(
+                    cast(te.NumberTableElement, element).get_sum_display_field(total)
+                )
+            else:
+                label = str(self.config.label) if is_label else ""
+                fields.append(self._cell(element, label))
+        return fields
+
+    def excel_values(self, sums: Sequence[Any]) -> dict[str, Any]:
+        """The row's values by column header, as the columns of the sheet."""
+        values: dict[str, Any] = {}
+        for element, total, is_label in self._columns(sums):
+            if total is not None:
+                number_element = cast(te.NumberTableElement, element)
+                values[element.name] = number_element.get_sum_value(total)
+            elif is_label:
+                values[element.name] = str(self.config.label)
+        return values
+
+    def latex_cells(self, sums: Sequence[Any]) -> list[tuple[str, int]]:
+        """Each cell's LaTeX and the width it needs, without the link columns,
+        as the rows of the LaTeX table."""
+        cells = []
+        for element, total, is_label in self._columns(sums):
+            if isinstance(element, te.LinkTableElement):
+                continue
+            if total is not None:
+                number_element = cast(te.NumberTableElement, element)
+                cells.append(
+                    (
+                        number_element.get_sum_latex(total),
+                        number_element.get_sum_value_len(total),
+                    )
+                )
+            elif is_label:
+                label = HtmlLatexConverter.convert(str(self.config.label))
+                cells.append((f"\\bfseries {label} &", len(label)))
+            else:
+                cells.append((" &", 0))
+        return cells
+
+    def _columns(
+        self, sums: Sequence[Any]
+    ) -> Iterator[tuple[te.TableElement, Any, bool]]:
+        """Each element with its total (None if it has none) and whether it
+        holds the label."""
         summed_elements = self.summed_elements
         totals = {
             id(element): total
@@ -62,17 +113,9 @@ class SummaryRow:
         }
         summed = {id(element): element for element in summed_elements}
         label_index = self._label_index(summed)
-        fields = []
         for index, element in enumerate(self.table_elements):
-            summed_element = summed.get(id(element))
             total = totals.get(id(element))
-            if summed_element is not None and total is not None:
-                fields.append(summed_element.get_sum_display_field(total))
-            elif index == label_index:
-                fields.append(self._cell(element, str(self.config.label)))
-            else:
-                fields.append(self._cell(element, ""))
-        return fields
+            yield element, total, total is None and index == label_index
 
     def _label_index(self, summed: Mapping[int, te.NumberTableElement]) -> int | None:
         for index, element in enumerate(self.table_elements):
