@@ -685,6 +685,19 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def set_df(self):
         return pd.DataFrame(self.df_data)
 
+    def get_excel_col_formats(self) -> dict[int, str | None]:
+        """By the column of the data each element shows: the sheet holds all
+        columns of the data, not only those of the table, and two columns may
+        share a header. ``get_df`` keeps the order of the columns."""
+        formats = {
+            element.attr: element.excel_format_str
+            for element in self.table_elements
+            if isinstance(element, te.AttrTableElement)
+        }
+        return {
+            index: formats.get(column) for index, column in enumerate(self.df.columns)
+        }
+
     def get_df(self) -> pd.DataFrame:
         return self.df.rename(columns=self.get_field_table_elements_name_map())
 
