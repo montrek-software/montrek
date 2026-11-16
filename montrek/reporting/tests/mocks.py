@@ -561,3 +561,15 @@ class MockMontrekReportFieldEditView(MontrekReportFieldEditView):
 class MockMontrekReportFieldEditViewValidationError(MockMontrekReportFieldEditView):
     def form_valid(self, form, edit_data: dict, request, field):
         raise forms.ValidationError("Validation Error raised!")
+
+
+class MockSummaryRowTableManager(MockMontrekTableManager):
+    show_summary_row = True
+
+
+class MockLongSummaryRowTableManager(MockLongMontrekTableManager):
+    show_summary_row = True
+
+
+class MockSummaryRowDataFrameTableManager(MockMontrekDataFrameTableManager):
+    show_summary_row = True

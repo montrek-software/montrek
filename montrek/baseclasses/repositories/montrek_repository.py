@@ -48,9 +48,9 @@ from baseclasses.utils import (
     django_field_to_pandas_dtype,
 )
 from django.apps import apps
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import FieldDoesNotExist, FieldError, PermissionDenied
 from django.db import models
-from django.db.models import F, Q, QuerySet
+from django.db.models import F, Q, QuerySet, Sum
 from django.db.models.fields.related import ManyToManyRel
 from django.utils import timezone
 from django_pandas.io import read_frame
@@ -307,6 +307,56 @@ class MontrekRepository:
             self.hub_class.objects.filter(**filters).values_list("id", flat=True)
         )
         return queryset.filter(hub_id__in=hub_ids)
+
+    @staticmethod
+    def get_column_sums(queryset: QuerySet, fields: Iterable[str]) -> dict[str, Any]:
+        """Sums of the fields over all rows of the queryset, in one query.
+
+        Only fields the queryset holds as numeric columns or annotations are
+        summed; the others are left out, for the caller to sum otherwise. A
+        field without any value sums to None.
+        """
+        summable = [
+            field
+            for field in dict.fromkeys(fields)
+            if isinstance(
+                MontrekRepository._output_field(queryset, field),
+                models.IntegerField | models.FloatField | models.DecimalField,
+            )
+        ]
+        if not summable:
+            return {}
+        # Aliases of their own: an aggregate named like the annotation it sums
+        # could take that annotation's place.
+        aliases = {}
+        for index, field in enumerate(summable):
+            alias = f"_sum_{index}"
+            while alias in queryset.query.annotations:
+                alias = f"_{alias}"
+            aliases[alias] = field
+        sums = queryset.order_by().aggregate(
+            **{alias: Sum(field) for alias, field in aliases.items()}
+        )
+        return {field: sums[alias] for alias, field in aliases.items()}
+
+    @staticmethod
+    def is_integer_column(queryset: QuerySet, field: str) -> bool:
+        return isinstance(
+            MontrekRepository._output_field(queryset, field), models.IntegerField
+        )
+
+    @staticmethod
+    def _output_field(queryset: QuerySet, field: str) -> models.Field | None:
+        annotation = queryset.query.annotations.get(field)
+        if annotation is not None:
+            try:
+                return annotation.output_field
+            except FieldError:
+                return None
+        try:
+            return cast(models.Field, queryset.model._meta.get_field(field))
+        except FieldDoesNotExist:
+            return None
 
     def receive_raw(
         self, apply_filter: bool = True, update_view_model: bool = False

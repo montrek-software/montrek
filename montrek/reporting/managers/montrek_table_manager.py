@@ -13,6 +13,7 @@ from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
@@ -26,9 +27,11 @@ from reporting.core.table_converter import LatexTableConverter
 from reporting.core.text_converter import HtmlTextConverter
 from reporting.dataclasses import table_elements as te
 from reporting.dataclasses.display_field import DisplayField
+from reporting.dataclasses.summary_row_config import SummaryRowConfig
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
 from reporting.modules.mailed_downloads import MailedDownloads
+from reporting.modules.summary_row import SummaryRow
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 from reporting.modules.table_serializer import TableSerializer
 from reporting.tasks.download_table_task import DownloadTableTask
@@ -37,6 +40,11 @@ from reporting.tasks.refresh_data_task import RefreshDataTask
 
 class MontrekTableMetaClass(type):
     def __init__(cls, name, bases, dct):
+        if getattr(cls, "show_summary_row", False) and getattr(cls, "is_large", False):
+            raise ImproperlyConfigured(
+                f"{name} is large and cannot show a summary row: the sums would "
+                "read all rows of the table."
+            )
         cls.download_task = DownloadTableTask(manager_class=cls)
         cls.refresh_data_task = RefreshDataTask(manager_class=cls)
         super().__init__(name, bases, dct)
@@ -51,6 +59,9 @@ class MontrekTableManagerABC(
     is_compact_format = False
     has_table_elements_filter_field: bool = True
     is_large: bool = False
+    # A row under the table with the sum of each numeric column over all rows
+    show_summary_row: bool = False
+    summary_row_config: ClassVar[SummaryRowConfig] = SummaryRowConfig()
     latex_rows_per_page: int = 25
     # See LatexTableConverter: cap on a cell's claim to column width, and
     # page-breaking longtable output instead of fixed-size table floats.
@@ -178,15 +189,46 @@ class MontrekTableManagerABC(
         else:
             order_field = self.order_field
         table_elements = self.table_elements
+        display_fields = self.get_display_fields(table_elements)
         return template.render(
             context={
                 "table_title": self.table_title,
                 "table_headers": self.get_table_headers(table_elements),
-                "display_fields": self.get_display_fields(table_elements),
+                "display_fields": display_fields,
+                "summary_fields": self._get_summary_fields_if_rows(
+                    table_elements, display_fields
+                ),
                 "order_field": order_field,
                 "order_descending": self.order_descending,
             }
         )
+
+    def get_summary_fields(
+        self, table_elements: TableElementsType
+    ) -> list[DisplayField] | None:
+        """The cells of the summary row, or None without one."""
+        if not self.show_summary_row:
+            return None
+        summary_row = SummaryRow(self.summary_row_config, table_elements)
+        return summary_row.display_fields(
+            self.get_column_sums(summary_row.summed_elements)
+        )
+
+    def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
+        """The sum of each element over all rows of the table, not only the
+        page, in the order of the elements."""
+        try:
+            table = self.get_full_table()
+        except NotImplementedError:
+            table = self.get_table()
+        return SummaryRow.sum_rows(table, elements)
+
+    def _get_summary_fields_if_rows(
+        self, table_elements: TableElementsType, display_fields: list
+    ) -> list[DisplayField] | None:
+        if not display_fields:
+            return None
+        return self.get_summary_fields(table_elements)
 
     def render_single_row(self, query_object) -> str:
         """Render a single ``<tr>`` using the same markup as the full table.
@@ -247,11 +289,15 @@ class MontrekTableManagerABC(
         pdf_elements = [
             e for e in self.table_elements if not isinstance(e, te.LinkTableElement)
         ]
+        display_fields = self.get_all_display_fields()
         return template.render(
             context={
                 "table_title": self.table_title,
                 "table_headers": self.get_table_headers(pdf_elements),
-                "display_fields": self.get_all_display_fields(),
+                "display_fields": display_fields,
+                "summary_fields": self._get_summary_fields_if_rows(
+                    pdf_elements, display_fields
+                ),
                 "order_field": None,
                 "order_descending": False,
                 "pdf_mode": True,
@@ -433,6 +479,50 @@ class MontrekTableManager(MontrekTableManagerABC):
     def get_full_table(self) -> QuerySet:
         self.set_order_field()
         return self.repository.receive()
+
+    def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
+        """Summed in SQL where the sum of the column is the sum of the values
+        the element shows; otherwise in Python over all rows."""
+        queryset = self.get_full_table()
+        if not isinstance(queryset, QuerySet):
+            return super().get_column_sums(elements)
+        sql_sums = self.repository.get_column_sums(
+            queryset,
+            [
+                element.attr
+                for element in elements
+                if self._is_summed_in_sql(queryset, element)
+            ],
+        )
+        totals: list[Any] = [None] * len(elements)
+        python_indexes = []
+        for index, element in enumerate(elements):
+            if self._is_summed_in_sql(queryset, element) and element.attr in sql_sums:
+                totals[index] = sql_sums[element.attr]
+            else:
+                python_indexes.append(index)
+        if python_indexes:
+            rows = list(queryset)
+            self._preload_container(rows)
+            python_sums = SummaryRow.sum_rows(
+                rows, [elements[index] for index in python_indexes]
+            )
+            for index, total in zip(python_indexes, python_sums, strict=True):
+                totals[index] = total
+        return totals
+
+    def _is_summed_in_sql(
+        self, queryset: QuerySet, element: te.NumberTableElement
+    ) -> bool:
+        if type(element).get_value is not te.NumberTableElement.get_value:
+            return False
+        if element.numerical_type is float:
+            return True
+        # Values shown as integers are truncated one by one, which the sum of
+        # a float or decimal column is not
+        if element.numerical_type is int:
+            return self.repository.is_integer_column(queryset, element.attr)
+        return False
 
     def get_table_row(self, row_id: int) -> Any | None:
         rows = list(self.get_full_table().filter(pk=row_id)[:1])

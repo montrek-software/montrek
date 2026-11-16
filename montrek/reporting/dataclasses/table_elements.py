@@ -700,6 +700,8 @@ class NumberTableElement(AttrTableElement):
     serializer_field_class: ClassVar = serializers.FloatField
     th_classes: ClassVar[TdClassesType | None] = ["text-end"]
     _excel_decimal_places: ClassVar[int] = 2
+    # Whether a summary row adds the column up; rates and shares are not
+    summable: ClassVar[bool] = True
 
     @property
     def excel_format_str(self) -> str:
@@ -771,12 +773,34 @@ class NumberTableElement(AttrTableElement):
         return self.shortener.shorten(value, 2, self.thousands)
 
     def get_value(self, obj: Any) -> Any:
-        value = super().get_value(obj)
+        return self._to_number(super().get_value(obj))
+
+    def _to_number(self, value: Any) -> Any:
         try:
-            numerical_value = self.numerical_type(value)
+            return self.numerical_type(value)
         except (TypeError, ValueError):
             return value
-        return numerical_value
+
+    def get_sum_display_field(self, total: Any) -> DisplayField:
+        """Cell of the summary row: the total formatted like the values of the
+        column, without the hover text and styles of subclasses, which may
+        depend on a row."""
+        value = self._to_number(total)
+        display_value = self.render_field_template(
+            self._analyze_value(value), {self.attr: value}
+        )
+        return DisplayField(
+            name=self.name,
+            display_value=display_value,
+            style_attrs_str=self.format_style_attr(
+                NumberTableElement.get_style_attrs(self, value, None)
+            ),
+            td_classes_str=self.format_td_classes(
+                NumberTableElement.get_td_classes(self, value, None)
+            ),
+            hover_text=None,
+            value=value,
+        )
 
 
 @dataclass
@@ -810,6 +834,7 @@ class IntTableElement(NumberTableElement):
 class PercentTableElement(NumberTableElement):
     serializer_field_class: ClassVar = serializers.FloatField
     attr: str
+    summable: ClassVar[bool] = False
 
     @property
     def excel_format_str(self) -> str:
@@ -833,6 +858,7 @@ class PercentTableElement(NumberTableElement):
 class ProgressBarTableElement(NumberTableElement):
     serializer_field_class: ClassVar = serializers.FloatField
     attr: str
+    summable: ClassVar[bool] = False
     td_classes: ClassVar[TdClassesType] = ["text-center"]
     th_classes: ClassVar[TdClassesType | None] = ["text-center"]
     field_template: ClassVar[str | None] = "progress_bar"

@@ -39,6 +39,11 @@
           {% include "tables/partials/table_row.html" with cells=row %}
         {% endfor %}
         </tbody>
+        {% if summary_fields %}
+          <tfoot class="table-summary-row">
+            {% include "tables/partials/table_row.html" with cells=summary_fields %}
+          </tfoot>
+        {% endif %}
       </table>
       {% if not display_fields %}
         <div class="empty-state">
