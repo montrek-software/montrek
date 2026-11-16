@@ -7,6 +7,7 @@ put a details block and a table side by side as two sheets.
 """
 
 from collections.abc import Mapping
+from decimal import Decimal
 from io import BytesIO
 from typing import BinaryIO, Protocol
 
@@ -98,6 +99,7 @@ class ExcelSheetMixin:
         ``write_excel_workbook``.
         """
         frame = self.get_excel_frame() if frame is None else frame
+        frame = self.decimals_as_floats(frame)
         row_offset = 3 if show_table_title else 0
         frame.to_excel(
             excel_writer,
@@ -113,6 +115,29 @@ class ExcelSheetMixin:
             col_formats=self.get_excel_col_formats(),
             table_title=self.table_title if show_table_title else None,
         )
+
+    @staticmethod
+    def decimals_as_floats(frame: pd.DataFrame) -> pd.DataFrame:
+        """Write decimals as numbers: pandas writes every value of a type it
+        does not know as text, Decimal among them. Excel holds numbers as
+        floats anyway."""
+        # By position, as two columns may share a header
+        object_columns = [
+            index
+            for index, dtype in enumerate(frame.dtypes)
+            if pd.api.types.is_object_dtype(dtype)
+        ]
+        if not object_columns:
+            return frame
+        frame = frame.copy()
+        for index in object_columns:
+            frame.isetitem(
+                index,
+                frame.iloc[:, index].map(
+                    lambda value: float(value) if isinstance(value, Decimal) else value
+                ),
+            )
+        return frame
 
     @staticmethod
     def disarm_formula_cells(worksheet) -> None:
