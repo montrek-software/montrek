@@ -151,7 +151,12 @@ class QueryBuilder:
             value_date_list__value_date__isnull=False,
         ).exclude(id=OuterRef("id"))
         if self.annotator.has_only_static_sats():
-            filtered_query = queryset.filter(value_date_list__value_date__isnull=True)
+            # The row's own copy of the date, not the date of the joined value
+            # date row: Postgres estimates the share of undated rows from the
+            # statistics of this table, whereas through the join it assumes the
+            # rows spread evenly over all value dates and expects a fraction
+            # of them, which makes it sort whole tables for later pages.
+            filtered_query = queryset.filter(value_date_copy__isnull=True)
         else:
             filtered_query = queryset.filter(
                 Q(value_date__isnull=False) | ~Exists(non_null_value_date_exists)

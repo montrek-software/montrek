@@ -117,6 +117,23 @@ class TestQueryBuilder(TestCase):
             select_count(["test_decimal", "comment"]),
         )
 
+    def test_query_builder__build_queryset__static_sats_read_undated_rows(self):
+        sat = TestMontrekSatelliteFactory.create(test_name="Static")
+        TestHubValueDateFactory.create(
+            hub=sat.hub_entity,
+            value_date_list=ValueDateListFactory(value_date=datetime.date(2024, 1, 15)),
+        )
+        self.annotator.subquery_builder_to_annotations(
+            ["test_name"], TestMontrekSatellite, SatelliteSubqueryBuilder
+        )
+
+        test_query = self.query_builder.build_queryset(self.reference_date)
+
+        row = test_query.get()
+        self.assertEqual(row.test_name, "Static")
+        self.assertIsNone(row.value_date)
+        self.assertIn('"value_date_copy" IS NULL', str(test_query.query))
+
     def test_query_builder__build_queryset__hub_scope_pk_restricts_to_hub(self):
         scoped_sat = TestMontrekSatelliteFactory.create(test_name="Scoped")
         other_sat = TestMontrekSatelliteFactory.create(test_name="Other")
