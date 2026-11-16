@@ -6,8 +6,19 @@ import pandas as pd
 from django.test import TestCase
 from openpyxl import load_workbook
 
+from reporting.dataclasses import table_elements as te
 from reporting.managers.excel_export import ExcelSheetMixin
 from reporting.tests.mocks import MockMontrekDataFrameTableManager
+
+
+class MockSharedHeaderDataFrameTableManager(MockMontrekDataFrameTableManager):
+    @property
+    def table_elements(self):
+        return (
+            te.StringTableElement(name="Name", attr="field_a"),
+            te.IntTableElement(name="Value", attr="field_b"),
+            te.PercentTableElement(name="Value", attr="field_c"),
+        )
 
 
 class TestDecimalsAsFloats(TestCase):
@@ -89,3 +100,17 @@ class TestDataFrameTableExcel(TestCase):
         self.assertEqual(formats["Field B"], "#,##0")
         self.assertEqual(formats["Field C"], "#,##0.000")
         self.assertEqual(formats["Field E"], "#,##0.00")
+
+    def test_columns_sharing_a_header_keep_their_formats(self):
+        df = pd.DataFrame(
+            {"field_a": ["a"], "field_b": [1000], "field_c": [Decimal("0.25")]}
+        )
+        manager = MockSharedHeaderDataFrameTableManager(
+            {"df_data": df.to_dict(orient="records")}
+        )
+
+        sheet = load_workbook(manager.to_excel(io.BytesIO())).active
+
+        self.assertEqual([cell.value for cell in sheet[1]], ["Name", "Value", "Value"])
+        self.assertEqual(sheet["B2"].number_format, "#,##0")
+        self.assertEqual(sheet["C2"].number_format, "#,##0.00%")
