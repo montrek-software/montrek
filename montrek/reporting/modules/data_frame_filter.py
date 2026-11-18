@@ -1,13 +1,18 @@
 import datetime
+import numbers
 from collections.abc import Callable, Mapping
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from django.db.models.constants import LOOKUP_SEP
+from django.utils import timezone
 
 TRUE_VALUES = ("True", "true", True)
 FALSE_VALUES = ("False", "false", False)
+# Compared as text, as Postgres casts the field to text for them
+TEXT_LOOKUPS = frozenset({"iexact", "contains", "startswith", "endswith"})
 
 
 class DataFrameFilterError(ValueError):
@@ -20,9 +25,14 @@ class DataFrameFilter:
 
     Mirrors the filter the query builder applies to a queryset: the keys are
     ``<column>__<lookup>``, all of them must hold, and the entries under an
-    ``OR`` key form a group of which one must hold. The value is converted to
-    the type of the column, as the database casts it to the type of the field.
-    As in SQL, a comparison with an empty value is not true, negated or not.
+    ``OR`` key form a group of which one must hold. For comparisons the value
+    is converted to the type of the column, as the database casts it to the
+    type of the field; text lookups compare the text. An empty value matches
+    no condition, and so every negated one, as on the model fields of a
+    repository's view model.
+
+    Built from the rows as given (``dtype=object``), a column keeps the type of
+    its values: ints with a None among them are still ints, not floats.
     """
 
     LOOKUPS: Mapping[str, Callable[[pd.Series, Any], pd.Series]] = {
@@ -74,22 +84,21 @@ class DataFrameFilter:
             raise DataFrameFilterError(f"Cannot resolve keyword '{field}'")
         column = df[field]
         value = filter_type["filter_value"]
+        negate = bool(filter_type["filter_negate"])
         if lookup == "isnull":
             condition = column.isna() if self._to_bool(value) else column.notna()
-            return ~condition if filter_type["filter_negate"] else condition
-        present = column.notna()
-        values = column[present]
+            return ~condition if negate else condition
+        values = column[column.notna()]
         if values.empty:
-            return pd.Series(False, index=df.index)
-        converted = self._convert(values, value, is_list=lookup == "in")
+            return pd.Series(negate, index=df.index)
+        if lookup not in TEXT_LOOKUPS:
+            value = self._convert(values, value, is_list=lookup == "in")
         condition = (
-            self.LOOKUPS[lookup](values, converted)
+            self.LOOKUPS[lookup](values, value)
             .astype(bool)
             .reindex(df.index, fill_value=False)
         )
-        if filter_type["filter_negate"]:
-            return ~condition & present
-        return condition
+        return ~condition if negate else condition
 
     def _split_key(self, key: str) -> tuple[str, str]:
         field, _, lookup = key.rpartition(LOOKUP_SEP)
@@ -119,24 +128,39 @@ class DataFrameFilter:
         if pd.api.types.is_float_dtype(values):
             return float
         if pd.api.types.is_datetime64_any_dtype(values):
-            return cls._to_timestamp
-        return cls._object_converter(values.iloc[0])
+            return cls._timestamp_converter(values.iloc[0])
+        return cls._object_converter(values)
 
     @classmethod
-    def _object_converter(cls, sample: Any) -> Callable[[Any], Any]:
-        # datetime first, as a datetime is a date as well
-        converters: tuple[tuple[type, Callable[[Any], Any]], ...] = (
-            (bool, cls._to_bool),
-            (int, cls._to_int),
-            (float, float),
+    def _object_converter(cls, values: pd.Series) -> Callable[[Any], Any]:
+        """By the type all values share; bool before int and datetime before
+        date, as a bool is an int and a datetime is a date."""
+        converters: tuple[tuple[type | tuple[type, ...], Callable[[Any], Any]], ...] = (
+            ((bool, np.bool_), cls._to_bool),
+            (numbers.Integral, cls._to_int),
             (Decimal, lambda value: Decimal(str(value))),
-            (datetime.datetime, cls._to_timestamp),
+            (numbers.Real, float),
+            (datetime.datetime, cls._timestamp_converter(values.iloc[0])),
             (datetime.date, cls._to_date),
         )
-        for sample_type, converter in converters:
-            if isinstance(sample, sample_type):
+        for value_type, converter in converters:
+            if all(isinstance(value, value_type) for value in values):
                 return converter
         return str
+
+    @staticmethod
+    def _timestamp_converter(sample: Any) -> Callable[[Any], pd.Timestamp]:
+        """A naive value is read in the default time zone where the column is
+        aware, as Django reads it with ``USE_TZ``."""
+        is_aware = isinstance(sample, datetime.datetime) and sample.tzinfo is not None
+
+        def to_timestamp(value: Any) -> pd.Timestamp:
+            timestamp = pd.Timestamp(value)
+            if is_aware and timestamp.tzinfo is None:
+                return timestamp.tz_localize(timezone.get_default_timezone())
+            return timestamp
+
+        return to_timestamp
 
     @staticmethod
     def _to_bool(value: Any) -> bool:
@@ -150,10 +174,6 @@ class DataFrameFilter:
     def _to_int(value: Any) -> int:
         # As the database does, "1.0" is no integer
         return value if isinstance(value, int) else int(str(value))
-
-    @staticmethod
-    def _to_timestamp(value: Any) -> pd.Timestamp:
-        return pd.Timestamp(value)
 
     @staticmethod
     def _to_date(value: Any) -> datetime.date:

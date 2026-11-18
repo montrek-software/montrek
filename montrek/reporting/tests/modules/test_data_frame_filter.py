@@ -22,6 +22,8 @@ class TestDataFrameFilter(SimpleTestCase):
                 "day": datetime.date(2026, 1, 1),
                 "moment": datetime.datetime(2026, 1, 1, 12),
                 "active": True,
+                "rank": 1,
+                "stamp": datetime.datetime(2026, 1, 1, 12, tzinfo=datetime.UTC),
             },
             {
                 "name": "beta",
@@ -31,6 +33,8 @@ class TestDataFrameFilter(SimpleTestCase):
                 "day": datetime.date(2026, 2, 1),
                 "moment": datetime.datetime(2026, 2, 1, 12),
                 "active": False,
+                "rank": None,
+                "stamp": datetime.datetime(2026, 2, 1, 12, tzinfo=datetime.UTC),
             },
             {
                 "name": None,
@@ -40,9 +44,12 @@ class TestDataFrameFilter(SimpleTestCase):
                 "day": None,
                 "moment": None,
                 "active": True,
+                "rank": 3,
+                "stamp": None,
             },
         ]
-        self.df = pd.DataFrame(records)
+        # As the manager builds it, so that each column keeps its types
+        self.df = pd.DataFrame(records, dtype=object)
 
     def rows(self, filter_dict: dict) -> list[int]:
         mask = DataFrameFilter(filter_dict).mask(self.df)
@@ -90,9 +97,30 @@ class TestDataFrameFilter(SimpleTestCase):
         self.assertEqual(self.rows({"name__isnull": condition(False)}), [0, 1])
         self.assertEqual(self.rows({"name__isnull": condition(True, True)}), [0, 1])
 
-    def test_negation_leaves_out_empty_values_as_sql_does(self):
-        self.assertEqual(self.rows({"name__exact": condition("Alpha", True)}), [1])
-        self.assertEqual(self.rows({"ratio__gt": condition("1", True)}), [0])
+    def test_negation_keeps_empty_values(self):
+        self.assertEqual(self.rows({"name__exact": condition("Alpha", True)}), [1, 2])
+        self.assertEqual(self.rows({"ratio__gt": condition("1", True)}), [0, 2])
+
+    def test_negation_of_a_column_without_values_keeps_all_rows(self):
+        df = pd.DataFrame({"name": [None, None]}, dtype=object)
+        mask = DataFrameFilter({"name__exact": condition("x", True)}).mask(df)
+        self.assertEqual(list(mask), [True, True])
+
+    def test_text_lookups_compare_the_text(self):
+        self.assertEqual(self.rows({"ratio__contains": condition("5")}), [0, 1])
+        self.assertEqual(self.rows({"day__startswith": condition("2026-02")}), [1])
+        self.assertEqual(self.rows({"count__iexact": condition("2")}), [1])
+
+    def test_ints_with_an_empty_value_stay_ints(self):
+        self.assertEqual(self.rows({"rank__exact": condition("3")}), [2])
+        with self.assertRaises(DataFrameFilterError):
+            self.rows({"rank__in": condition(["1.0", "2"])})
+
+    def test_naive_value_on_an_aware_column_is_in_the_default_time_zone(self):
+        self.assertEqual(self.rows({"stamp__lt": condition("2026-01-15")}), [0])
+        self.assertEqual(
+            self.rows({"stamp__exact": condition("2026-02-01 12:00+00:00")}), [1]
+        )
 
     def test_all_conditions_must_hold(self):
         filter_dict = {

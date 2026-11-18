@@ -27,6 +27,7 @@ from reporting.tests.mocks import (
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
     MockRepositoryFilterFieldsManager,
+    MockSummaryRowDataFrameTableManager,
 )
 from testing.decorators.add_logged_in_user import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -755,6 +756,16 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertTrue(manager.get_df().empty)
         self.assertEqual(len(manager.messages), 1)
         self.assertIn("Filter could not be applied", manager.messages[0].message)
+
+    def test_filtered_excel_frame_keeps_the_rows_above_the_summary(self):
+        manager = MockSummaryRowDataFrameTableManager(
+            self.filtered_manager(
+                {"field_b__gte": {"filter_value": "2", "filter_negate": False}}
+            ).session_data
+        )
+        frame = manager.get_excel_frame()
+        self.assertEqual(list(frame["Field_A"][:2]), ["b", "c"])
+        self.assertEqual(len(frame), 3)
 
     def test_filter_on_a_table_without_rows(self):
         manager = MockMontrekDataFrameTableManager(

@@ -686,7 +686,8 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         if not filter_dict or not self.df_data:
             return
         try:
-            mask = DataFrameFilter(filter_dict).mask(self.df).to_numpy()
+            rows = pd.DataFrame(self.df_data, dtype=object)
+            mask = DataFrameFilter(filter_dict).mask(rows).to_numpy()
         except (ValueError, TypeError) as e:
             message = MontrekMessageError(f"Filter could not be applied: {e}")
             if message not in self.messages:
@@ -695,7 +696,8 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         self.df_data = [
             row for row, keep in zip(self.df_data, mask, strict=True) if keep
         ]
-        self.df = self.df[mask]
+        # Rebuilt rather than masked, so that its index has no gaps
+        self.df = self.set_df()
 
     def get_table(self) -> list[dict]:
         full_table = self.get_full_table()
