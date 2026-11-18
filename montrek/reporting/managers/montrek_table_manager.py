@@ -9,7 +9,10 @@ from collections.abc import Callable, Mapping
 from typing import Any, ClassVar
 
 import pandas as pd
-from baseclasses.dataclasses.montrek_message import MontrekMessageInfo
+from baseclasses.dataclasses.montrek_message import (
+    MontrekMessageError,
+    MontrekMessageInfo,
+)
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from django.conf import settings
@@ -30,6 +33,7 @@ from reporting.dataclasses.display_field import DisplayField
 from reporting.dataclasses.summary_row_config import SummaryRowConfig
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
+from reporting.modules.data_frame_filter import DataFrameFilter
 from reporting.modules.mailed_downloads import MailedDownloads
 from reporting.modules.summary_row import SummaryRow
 from reporting.modules.excel_formatter import MontrekExcelFormatter
@@ -655,10 +659,43 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
+        self._apply_filter()
 
     def get_paginate_by(self) -> int:
         paginate_by = self.session_data.get("current_paginate_by", 10)
         return max(paginate_by, 5)
+
+    @staticmethod
+    def get_source_session_data(session_data: SessionDataType) -> SessionDataType:
+        """Session data for the managers and repositories that build the rows.
+
+        Without the filter of the view: it applies to the rows of this table,
+        and a repository given it would apply it to its own fields instead."""
+        return {key: value for key, value in session_data.items() if key != "filter"}
+
+    def _apply_filter(self) -> None:
+        """Applies the filter of the list view to the rows, so that the table,
+        its summary row and the exports show the same rows.
+
+        The rows are kept as given rather than rebuilt from the DataFrame, which
+        would turn None into NaN and dates into Timestamps. A filter that
+        cannot be applied yields no rows, as on a queryset."""
+        request_path = self.session_data.get("request_path", "")
+        filter_dict = self.session_data.get("filter", {}).get(request_path, {})
+        # Rows without values have no columns to check the filter against
+        if not filter_dict or not self.df_data:
+            return
+        try:
+            mask = DataFrameFilter(filter_dict).mask(self.df).to_numpy()
+        except (ValueError, TypeError) as e:
+            message = MontrekMessageError(f"Filter could not be applied: {e}")
+            if message not in self.messages:
+                self.messages.append(message)
+            mask = [False] * len(self.df_data)
+        self.df_data = [
+            row for row, keep in zip(self.df_data, mask, strict=True) if keep
+        ]
+        self.df = self.df[mask]
 
     def get_table(self) -> list[dict]:
         full_table = self.get_full_table()

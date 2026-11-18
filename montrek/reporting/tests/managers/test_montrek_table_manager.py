@@ -703,6 +703,83 @@ class TestMontrekDataFrameTableManager(TestCase):
             "Table is too large to download. Sending it by mail.",
         )
 
+    def filtered_manager(self, filter_dict: dict) -> MockMontrekDataFrameTableManager:
+        return MockMontrekDataFrameTableManager(
+            {
+                "user_id": self.user.id,
+                "host_url": "test_server",
+                "request_path": "/table",
+                "filter": {"/table": filter_dict},
+                "df_data": self.manager.df_data,
+            }
+        )
+
+    def test_filter_limits_the_rows(self):
+        manager = self.filtered_manager(
+            {"field_b__gte": {"filter_value": "2", "filter_negate": False}}
+        )
+        self.assertEqual([row["field_a"] for row in manager.get_table()], ["b", "c"])
+        # The rows are kept as given
+        self.assertIs(manager.get_full_table()[0], self.manager.df_data[1])
+        self.assertEqual(manager.messages, [])
+
+    def test_filter_applies_to_the_download(self):
+        manager = self.filtered_manager(
+            {"field_a__exact": {"filter_value": "b", "filter_negate": True}}
+        )
+        response = manager.download_or_mail_csv()
+        self.assertEqual(
+            response.getvalue(),
+            b"Field_A,Field B,Field C,Field D,Field E,Link Text\na,1,1.0,2024-07-13,1,a\nc,3,3.0,2024-07-13,3,c\n",
+        )
+
+    def test_filter_of_another_path_does_not_apply(self):
+        manager = self.filtered_manager({})
+        manager_other = MockMontrekDataFrameTableManager(
+            manager.session_data
+            | {
+                "filter": {
+                    "/other": {
+                        "field_a__exact": {"filter_value": "b", "filter_negate": False}
+                    }
+                }
+            }
+        )
+        self.assertEqual(len(manager_other.get_table()), 3)
+
+    def test_filter_that_cannot_be_applied_yields_no_rows(self):
+        manager = self.filtered_manager(
+            {"field_b__exact": {"filter_value": "1.5", "filter_negate": False}}
+        )
+        self.assertEqual(manager.get_table(), [])
+        self.assertTrue(manager.get_df().empty)
+        self.assertEqual(len(manager.messages), 1)
+        self.assertIn("Filter could not be applied", manager.messages[0].message)
+
+    def test_filter_on_a_table_without_rows(self):
+        manager = MockMontrekDataFrameTableManager(
+            self.filtered_manager({}).session_data
+            | {
+                "filter": {
+                    "/table": {
+                        "field_a__exact": {"filter_value": "b", "filter_negate": False}
+                    }
+                },
+                "df_data": [],
+            }
+        )
+        self.assertEqual(manager.get_table(), [])
+        self.assertEqual(manager.messages, [])
+
+    def test_source_session_data_has_no_filter(self):
+        session_data = self.filtered_manager({}).session_data
+        source_session_data = MockMontrekDataFrameTableManager.get_source_session_data(
+            session_data
+        )
+        self.assertNotIn("filter", source_session_data)
+        self.assertEqual(source_session_data["request_path"], "/table")
+        self.assertIn("filter", session_data)
+
     def test_convert_nan_to_json(self):
         input_df = pd.DataFrame(
             {
