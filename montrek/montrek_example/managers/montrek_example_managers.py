@@ -154,7 +154,8 @@ class HubADataFrameManager(MontrekDataFrameTableManager):
 
     def __init__(self, session_data: SessionDataType | None = None):
         session_data = {} if session_data is None else session_data
-        self.session_data = session_data
+        # The DataFrame table applies the filter of the view to the rows itself
+        self.session_data = self.get_source_session_data(session_data)
         df = read_frame(self.repository.receive(), fieldnames=self.field_names)
         session_data = session_data | {"df_data": df.to_dict(orient="records")}
         super().__init__(session_data)

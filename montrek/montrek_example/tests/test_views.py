@@ -173,6 +173,50 @@ class TestMontrekExampleADataFrameListView(MontrekListViewTestCase):
         sata1 = me_factories.SatA1Factory()
         me_factories.SatA2Factory(hub_entity=sata1.hub_entity)
 
+    def test_filter(self):
+        other_sata1 = me_factories.SatA1Factory(field_a1_str="other")
+        me_factories.SatA2Factory(
+            hub_entity=other_sata1.hub_entity, field_a2_str="test"
+        )
+        HubARepository().store_in_view_model()
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.context_data["object_list"]), 2)
+        query_params = {
+            "filter_field": "field_a2_str",
+            "filter_lookup": "in",
+            "filter_negate": False,
+            "filter_value": "test,foo,bar",
+        }
+        response = self.client.get(self.url, data=query_params)
+        obj_list = response.context_data["object_list"]
+        self.assertEqual([row["field_a1_str"] for row in obj_list], ["other"])
+
+        # The filter persists for this path until reset
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.context_data["object_list"]), 1)
+
+        response = self.client.get(self.url, data={"action": "reset"}, follow=True)
+        self.assertEqual(len(response.context_data["object_list"]), 2)
+
+    def test_filter_that_cannot_be_applied_shows_no_rows_and_an_error(self):
+        HubARepository().store_in_view_model()
+        self.assertEqual(len(self.client.get(self.url).context_data["object_list"]), 1)
+        query_params = {
+            "filter_field": "field_a1_int",
+            "filter_lookup": "in",
+            "filter_negate": False,
+            "filter_value": "1.0,2",
+        }
+        response = self.client.get(self.url, data=query_params)
+        self.assertEqual(len(response.context_data["object_list"]), 0)
+        messages = [
+            str(message)
+            for message in response.context["messages"]
+            if message.level_tag == "error"
+        ]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("Filter could not be applied", messages[0])
+
 
 class TestMontrekExampleADataFrameListViewPages(MontrekListViewTestCase):
     viewname = "montrek_example_a_df_list"
@@ -198,6 +242,24 @@ class TestMontrekExampleADataFrameListViewPages(MontrekListViewTestCase):
         self.assertEqual(len(object_list), 5)
         test_page = response.context_data["paginator"]
         self.assertEqual(test_page.number, 2)
+
+    def test_apply_filter_on_latter_page(self):
+        self.client.get(self.url, data={"page": 2})
+        query_params = {
+            "filter_field": "field_a1_str",
+            "filter_value": "field_1",
+            "filter_negate": "False",
+            "filter_lookup": "startswith",
+            "action": "filter",
+        }
+        response = self.client.get(self.url, data=query_params)
+        object_list = response.context_data["object_list"]
+        # field_1 and field_10 to field_14
+        self.assertEqual(len(object_list), 6)
+        test_page = response.context_data["paginator"]
+        self.assertEqual(test_page.number, 1)
+        self.assertEqual(test_page.num_pages, 1)
+        self.assertFalse(test_page.show_paginator)
 
 
 class TestMontrekExampleACreateView(MontrekCreateViewTestCase):
