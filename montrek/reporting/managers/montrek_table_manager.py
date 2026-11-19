@@ -142,7 +142,9 @@ class MontrekTableManagerABC(
         raise NotImplementedError("Method get_table must be implemented")
 
     def get_full_table(self) -> TableDataType:
-        raise NotImplementedError("Method get_full_table must be implemented")
+        """All rows of the table, unpaginated. Tables without pagination show
+        them all on one page."""
+        return self.get_table()
 
     def get_df(self) -> pd.DataFrame:
         raise NotImplementedError("Method get_df must be implemented")
@@ -228,10 +230,7 @@ class MontrekTableManagerABC(
     def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
         """The sum of each element over all rows of the table, not only the
         page, in the order of the elements."""
-        try:
-            table = self.get_full_table()
-        except NotImplementedError:
-            table = self.get_table()
+        table = self.get_full_table()
         return SummaryRow.sum_rows(table, elements)
 
     def _get_summary_fields_if_rows(
@@ -286,10 +285,7 @@ class MontrekTableManagerABC(
 
     def get_all_display_fields(self) -> list[list[DisplayField]]:
         """All rows (unpaginated) for PDF rendering."""
-        try:
-            table = self.get_full_table()
-        except NotImplementedError:
-            table = self.get_table()
+        table = self.get_full_table()
         pdf_elements = [
             e for e in self.table_elements if not isinstance(e, te.LinkTableElement)
         ]
@@ -518,6 +514,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
+        self._full_table: None | QuerySet = None
 
     def get_paginate_by(self):
         paginate_by = self.session_data.get("current_paginate_by", 10)
@@ -529,8 +526,12 @@ class MontrekTableManager(MontrekTableManagerABC):
         return queryset
 
     def get_full_table(self) -> QuerySet:
+        if self._full_table is not None:
+            return self._full_table
         self.set_order_field()
-        return self.repository.receive()
+        full_table = self.repository.receive()
+        self._full_table = full_table
+        return full_table
 
     def get_column_sums(self, elements: list[te.NumberTableElement]) -> list[Any]:
         """Summed in SQL where the sum of the column is the sum of the values
@@ -582,10 +583,9 @@ class MontrekTableManager(MontrekTableManagerABC):
         return rows[0] if rows else None
 
     def get_df(self) -> pd.DataFrame:
-        queryset = self.repository.receive()
+        queryset = self.get_full_table()
         self._preload_container(queryset)
-        queryset = list(queryset)
-        return self._build_df(queryset)
+        return self._build_df(list(queryset))
 
     def _preload_container(self, queryset: TableDataType) -> None:
         """Hook for subclasses to bulk-prefetch data before row iteration."""
@@ -635,7 +635,7 @@ class MontrekTableManager(MontrekTableManagerABC):
         return results
 
     def _get_table_dimensions(self) -> int:
-        rows = self.repository.receive().count()
+        rows = self.get_full_table().count()
         cols = len(self.table_elements)
         return rows * cols
 
