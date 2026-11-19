@@ -78,8 +78,14 @@ set up to need few rounds:
 - When exploration is cut off, the answer is prefilled with `## Summary`
   (Mistral's assistant prefix), so the model cannot answer with narration and
   need a second request. An API that rejects the prefix gets the plain request.
-- `AI_REVIEW_REASONING_EFFORT=medium` or `low` cuts the reasoning further; it
-  has not been compared for quality yet, so the default stays the model's.
+- `AI_REVIEW_REASONING_EFFORT=medium` or `low` cuts the reasoning further, at
+  a cost in findings (see below), so the default stays the model's `high`.
+
+On one extension pull request (7 files), the review took 26m43s before these
+changes (25 rounds, cut off at the limit) and 10m51s after them (16 rounds,
+finished on its own, half the output tokens), with the same depth of
+exploration and one valid finding. With `medium` it took 5m17s in 6 rounds but
+missed that finding.
 
 The usage line ends with the wall-clock time of the review.
 
