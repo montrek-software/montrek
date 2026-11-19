@@ -44,6 +44,12 @@ Django code lives under `montrek/`.
    Fewer findings you are sure of beat many guesses; if the change is fine, say so.
 8. Be economical with tool calls: read the parts of files you need, search with
    specific patterns. Do not narrate your plan between tool calls.
+   - The changed files are in the prompt in full, with line numbers (except those
+     listed as too large); do not read them again.
+   - Make every tool call you already know you need in the same response; they run
+     together. One call per response costs a round each.
+   - Each round's last tool result ends with your remaining budget. When it says to
+     wrap up, check only what a finding you will report still depends on.
 
 ## Output
 

@@ -17,7 +17,10 @@ TIMEOUT_SECONDS = 300
 
 
 class ChatClientError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        # The HTTP status when the API answered with an error, else None.
+        self.status = status
 
 
 class ChatClient:
@@ -27,6 +30,7 @@ class ChatClient:
         model: str,
         base_url: str,
         prompt_caching: bool = False,
+        reasoning_effort: str | None = None,
     ) -> None:
         if not base_url.startswith("https://"):
             raise ChatClientError("The API base URL must use https.")
@@ -39,6 +43,7 @@ class ChatClient:
         self.prompt_cache_key = (
             f"ai-review-{uuid.uuid4().hex}" if prompt_caching else None
         )
+        self.reasoning_effort = reasoning_effort
         self.prompt_tokens = 0
         self.cached_tokens = 0
         self.completion_tokens = 0
@@ -49,12 +54,19 @@ class ChatClient:
         tools: list[dict[str, Any]] | None = None,
         tool_choice: str = "auto",
     ) -> dict[str, Any]:
-        """Send one completion request and return the assistant message."""
+        """Send one completion request and return the assistant message.
+
+        The message comes back unchanged, its content possibly a list of typed
+        parts: reasoning models expect their ``thinking`` parts back in the
+        history of later requests. ``text_of`` gives the answer text.
+        """
         body: dict[str, Any] = {
             "model": self.model,
             "messages": messages,
             "temperature": 0.2,
         }
+        if self.reasoning_effort:
+            body["reasoning_effort"] = self.reasoning_effort
         if self.prompt_cache_key:
             body["prompt_cache_key"] = self.prompt_cache_key
         if tools:
@@ -66,16 +78,13 @@ class ChatClient:
         details = usage.get("prompt_tokens_details") or {}
         self.cached_tokens += details.get("cached_tokens") or 0
         self.completion_tokens += usage.get("completion_tokens", 0)
-        message = response["choices"][0]["message"]
-        message["content"] = self.text_of(message.get("content"))
-        return message
+        return response["choices"][0]["message"]
 
     @staticmethod
     def text_of(content: str | list[Any] | None) -> str:
         """The answer text; reasoning models return a list of typed parts.
 
-        Their ``thinking`` parts are dropped, so they are neither shown in the
-        review nor sent back with the conversation.
+        Their ``thinking`` parts are left out, so they never reach the review.
         """
         if isinstance(content, list):
             return "".join(
@@ -120,7 +129,8 @@ class ChatClient:
                     detail += f"\nRate-limit headers: {limits}"
                 if error.code not in RETRY_STATUSES or attempt == MAX_ATTEMPTS:
                     raise ChatClientError(
-                        f"API {method} {path} returned HTTP {error.code}: " f"{detail}"
+                        f"API {method} {path} returned HTTP {error.code}: {detail}",
+                        status=error.code,
                     ) from error
                 wait = float(error.headers.get("Retry-After") or 2**attempt)
             except (urllib.error.URLError, TimeoutError) as error:

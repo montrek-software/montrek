@@ -21,6 +21,15 @@ from review_tools import ReviewTools
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_FILE = Path(__file__).with_name("review_prompt.md")
 MAX_DIFF_CHARS = 80_000
+# Changed files are inlined in full up to these sizes, so the model does not
+# spend rounds reading them; larger ones it reads with read_file.
+MAX_INLINED_FILE_CHARS = 30_000
+MAX_INLINED_FILES_CHARS = 120_000
+REVIEW_START = "## Summary"
+# From this share of the round or token budget on, the model is asked to wrap up.
+WRAP_UP_SHARE = 0.6
+# HTTP statuses with which an API rejects a request it does not support.
+REJECTED_STATUSES = {400, 422}
 
 
 class AiReview:
@@ -92,7 +101,8 @@ class AiReview:
             "--max-input-tokens",
             type=int,
             default=800_000,
-            help="stop exploring once this many input tokens are spent",
+            help="stop exploring once this many input tokens are spent; a cached "
+            "token counts with its share of the price (a tenth on Mistral)",
         )
         parser.add_argument("--output", type=Path, help="write the review here")
         parser.add_argument(
@@ -103,21 +113,26 @@ class AiReview:
 
     def run(self) -> str:
         client = self.provider.client(self.options.model)
+        self.started = time.monotonic()
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": PROMPT_FILE.read_text()},
             {"role": "user", "content": self.prompt()},
         ]
+        effort = f", reasoning effort {client.reasoning_effort}"
         self.log(
             f"Reviewing {self.options.repo} {self.scope.merge_base[:8]}.."
             f"{'worktree' if self.options.worktree else self.scope.head} "
-            f"with {client.model}: {len(self.scope.changed_files)} files, "
+            f"with {client.model}{effort if client.reasoning_effort else ''}: "
+            f"{len(self.scope.changed_files)} files, "
             f"{len(self.tools.files)} visible"
         )
         for round_number in range(1, self.options.max_rounds + 1):
             message = self.chat(client, messages, round_number)
             tool_calls = message.get("tool_calls") or []
             if not tool_calls:
-                return self.finish(client, message.get("content") or "")
+                return self.finish(client, ChatClient.text_of(message.get("content")))
+            # The content goes back unchanged: reasoning models need their
+            # thinking parts in the history, or they reason it all out again.
             messages.append(
                 {
                     "role": "assistant",
@@ -125,26 +140,36 @@ class AiReview:
                     "tool_calls": tool_calls,
                 }
             )
-            for call in tool_calls:
+            for index, call in enumerate(tool_calls):
                 function = call["function"]
                 self.log(
                     f"  [{round_number}] {function['name']} {function['arguments']}"
                 )
+                output = self.tools.execute(function["name"], function["arguments"])
+                if index == len(tool_calls) - 1:
+                    output += self.budget_note(client, round_number)
                 messages.append(
                     {
                         "role": "tool",
                         "tool_call_id": call["id"],
                         "name": function["name"],
-                        "content": self.tools.execute(
-                            function["name"], function["arguments"]
-                        ),
+                        "content": output,
                     }
                 )
-            if client.prompt_tokens >= self.options.max_input_tokens:
+            if self.spent_tokens(client) >= self.options.max_input_tokens:
                 self.log("  Input token budget reached.")
                 break
         else:
             self.log(f"  Round limit ({self.options.max_rounds}) reached.")
+        return self.finish(client, self.forced_review(client, messages))
+
+    def forced_review(self, client: ChatClient, messages: list[dict[str, Any]]) -> str:
+        """The review after exploration was cut off.
+
+        The answer is prefilled with the start of the required structure, so
+        the model cannot reply with narration instead of the review. An API
+        without assistant prefixes gets asked again when it narrates.
+        """
         messages.append(
             {
                 "role": "user",
@@ -152,22 +177,61 @@ class AiReview:
                 "structure, from what you have verified so far.",
             }
         )
+        prefix = {"role": "assistant", "content": REVIEW_START, "prefix": True}
+        try:
+            message = self.chat(client, [*messages, prefix], 0, tool_choice="none")
+        except ChatClientError as error:
+            if error.status not in REJECTED_STATUSES:
+                raise
+            self.log(f"  Assistant prefix rejected ({error.status}), asking plainly.")
+        else:
+            content = ChatClient.text_of(message.get("content")).lstrip()
+            # Whether the answer repeats the prefix is not documented.
+            return (
+                content
+                if content.startswith(REVIEW_START)
+                else REVIEW_START
+                + (content if content.startswith("\n") else "\n" + content)
+            )
         message = self.chat(client, messages, 0, tool_choice="none")
-        content = message.get("content") or ""
-        if "## Summary" not in content:
+        content = ChatClient.text_of(message.get("content"))
+        if REVIEW_START not in content:
             # The forced answer can still be narration ("let me check one
             # more thing"); ask once more for the review itself.
             messages += [
-                {"role": "assistant", "content": content},
+                {"role": "assistant", "content": message.get("content") or ""},
                 {
                     "role": "user",
                     "content": "That was not the review. Reply with the review "
-                    "only, starting with '## Summary', in the required structure.",
+                    f"only, starting with '{REVIEW_START}', in the required "
+                    "structure.",
                 },
             ]
             message = self.chat(client, messages, 0, tool_choice="none")
-            content = message.get("content") or ""
-        return self.finish(client, content)
+            content = ChatClient.text_of(message.get("content"))
+        return content
+
+    def budget_note(self, client: ChatClient, round_number: int) -> str:
+        """Tells the model how much exploration is left, after a round's tools."""
+        rounds = round_number / self.options.max_rounds
+        tokens = self.spent_tokens(client) / self.options.max_input_tokens
+        note = (
+            f"\n\n[Review budget: round {round_number} of {self.options.max_rounds}, "
+            f"{max(rounds, tokens):.0%} used.]"
+        )
+        if max(rounds, tokens) >= WRAP_UP_SHARE:
+            note += (
+                " Wrap up: only check what a finding you will report still "
+                "depends on, then write the review."
+            )
+        return note
+
+    def spent_tokens(self, client: ChatClient) -> float:
+        """Input tokens so far, a cached one weighted with its share of the price."""
+        cached = client.cached_tokens
+        return (
+            client.prompt_tokens - cached + cached * self.provider.cached_price_factor
+        )
 
     def chat(
         self,
@@ -190,7 +254,7 @@ class AiReview:
         label = f"round {round_number}" if round_number else "final"
         self.log(
             f"  ({label}: {prompt:,} in, {cached:,} cached, {completion:,} out, "
-            f"{len(message.get('content') or ''):,} chars text, "
+            f"{len(ChatClient.text_of(message.get('content'))):,} chars text, "
             f"{time.monotonic() - started:.0f}s)"
         )
         return message
@@ -216,6 +280,7 @@ class AiReview:
             "## Changed files\n"
             + "\n".join(f"- `{path}`" for path in scope.changed_files),
             "## Diff\n" + self.inline_diff(),
+            "## Changed files in full\n" + self.inline_files(),
         ]
         return "\n\n".join(parts)
 
@@ -254,15 +319,55 @@ class AiReview:
             )
         return diff
 
+    def inline_files(self) -> str:
+        """The changed files as they are now, with line numbers like read_file.
+
+        Production code first: when the budget runs out, tests are what the
+        model reads with read_file.
+        """
+        inlined: list[str] = []
+        left_out: list[str] = []
+        size = 0
+        paths = sorted(
+            self.scope.changed_files,
+            key=lambda path: not self.scope.is_production_file(path),
+        )
+        for path in paths:
+            if path not in self.scope.visible_files:
+                continue
+            text = (self.scope.project_root / path).read_text(errors="replace")
+            lines = text.split("\n")
+            numbered = "\n".join(
+                f"{number:>5}  {line}" for number, line in enumerate(lines, start=1)
+            )
+            if (
+                len(numbered) > MAX_INLINED_FILE_CHARS
+                or size + len(numbered) > MAX_INLINED_FILES_CHARS
+            ):
+                left_out.append(path)
+                continue
+            inlined.append(
+                f'<file path="{path}" lines="{len(lines)}">\n{numbered}\n</file>'
+            )
+            size += len(numbered)
+        parts = inlined or ["(none small enough to inline)"]
+        if left_out:
+            parts.append(
+                "Too large to inline; read the parts you need with read_file:\n"
+                + "\n".join(f"- {path}" for path in left_out)
+            )
+        return "\n\n".join(parts)
+
     def finish(self, client: ChatClient, review: str) -> str:
         # Models sometimes narrate before the required structure starts.
-        start = review.find("## Summary")
+        start = review.find(REVIEW_START)
         if start > 0:
             review = review[start:]
         usage = (
             f"AI review by `{client.model}` ({self.provider.name}) · "
             f"{client.prompt_tokens:,} input ({client.cached_tokens:,} cached) / "
-            f"{client.completion_tokens:,} output tokens · {self.cost(client)}"
+            f"{client.completion_tokens:,} output tokens · {self.cost(client)} · "
+            f"{self.elapsed()}"
         )
         self.log(usage)
         return f"{review.strip()}\n\n---\n_{usage}_\n"
@@ -279,6 +384,10 @@ class AiReview:
             + client.completion_tokens * price_out
         ) / 1_000_000
         return f"≈ {self.provider.currency}{cost:.2f}"
+
+    def elapsed(self) -> str:
+        minutes, seconds = divmod(round(time.monotonic() - self.started), 60)
+        return f"{minutes}m{seconds:02d}s"
 
     def write(self, review: str) -> None:
         if self.options.output:
