@@ -19,6 +19,7 @@ from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockCountingTableElementsManager,
     MockDataFrameHookTableManager,
+    MockEmptyDataFrameHookTableManager,
     MockEmptyMontrekTableManager,
     MockExportingMontrekTableManager,
     MockFilterFieldsTableManager,
@@ -760,6 +761,16 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertEqual(len(manager.messages), 1)
         self.assertIn("Filter could not be applied", manager.messages[0].message)
 
+    def test_filter_without_matching_rows_keeps_the_headers(self):
+        manager = self.filtered_manager(
+            {"field_a__exact": {"filter_value": "x", "filter_negate": False}}
+        )
+        self.assertEqual(manager.get_table(), [])
+        self.assertEqual(
+            manager.download_or_mail_csv().getvalue(),
+            b"Field_A,Field B,Field C,Field D,Field E,Link Text\n",
+        )
+
     def test_filtered_excel_frame_keeps_the_rows_above_the_summary(self):
         manager = MockSummaryRowDataFrameTableManager(
             self.filtered_manager(
@@ -927,16 +938,30 @@ class TestMontrekDataFrameTableManagerHooks(TestCase):
         )
         self.assertEqual(manager.messages, [])
 
-    def test_repository_gets_no_filter(self):
+    def test_source_repository_gets_no_filter(self):
         filter_dict = {
             "/table": {"field_b__gte": {"filter_value": "1", "filter_negate": False}}
         }
         manager = MockDataFrameHookTableManager(
             self.session_data | {"filter": filter_dict}
         )
-        self.assertNotIn("filter", manager.repository_session_data)
-        self.assertEqual(manager.repository_session_data["request_path"], "/table")
-        self.assertEqual(manager.session_data["filter"], filter_dict)
+        self.assertNotIn("filter", manager.source_repository_session_data)
+        self.assertEqual(
+            manager.source_repository_session_data["request_path"], "/table"
+        )
+        # Other users of the repository, e.g. uploads, keep the filter
+        self.assertEqual(manager.repository.session_data["filter"], filter_dict)
+
+    def test_empty_table_keeps_the_columns_of_the_dataframe(self):
+        manager = MockDataFrameHookTableManager(self.session_data)
+        manager_empty = MockEmptyDataFrameHookTableManager(self.session_data)
+        self.assertEqual(manager_empty.get_table(), [])
+        self.assertEqual(
+            list(manager_empty.get_df().columns), list(manager.get_df().columns)
+        )
+        self.assertEqual(
+            manager_empty.download_or_mail_csv().getvalue(), b"Field_A,Field B\n"
+        )
 
     def test_session_data_does_not_carry_the_rows(self):
         manager = MockDataFrameHookTableManager(self.session_data)

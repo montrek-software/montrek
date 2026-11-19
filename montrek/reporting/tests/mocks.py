@@ -583,7 +583,7 @@ class MockDataFrameHookTableManager(MockMontrekDataFrameTableManager):
 
     def get_dataframe(self) -> pd.DataFrame:
         # Read through the repository, as a table built from a query would
-        self.repository_session_data = self.repository.session_data
+        self.source_repository_session_data = self.source_repository.session_data
         return pd.DataFrame(
             {
                 "field_a": [f"row {index}" for index in range(self.row_count)],
@@ -594,6 +594,10 @@ class MockDataFrameHookTableManager(MockMontrekDataFrameTableManager):
 
 class MockLargeDataFrameHookTableManager(MockDataFrameHookTableManager):
     row_count = 30000
+
+
+class MockEmptyDataFrameHookTableManager(MockDataFrameHookTableManager):
+    row_count = 0
 
 
 class MockRowsHookTableManager(MockMontrekDataFrameTableManager):

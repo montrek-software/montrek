@@ -154,7 +154,7 @@ class HubADataFrameManager(MontrekDataFrameTableManager):
     is_paginated = True
 
     def get_dataframe(self) -> pd.DataFrame:
-        return read_frame(self.repository.receive(), fieldnames=self.field_names)
+        return read_frame(self.source_repository.receive(), fieldnames=self.field_names)
 
     @property
     def table_elements(self) -> TableElementsType:
