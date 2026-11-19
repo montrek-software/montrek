@@ -651,17 +651,44 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     is_paginated = False
 
     def __init__(self, session_data: SessionDataType | None = None):
-        session_data = {} if session_data is None else session_data
-        if "df_data" not in session_data:
-            raise ValueError("DataFrame data not set in session_data['df_data'].")
+        super().__init__(session_data)
         # The rows are the data of the table; ``df`` is derived from them once
         # they are filtered and sorted.
-        self.df_data = session_data["df_data"]
-        super().__init__(session_data)
+        self.df_data = self.get_rows()
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
         self._apply_filter()
         self._apply_order()
+
+    def get_rows(self) -> list[dict]:
+        """The rows of the table, before the filter and the order of the view.
+
+        Built from ``get_dataframe``, or else given in ``session_data["df_data"]``.
+        Tables that build their rows themselves override this or
+        ``get_dataframe``; the download task then rebuilds them from the session
+        data instead of carrying them along."""
+        df = self.get_dataframe()
+        if df is not None:
+            return df.to_dict(orient="records")
+        if "df_data" not in self.session_data:
+            raise ValueError("DataFrame data not set in session_data['df_data'].")
+        return self.session_data["df_data"]
+
+    def get_dataframe(self) -> pd.DataFrame | None:
+        """The data of the table as a DataFrame, or None to take the rows
+        given in ``session_data["df_data"]``."""
+        return None
+
+    @property
+    def source_session_data(self) -> SessionDataType:
+        """Session data for the managers and repositories that build the rows."""
+        return self.get_source_session_data(self.session_data)
+
+    @property
+    def repository(self):
+        if self._repository is None:
+            self._repository = self.repository_class(self.source_session_data)
+        return self._repository
 
     def get_paginate_by(self) -> int:
         paginate_by = self.session_data.get("current_paginate_by", 10)
