@@ -573,3 +573,38 @@ class MockLongSummaryRowTableManager(MockLongMontrekTableManager):
 
 class MockSummaryRowDataFrameTableManager(MockMontrekDataFrameTableManager):
     show_summary_row = True
+
+
+class MockDataFrameHookTableManager(MockMontrekDataFrameTableManager):
+    """Builds its rows from a DataFrame instead of taking them from the
+    session data."""
+
+    row_count = 3
+
+    def get_dataframe(self) -> pd.DataFrame:
+        # Read through the repository, as a table built from a query would
+        self.source_repository_session_data = self.source_repository.session_data
+        return pd.DataFrame(
+            {
+                "field_a": [f"row {index}" for index in range(self.row_count)],
+                "field_b": list(range(self.row_count)),
+            }
+        )
+
+
+class MockLargeDataFrameHookTableManager(MockDataFrameHookTableManager):
+    row_count = 30000
+
+
+class MockEmptyDataFrameHookTableManager(MockDataFrameHookTableManager):
+    row_count = 0
+
+
+class MockRowsHookTableManager(MockMontrekDataFrameTableManager):
+    """Builds its rows as dicts, keeping None as it is."""
+
+    def get_rows(self) -> list[dict]:
+        return [
+            {"field_a": "a", "field_b": None},
+            {"field_a": "b", "field_b": 2},
+        ]

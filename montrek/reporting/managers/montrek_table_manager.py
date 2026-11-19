@@ -14,6 +14,7 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageInfo,
 )
 from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -651,17 +652,52 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     is_paginated = False
 
     def __init__(self, session_data: SessionDataType | None = None):
-        session_data = {} if session_data is None else session_data
-        if "df_data" not in session_data:
-            raise ValueError("DataFrame data not set in session_data['df_data'].")
+        super().__init__(session_data)
+        self._dataframe_columns: list[str] = []
         # The rows are the data of the table; ``df`` is derived from them once
         # they are filtered and sorted.
-        self.df_data = session_data["df_data"]
-        super().__init__(session_data)
+        self.df_data = self.get_rows()
+        # Taken before the filter, so that exports of a table without rows keep
+        # their headers
+        self.df_columns: list[str] = self._dataframe_columns or list(
+            dict.fromkeys(key for row in self.df_data for key in row)
+        )
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
         self._apply_filter()
         self._apply_order()
+
+    def get_rows(self) -> list[dict]:
+        """The rows of the table, before the filter and the order of the view.
+
+        Built from ``get_dataframe``, or else given in ``session_data["df_data"]``.
+        Tables that build their rows themselves override this or
+        ``get_dataframe``; the download task then rebuilds them from the session
+        data instead of carrying them along."""
+        df = self.get_dataframe()
+        if df is not None:
+            self._dataframe_columns = list(df.columns)
+            return df.to_dict(orient="records")
+        if "df_data" not in self.session_data:
+            raise ValueError("DataFrame data not set in session_data['df_data'].")
+        return self.session_data["df_data"]
+
+    def get_dataframe(self) -> pd.DataFrame | None:
+        """The data of the table as a DataFrame, or None to take the rows
+        given in ``session_data["df_data"]``."""
+        return None
+
+    @property
+    def source_session_data(self) -> SessionDataType:
+        """Session data for the managers and repositories that build the rows."""
+        return self.get_source_session_data(self.session_data)
+
+    @cached_property
+    def source_repository(self) -> MontrekRepository:
+        """The repository to build the rows from. ``repository`` keeps the
+        filter of the view for its other users, e.g. uploads that overwrite the
+        rows shown."""
+        return self.repository_class(self.source_session_data)
 
     def get_paginate_by(self) -> int:
         paginate_by = self.session_data.get("current_paginate_by", 10)
@@ -749,7 +785,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
 
     @cached_property
     def df(self) -> pd.DataFrame:
-        return pd.DataFrame(self.df_data)
+        return pd.DataFrame(self.df_data, columns=self.df_columns)
 
     def get_excel_col_formats(self) -> dict[int, str | None]:
         """By the column of the data each element shows: the sheet holds all

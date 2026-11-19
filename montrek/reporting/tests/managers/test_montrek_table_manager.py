@@ -18,15 +18,19 @@ from reporting.dataclasses.table_elements import HistoryChangeState
 from reporting.managers.montrek_table_manager import HistoryDataTableManager
 from reporting.tests.mocks import (
     MockCountingTableElementsManager,
+    MockDataFrameHookTableManager,
+    MockEmptyDataFrameHookTableManager,
     MockEmptyMontrekTableManager,
     MockExportingMontrekTableManager,
     MockFilterFieldsTableManager,
     MockHtmlMontrekTableManager,
     MockLongMontrekTableManager,
     MockLongMontrekTableManager2,
+    MockLargeDataFrameHookTableManager,
     MockMontrekDataFrameTableManager,
     MockMontrekTableManager,
     MockRepositoryFilterFieldsManager,
+    MockRowsHookTableManager,
     MockSummaryRowDataFrameTableManager,
 )
 from testing.decorators.add_logged_in_user import add_logged_in_user
@@ -757,6 +761,16 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertEqual(len(manager.messages), 1)
         self.assertIn("Filter could not be applied", manager.messages[0].message)
 
+    def test_filter_without_matching_rows_keeps_the_headers(self):
+        manager = self.filtered_manager(
+            {"field_a__exact": {"filter_value": "x", "filter_negate": False}}
+        )
+        self.assertEqual(manager.get_table(), [])
+        self.assertEqual(
+            manager.download_or_mail_csv().getvalue(),
+            b"Field_A,Field B,Field C,Field D,Field E,Link Text\n",
+        )
+
     def test_filtered_excel_frame_keeps_the_rows_above_the_summary(self):
         manager = MockSummaryRowDataFrameTableManager(
             self.filtered_manager(
@@ -877,6 +891,93 @@ class TestMontrekDataFrameTableManager(TestCase):
         test_json = manager.to_json()
         test_output = [dd["field_b"] for dd in test_json]
         self.assertEqual(test_output[2], None)
+
+
+class TestMontrekDataFrameTableManagerHooks(TestCase):
+    def setUp(self):
+        self.user = MontrekUserFactory()
+        self.session_data = {
+            "user_id": self.user.id,
+            "host_url": "test_server",
+            "request_path": "/table",
+        }
+
+    def test_rows_from_the_dataframe(self):
+        manager = MockDataFrameHookTableManager(self.session_data)
+        self.assertEqual(
+            manager.get_table(),
+            [
+                {"field_a": "row 0", "field_b": 0},
+                {"field_a": "row 1", "field_b": 1},
+                {"field_a": "row 2", "field_b": 2},
+            ],
+        )
+        self.assertEqual(list(manager.get_df()["Field_A"]), ["row 0", "row 1", "row 2"])
+
+    def test_rows_from_get_rows(self):
+        manager = MockRowsHookTableManager(self.session_data)
+        self.assertEqual(
+            manager.get_table(),
+            [{"field_a": "a", "field_b": None}, {"field_a": "b", "field_b": 2}],
+        )
+
+    def test_filter_and_order_apply_to_the_built_rows(self):
+        manager = MockDataFrameHookTableManager(
+            self.session_data
+            | {
+                "filter": {
+                    "/table": {
+                        "field_b__gte": {"filter_value": "1", "filter_negate": False}
+                    }
+                },
+                "order_field": "-field_b",
+            }
+        )
+        self.assertEqual(
+            [row["field_a"] for row in manager.get_table()], ["row 2", "row 1"]
+        )
+        self.assertEqual(manager.messages, [])
+
+    def test_source_repository_gets_no_filter(self):
+        filter_dict = {
+            "/table": {"field_b__gte": {"filter_value": "1", "filter_negate": False}}
+        }
+        manager = MockDataFrameHookTableManager(
+            self.session_data | {"filter": filter_dict}
+        )
+        self.assertNotIn("filter", manager.source_repository_session_data)
+        self.assertEqual(
+            manager.source_repository_session_data["request_path"], "/table"
+        )
+        # Other users of the repository, e.g. uploads, keep the filter
+        self.assertEqual(manager.repository.session_data["filter"], filter_dict)
+
+    def test_empty_table_keeps_the_columns_of_the_dataframe(self):
+        manager = MockDataFrameHookTableManager(self.session_data)
+        manager_empty = MockEmptyDataFrameHookTableManager(self.session_data)
+        self.assertEqual(manager_empty.get_table(), [])
+        self.assertEqual(
+            list(manager_empty.get_df().columns), list(manager.get_df().columns)
+        )
+        self.assertEqual(
+            manager_empty.download_or_mail_csv().getvalue(), b"Field_A,Field B\n"
+        )
+
+    def test_session_data_does_not_carry_the_rows(self):
+        manager = MockDataFrameHookTableManager(self.session_data)
+        self.assertNotIn("df_data", manager.session_data)
+
+    def test_large_download_rebuilds_the_rows(self):
+        manager = MockLargeDataFrameHookTableManager(self.session_data)
+        response = manager.download_or_mail_csv()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(mail.outbox[0].subject.endswith(".csv is ready for download"))
+
+    def test_without_rows_or_hook(self):
+        with self.assertRaisesMessage(
+            ValueError, "DataFrame data not set in session_data['df_data']."
+        ):
+            MockMontrekDataFrameTableManager(self.session_data)
 
 
 class TestHistoryDataTable(TestCase):
