@@ -654,12 +654,14 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         session_data = {} if session_data is None else session_data
         if "df_data" not in session_data:
             raise ValueError("DataFrame data not set in session_data['df_data'].")
+        # The rows are the data of the table; ``df`` is derived from them once
+        # they are filtered and sorted.
         self.df_data = session_data["df_data"]
-        self.df = self.set_df()
         super().__init__(session_data)
         self.paginator: None | MontrekTablePaginator = None
         self.paginate_by: int = self.get_paginate_by()
         self._apply_filter()
+        self._apply_order()
 
     def get_paginate_by(self) -> int:
         paginate_by = self.session_data.get("current_paginate_by", 10)
@@ -689,15 +691,42 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
             rows = pd.DataFrame(self.df_data, dtype=object)
             mask = DataFrameFilter(filter_dict).mask(rows).to_numpy()
         except (ValueError, TypeError) as e:
-            message = MontrekMessageError(f"Filter could not be applied: {e}")
-            if message not in self.messages:
-                self.messages.append(message)
+            self._add_error_message(f"Filter could not be applied: {e}")
             mask = [False] * len(self.df_data)
         self.df_data = [
             row for row, keep in zip(self.df_data, mask, strict=True) if keep
         ]
-        # Rebuilt rather than masked, so that its index has no gaps
-        self.df = self.set_df()
+
+    def _apply_order(self) -> None:
+        """Sorts the rows by the order field, empty values last. Rows with equal
+        values keep their order. A field the rows cannot be sorted by leaves
+        them as given."""
+        if not self.order_field or not self.df_data:
+            return
+        column = self.order_field[1:] if self.order_descending else self.order_field
+        if not any(column in row for row in self.df_data):
+            self._add_error_message(f"Table could not be sorted: no field {column}")
+            return
+        present: list[dict] = []
+        empty: list[dict] = []
+        for row in self.df_data:
+            (empty if self._is_empty(row.get(column)) else present).append(row)
+        try:
+            present.sort(key=lambda row: row[column], reverse=self.order_descending)
+        except TypeError as e:
+            self._add_error_message(f"Table could not be sorted: {e}")
+            return
+        self.df_data = present + empty
+
+    @staticmethod
+    def _is_empty(value: Any) -> bool:
+        """None, and the NaN or NaT of rows that come from a DataFrame."""
+        return value is None or (pd.api.types.is_scalar(value) and pd.isna(value))
+
+    def _add_error_message(self, text: str) -> None:
+        message = MontrekMessageError(text)
+        if message not in self.messages:
+            self.messages.append(message)
 
     def get_table(self) -> list[dict]:
         full_table = self.get_full_table()
@@ -721,7 +750,8 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         )
         return full_table[offset : offset + paginate_by]
 
-    def set_df(self):
+    @cached_property
+    def df(self) -> pd.DataFrame:
         return pd.DataFrame(self.df_data)
 
     def get_excel_col_formats(self) -> dict[int, str | None]:

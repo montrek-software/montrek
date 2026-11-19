@@ -782,6 +782,76 @@ class TestMontrekDataFrameTableManager(TestCase):
         self.assertEqual(manager.get_table(), [])
         self.assertEqual(manager.messages, [])
 
+    def ordered_manager(
+        self, order_field: str, df_data: list[dict] | None = None
+    ) -> MockMontrekDataFrameTableManager:
+        return MockMontrekDataFrameTableManager(
+            {
+                "user_id": self.user.id,
+                "host_url": "test_server",
+                "order_field": order_field,
+                "df_data": self.manager.df_data if df_data is None else df_data,
+            }
+        )
+
+    def test_order_sorts_the_rows(self):
+        manager = self.ordered_manager("-field_b")
+        self.assertEqual(
+            [row["field_a"] for row in manager.get_table()], ["c", "b", "a"]
+        )
+        # The rows are kept as given
+        self.assertIs(manager.get_full_table()[0], self.manager.df_data[2])
+        self.assertEqual(manager.messages, [])
+
+    def test_order_applies_to_the_download(self):
+        manager = self.ordered_manager("-field_b")
+        self.assertEqual(list(manager.get_df()["Field_A"]), ["c", "b", "a"])
+        self.assertEqual(list(manager.get_df().index), [0, 1, 2])
+
+    def test_order_puts_empty_values_last_and_keeps_ties(self):
+        df_data = [
+            {"field_a": "a", "field_b": 2},
+            {"field_a": "b", "field_b": None},
+            {"field_a": "c", "field_b": 1},
+            {"field_a": "d", "field_b": 2},
+        ]
+        ascending = self.ordered_manager("field_b", df_data)
+        descending = self.ordered_manager("-field_b", df_data)
+        self.assertEqual(
+            [row["field_a"] for row in ascending.get_table()], ["c", "a", "d", "b"]
+        )
+        self.assertEqual(
+            [row["field_a"] for row in descending.get_table()], ["a", "d", "c", "b"]
+        )
+
+    def test_order_follows_the_filter(self):
+        manager = MockMontrekDataFrameTableManager(
+            self.filtered_manager(
+                {"field_b__gte": {"filter_value": "2", "filter_negate": False}}
+            ).session_data
+            | {"order_field": "-field_b"}
+        )
+        self.assertEqual([row["field_a"] for row in manager.get_table()], ["c", "b"])
+
+    def test_order_by_an_unknown_field_keeps_the_rows(self):
+        manager = self.ordered_manager("unknown")
+        self.assertEqual(
+            [row["field_a"] for row in manager.get_table()], ["a", "b", "c"]
+        )
+        self.assertEqual(len(manager.messages), 1)
+        self.assertIn("Table could not be sorted", manager.messages[0].message)
+
+    def test_order_by_values_that_cannot_be_compared_keeps_the_rows(self):
+        df_data = [{"field_a": "a", "field_b": 1}, {"field_a": "b", "field_b": "x"}]
+        manager = self.ordered_manager("field_b", df_data)
+        self.assertEqual([row["field_a"] for row in manager.get_table()], ["a", "b"])
+        self.assertIn("Table could not be sorted", manager.messages[0].message)
+
+    def test_order_on_a_table_without_rows(self):
+        manager = self.ordered_manager("field_b", [])
+        self.assertEqual(manager.get_table(), [])
+        self.assertEqual(manager.messages, [])
+
     def test_source_session_data_has_no_filter(self):
         session_data = self.filtered_manager({}).session_data
         source_session_data = MockMontrekDataFrameTableManager.get_source_session_data(
