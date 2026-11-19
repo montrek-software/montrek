@@ -47,6 +47,8 @@ class ReviewProvider:
             model or self.model,
             base_url=os.environ.get("AI_REVIEW_BASE_URL", self.base_url),
             prompt_caching=self.prompt_caching,
+            reasoning_effort=os.environ.get("AI_REVIEW_REASONING_EFFORT", "").strip()
+            or None,
         )
 
     def prices(self, model: str) -> tuple[float, float] | None:

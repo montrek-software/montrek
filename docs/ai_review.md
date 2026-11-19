@@ -54,11 +54,40 @@ Set in `.env` or the environment:
 | `AI_REVIEW_MODEL` | model ID; default `mistral-large-4` (Mistral) or `Qwen/Qwen3-Coder-Next` (IONOS) |
 | `AI_REVIEW_PRICE_INPUT`, `AI_REVIEW_PRICE_OUTPUT` | price per million tokens, for the cost estimate |
 | `AI_REVIEW_BASE_URL` | another OpenAI-compatible endpoint for the provider |
+| `AI_REVIEW_REASONING_EFFORT` | passed to the API as `reasoning_effort`; Mistral Large 4 takes `low`, `medium` or `high` (its default) |
 
 `bin/review/ai-review.sh --list-models` lists the models of the provider, and
 `--help` shows the remaining options, e.g.
 `--max-rounds` (25) and `--max-input-tokens` (800 000), the limits after which
-the model is told to write the review.
+the model is told to write the review. The token budget counts a cached input
+token with its share of the price (a tenth on Mistral), so it limits cost, not
+the size of the conversation. Each round's last tool result tells the model how
+much of the budget is used, and from 60 % on to wrap up.
+
+## Speed
+
+Almost all of a review's time is the model's output, mostly reasoning, at
+about 20 to 25 tokens per second; input is cached and cheap. So the review is
+set up to need few rounds:
+
+- The changed files are in the prompt in full, with line numbers (up to
+  30 000 characters each, 120 000 together, production code first), next to the diff.
+- The model's thinking parts go back into the conversation unchanged, as
+  Mistral asks for reasoning models; without them it reasons everything out
+  again in every round.
+- When exploration is cut off, the answer is prefilled with `## Summary`
+  (Mistral's assistant prefix), so the model cannot answer with narration and
+  need a second request. An API that rejects the prefix gets the plain request.
+- `AI_REVIEW_REASONING_EFFORT=medium` or `low` cuts the reasoning further, at
+  a cost in findings (see below), so the default stays the model's `high`.
+
+On one extension pull request (7 files), the review took 26m43s before these
+changes (25 rounds, cut off at the limit) and 10m51s after them (16 rounds,
+finished on its own, half the output tokens), with the same depth of
+exploration and one valid finding. With `medium` it took 5m17s in 6 rounds but
+missed that finding.
+
+The usage line ends with the wall-clock time of the review.
 
 ## What the model sees
 
