@@ -16,6 +16,13 @@ class MontrekManager:
         self.session_data = session_data
         self.messages: list[MontrekMessage] = []
 
+    def add_message(self, message: MontrekMessage) -> None:
+        """Adds the message unless it is already there: managers may share their
+        messages, e.g. with their export manager, and report the same problem
+        more than once."""
+        if message not in self.messages:
+            self.messages.append(message)
+
     @property
     def repository(self):
         if self._repository is None:

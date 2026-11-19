@@ -691,7 +691,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
             rows = pd.DataFrame(self.df_data, dtype=object)
             mask = DataFrameFilter(filter_dict).mask(rows).to_numpy()
         except (ValueError, TypeError) as e:
-            self._add_error_message(f"Filter could not be applied: {e}")
+            self.add_message(MontrekMessageError(f"Filter could not be applied: {e}"))
             mask = [False] * len(self.df_data)
         self.df_data = [
             row for row, keep in zip(self.df_data, mask, strict=True) if keep
@@ -705,7 +705,9 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
             return
         column = self.order_field[1:] if self.order_descending else self.order_field
         if not any(column in row for row in self.df_data):
-            self._add_error_message(f"Table could not be sorted: no field {column}")
+            self.add_message(
+                MontrekMessageError(f"Table could not be sorted: no field {column}")
+            )
             return
         present: list[dict] = []
         empty: list[dict] = []
@@ -714,7 +716,7 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         try:
             present.sort(key=lambda row: row[column], reverse=self.order_descending)
         except TypeError as e:
-            self._add_error_message(f"Table could not be sorted: {e}")
+            self.add_message(MontrekMessageError(f"Table could not be sorted: {e}"))
             return
         self.df_data = present + empty
 
@@ -722,11 +724,6 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def _is_empty(value: Any) -> bool:
         """None, and the NaN or NaT of rows that come from a DataFrame."""
         return value is None or (pd.api.types.is_scalar(value) and pd.isna(value))
-
-    def _add_error_message(self, text: str) -> None:
-        message = MontrekMessageError(text)
-        if message not in self.messages:
-            self.messages.append(message)
 
     def get_table(self) -> list[dict]:
         full_table = self.get_full_table()
