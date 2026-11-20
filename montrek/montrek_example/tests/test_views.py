@@ -619,11 +619,40 @@ class TestMontrekExampleAInlineFieldEditView(MontrekInlineFieldEditViewTestCase)
     def build_factories(self):
         self.sat_a1 = me_factories.SatA1Factory(field_a1_str="test", field_a1_int=12)
         me_factories.SatA2Factory(
-            hub_entity=self.sat_a1.hub_entity, field_a2_str="original"
+            hub_entity=self.sat_a1.hub_entity,
+            field_a2_str="original",
+            field_a2_float=1.5,
         )
 
     def url_kwargs(self) -> dict:
         return {"pk": self.sat_a1.get_hub_value_date().id}
+
+    def choose_factor_on_the_list(self, factor: str) -> str:
+        list_url = reverse("montrek_example_a_list")
+        self.client.get(
+            list_url,
+            data={"parameter_form": "example_factor", "example_factor-factor": factor},
+        )
+        return "http://testserver" + list_url
+
+    def test_rows_use_the_parameters_of_the_list(self):
+        list_url = self.choose_factor_on_the_list("3")
+        for method, data in (("get", {}), ("post", self.post_data("cancel"))):
+            with self.subTest(method=method):
+                response = getattr(self.client, method)(
+                    self.url, data, HTTP_HX_REQUEST="true", HTTP_HX_CURRENT_URL=list_url
+                )
+                # 1.5 times the factor 3 chosen on the list, not the default 2
+                self.assertIn("4.500", response.content.decode())
+
+    def test_rows_fall_back_to_the_referer(self):
+        list_url = self.choose_factor_on_the_list("3")
+
+        response = self.client.get(
+            self.url, HTTP_HX_REQUEST="true", HTTP_REFERER=list_url
+        )
+
+        self.assertIn("4.500", response.content.decode())
 
     def additional_assertions(self, test_object):
         # Sibling satellite fields survive the single-field update.

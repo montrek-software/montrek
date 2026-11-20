@@ -2,6 +2,7 @@ import logging
 from collections.abc import Callable
 from functools import partial, wraps
 from pathlib import Path
+from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any, Protocol
 
 from django.conf import settings
@@ -514,7 +515,6 @@ class MontrekListView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
-        self.show_messages()
         if not isinstance(
             self.manager, MontrekTableManager | MontrekDataFrameTableManager
         ):
@@ -522,6 +522,8 @@ class MontrekListView(
                 f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager or MontrekDataFrameTableManager"
             )
         table = self.manager.to_html()
+        # After rendering, which may add messages, e.g. from the summary row
+        self.show_messages()
         context["table"] = table
         context["paginator"] = self.manager.paginator
         context["paginate_by"] = self.manager.paginate_by
@@ -1096,9 +1098,23 @@ class MontrekHtmxRowRenderMixin:
                     "to row_table_manager_class"
                 )
             self._row_table_manager = self.row_table_manager_class(
-                self.get_row_table_session_data()
+                self._with_list_parameters(self.get_row_table_session_data())
             )
         return self._row_table_manager
+
+    def _with_list_parameters(self, session_data: SessionDataType) -> SessionDataType:
+        """Adds the values of the parameter forms of the list the request comes
+        from, so that the row is rendered as the list renders it."""
+        request = getattr(self, "request", None)
+        if request is None:
+            return session_data
+        list_url = request.headers.get("HX-Current-URL") or request.META.get(
+            "HTTP_REFERER", ""
+        )
+        values = ParameterForms.stored_values(
+            dict(request.session), urlparse(list_url).path
+        )
+        return {**values, **session_data}
 
     def get_row_table_session_data(self) -> SessionDataType:
         return self.session_data

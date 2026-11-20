@@ -21,6 +21,12 @@ class MockCurrencyForm(MontrekParameterForm):
     )
 
 
+class MockOptionsForm(MontrekParameterForm):
+    session_key = "options"
+    with_closed = forms.BooleanField(required=False, initial=True)
+    as_of = forms.SplitDateTimeField(required=False)
+
+
 class MockColumnsForm(MontrekParameterForm):
     session_key = "columns"
     shown = forms.MultipleChoiceField(
@@ -129,6 +135,43 @@ class TestParameterForms(TestCase):
         self.assertEqual(
             json.loads(json.dumps(session_data["currency"])), {"ccy_code": "USD"}
         )
+
+    def test_an_unchecked_box_is_kept(self):
+        """An unchecked box submits nothing, which is a valid submission."""
+        options = (MockOptionsForm,)
+        self.apply(self.request(**{SUBMITTED_FORM_PARAM: "options"}), options)
+
+        _, session_data = self.apply(self.request(), options)
+
+        self.assertFalse(session_data["options"]["with_closed"])
+
+    def test_a_field_of_several_widgets_is_kept(self):
+        options = (MockOptionsForm,)
+        inputs = {"options-as_of_0": "2026-11-20", "options-as_of_1": "16:30"}
+        _, session_data = self.apply(
+            self.request(**{SUBMITTED_FORM_PARAM: "options"}, **inputs), options
+        )
+        for name in inputs:
+            self.assertNotIn(name, session_data)
+
+        _, session_data = self.apply(self.request(), options)
+
+        self.assertEqual(session_data["options"]["as_of"], ["2026-11-20", "16:30"])
+
+    def test_applied_values_are_stored_for_other_views(self):
+        self.apply(self.submit(**{"currency-ccy_code": "USD"}))
+
+        self.assertEqual(
+            ParameterForms.stored_values(dict(self.session), PATH),
+            {"currency": {"ccy_code": "USD"}},
+        )
+        self.assertEqual(ParameterForms.stored_values(dict(self.session), "/other"), {})
+
+    def test_initial_values_are_not_stored(self):
+        """They may be of any type, while the session takes JSON only."""
+        self.apply(self.request())
+
+        self.assertEqual(ParameterForms.stored_values(dict(self.session), PATH), {})
 
     def test_without_forms_nothing_changes(self):
         parameter_forms, session_data = self.apply(self.request(), form_classes=())

@@ -6,7 +6,7 @@
     <div class="row mb-1 align-items-end">
       {% for field in form %}
         <div class="col-lg-3 px-1">
-          <span class="input-group-text bg-primary-light-custom">{{ field.label }}</span>
+          <label for="{{ field.id_for_label }}" class="input-group-text bg-primary-light-custom">{{ field.label }}</label>
           {% if field.widget_type == "select" %}
             {{ field|add_class:"form-select" }}
           {% else %}

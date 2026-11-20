@@ -482,6 +482,17 @@ class MockMontrekListView(MontrekListView, MockRequester):
         self.add_mock_request(url)
 
 
+class MockManagerMessageWhileRendering(MockManager):
+    def to_html(self):
+        html = super().to_html()
+        self.add_message(MontrekMessageWarning("Added while rendering"))
+        return html
+
+
+class MockMontrekListViewMessageWhileRendering(MockMontrekListView):
+    manager_class = MockManagerMessageWhileRendering
+
+
 class MockManagerPdfFails(MontrekTableManager):
     repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
 
@@ -503,6 +514,14 @@ class MockMontrekListViewPdfFails(MontrekListView, MockRequester):
 
 
 class TestMontrekListView(TestCase):
+    def test_list_view_shows_messages_added_while_rendering(self):
+        test_list_view = MockMontrekListViewMessageWhileRendering("dummy")
+
+        test_list_view.get(test_list_view.request)
+
+        messages = [message.message for message in get_messages(test_list_view.request)]
+        self.assertEqual(messages, ["Added while rendering"])
+
     def test_list_view_base_normal_load(self):
         """
         Test that the page loads normally without the `gen_csv` query parameter.
