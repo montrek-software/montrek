@@ -15,7 +15,6 @@ from baseclasses.repositories.db.db_staller import DbStaller, StalledSatelliteDi
 from django.db import models, transaction
 from django.db.utils import IntegrityError
 from django.utils import timezone
-from psycopg2.errors import UniqueViolation
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +166,7 @@ class ViewModelRepository:
                 with transaction.atomic():
                     self._try_store_query_in_view_model(query, mode)
                 break
-            except (IntegrityError, UniqueViolation) as err:
+            except IntegrityError as err:
                 if attempt == self.MAX_RETRIES - 1:
                     raise ValueError(
                         "Maximum number of retries exceeded when storing to the view model due to repeated integrity errors."
