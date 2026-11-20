@@ -2508,3 +2508,58 @@ class TestMoneyTableElementRowCurrency(TestCase):
         )
 
         self.assertTrue(ccy_symbol_field.kw_only)
+
+
+class TestMoneyTableElementColumnCurrency(TestCase):
+    def build_element(self) -> te.MoneyTableElement:
+        return te.MoneyTableElement(name="Value", attr="value", ccy_symbol="CHF")
+
+    def test_every_row_shows_the_column_symbol(self):
+        for row in ({"value": 1.0}, SimpleNamespace(value=1.0)):
+            with self.subTest(row=row):
+                element = self.build_element()
+
+                self.assertEqual(
+                    element.get_display_field(row).display_value.strip(), "1.00CHF"
+                )
+                self.assertEqual(
+                    element.get_attribute(row, "latex"), "\\color{textdark} 1.00CHF &"
+                )
+
+    def test_the_total_shows_the_column_symbol(self):
+        element = self.build_element()
+
+        self.assertEqual(
+            element.get_sum_display_field(1000).display_value.strip(), "1,000.00CHF"
+        )
+        self.assertEqual(
+            element.get_sum_latex(1000), "\\bfseries \\color{textdark} 1,000.00CHF &"
+        )
+        self.assertEqual(element.get_sum_value_len(1000), len("1,000.00CHF"))
+
+    def test_the_column_symbol_is_escaped_for_latex(self):
+        element = te.MoneyTableElement(name="Value", attr="value", ccy_symbol="$")
+
+        self.assertEqual(element.format_latex(1.0), "\\color{textdark} 1.00\\$ &")
+
+    def test_a_row_symbol_field_overrides_the_column_symbol(self):
+        element = te.MoneyTableElement(
+            name="Value", attr="value", ccy_symbol="CHF", ccy_symbol_field="symbol"
+        )
+
+        display_field = element.get_display_field({"value": 1.0, "symbol": "€"})
+
+        self.assertEqual(display_field.display_value.strip(), "1.00€")
+        self.assertEqual(element.get_sum_value_len(1000), len("1,000.00"))
+
+    def test_euro_and_dollar_keep_their_symbol(self):
+        self.assertEqual(te.EuroTableElement(name="t", attr="a").ccy_symbol, "€")
+        self.assertEqual(te.DollarTableElement(name="t", attr="a").ccy_symbol, "$")
+
+    def test_euro_and_dollar_positional_arguments_are_unchanged(self):
+        """The keyword-only symbol does not shift positional arguments."""
+        element = te.EuroTableElement("Name", "attr", "Hover")
+
+        self.assertEqual(
+            (element.name, element.attr, element.hover_text), ("Name", "attr", "Hover")
+        )
