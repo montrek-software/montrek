@@ -16,6 +16,9 @@
     <!-- LEFT: FILTER FORM -->
       <div class="col-12 col-lg-9 tile">
         {% include "partials/table_filter_form.html" %}
+        {% if parameter_forms %}
+          {% include "partials/table_parameter_forms.html" %}
+        {% endif %}
       </div>
 
     <!-- RIGHT: EXPORT BUTTONS -->
