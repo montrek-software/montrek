@@ -167,6 +167,22 @@ class TestTableElements(TestCase, TableElementTestingToolMixin):
                 msg=element_class.__name__,
             )
 
+    def test_columns_are_sortable_by_default(self):
+        self.assertTrue(te.StringTableElement(name="test", attr="a").sortable)
+        self.assertFalse(
+            te.StringTableElement(name="test", attr="a", sortable=False).sortable
+        )
+
+    def test_sortable_is_keyword_only(self):
+        """A positional field would shift the positional arguments of every
+        table element subclass."""
+        sortable_field = next(
+            field
+            for field in dataclasses.fields(te.TableElement)
+            if field.name == "sortable"
+        )
+        self.assertTrue(sortable_field.kw_only)
+
     def test_th_classes_str_centers_progress_bar_header(self):
         self.assertEqual(
             te.ProgressBarTableElement(name="test", attr="a").th_classes_str,
