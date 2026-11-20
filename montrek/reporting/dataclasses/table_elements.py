@@ -56,6 +56,9 @@ class TableElement:
     # number and prints the note below the table. Keyword-only so it does not
     # shift the positional arguments of any subclass.
     footnote_attr: str | None = field(default=None, kw_only=True)
+    # Whether the header sorts the table by ``attr``. Turn it off for a column
+    # the query cannot order by, e.g. one whose value is computed in Python.
+    sortable: bool = field(default=True, kw_only=True)
     style_attrs: ClassVar[StyleAttrsType] = {}
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     th_classes: ClassVar[TdClassesType | None] = None

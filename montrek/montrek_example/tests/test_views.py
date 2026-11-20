@@ -125,6 +125,72 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         self.assertEqual(overview_html, exp_overview_html)
 
 
+class TestMontrekExampleAListViewSorting(MontrekListViewTestCase):
+    """The TestField column is computed in Python and cannot be sorted."""
+
+    viewname = "montrek_example_a_list"
+    view_class = me_views.MontrekExampleAList
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=sata1.hub_entity)
+
+    def stored_order(self) -> list | None:
+        return self.client.session.get("order_fields", {}).get(self.url)
+
+    def store_order(self, order_field: str) -> None:
+        session = self.client.session
+        session["order_fields"] = {self.url: [order_field]}
+        session.save()
+
+    def error_messages(self, response) -> list[str]:
+        return [
+            str(message)
+            for message in response.context["messages"]
+            if message.level_tag == "error"
+        ]
+
+    def header(self, name: str) -> Tag:
+        soup = BeautifulSoup(self.client.get(self.url).content, "html.parser")
+        return next(th for th in soup.find_all("th") if name in th.get_text())
+
+    def test_only_sortable_columns_have_a_sort_button(self):
+        self.assertIsNotNone(self.header("A1 Int").find("button"))
+        self.assertIsNone(self.header("TestField").find("button"))
+
+    def test_sortable_column_is_sorted(self):
+        self.client.get(self.url, data={"order_action": "field_a1_int"})
+        self.assertEqual(self.stored_order(), ["field_a1_int"])
+
+    def test_order_by_an_unsortable_column_is_not_stored(self):
+        self.client.get(self.url, data={"order_action": "field_a1_int"})
+
+        response = self.client.get(self.url, data={"order_action": "individual_field"})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.stored_order(), ["field_a1_int"])
+
+    def test_page_with_a_stored_order_by_an_unsortable_column_renders(self):
+        self.store_order("individual_field")
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context_data["object_list"]), 1)
+        self.assertEqual(self.error_messages(response), [])
+
+    def test_page_with_an_order_that_cannot_be_resolved_renders(self):
+        self.store_order("-no_such_field")
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context_data["object_list"]), 1)
+        (message,) = self.error_messages(response)
+        self.assertIn("Table could not be sorted", message)
+
+
 class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
     viewname = "montrek_example_a_list"
     view_class = me_views.MontrekExampleAList

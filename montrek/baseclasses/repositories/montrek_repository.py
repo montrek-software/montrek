@@ -112,7 +112,7 @@ class MontrekRepository:
         self.calculated_fields: list[str] = []
         self.linked_fields: list[str] = []
         self.set_annotations()
-        self._order_fields: tuple[str] | None = None
+        self._order_fields: tuple[str, ...] | None = None
         self._db_staller: DbStaller | None = None
         self.view_model_repository = ViewModelRepository(self.view_model)
 
@@ -456,7 +456,7 @@ class MontrekRepository:
             return self._order_fields
         return self.default_order_fields
 
-    def set_order_fields(self, fields: tuple[str]):
+    def set_order_fields(self, fields: tuple[str, ...]):
         self._order_fields = fields
 
     @property

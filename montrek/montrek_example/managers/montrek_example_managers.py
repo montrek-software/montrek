@@ -108,7 +108,10 @@ class HubAManager(MontrekTableManager):
             ),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            ExampleIndividualTableElement(name="TestField", attr="individual_field"),
+            # Computed in Python, so the query cannot order by it
+            ExampleIndividualTableElement(
+                name="TestField", attr="individual_field", sortable=False
+            ),
             te.LinkTableElement(
                 name="View",
                 url="montrek_example_a_details",
