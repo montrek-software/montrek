@@ -1,6 +1,7 @@
 import datetime
 
 from django.test import TestCase
+from django.utils import timezone
 
 from baseclasses.models import (
     LinkTestMontrekTestLink,
@@ -26,7 +27,10 @@ class TestDBCreator(TestCase):
         test_db_creator = DbCreator(MockDbStaller(), 1)
         test_datetime = datetime.datetime(2018, 1, 1, 0, 0, 0)
         test_db_creator._make_timezone_aware(test_datetime, "UTC")
-        self.assertEqual(test_db_creator.data["UTC"].tzinfo.key, "UTC")
+        self.assertEqual(
+            test_db_creator.data["UTC"].tzinfo.key,
+            timezone.get_default_timezone_name(),
+        )
 
     def test_set_static_satellite_hub(self):
         test_db_creator = DbCreator(MockDbStaller(), 1)

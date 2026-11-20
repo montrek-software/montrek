@@ -5,10 +5,10 @@ from typing import Any, ClassVar, cast
 
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.fields import HubForeignKey
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.utils import datetime_to_montrek_time
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 
 # Create your models here.
 
@@ -28,12 +28,8 @@ class StateMixin(models.Model):
     class Meta:
         abstract = True
 
-    state_date_start = models.DateTimeField(
-        default=timezone.make_aware(datetime.datetime.min)
-    )
-    state_date_end = models.DateTimeField(
-        default=timezone.make_aware(datetime.datetime.max)
-    )
+    state_date_start = models.DateTimeField(default=DatetimeBoundaries.MIN)
+    state_date_end = models.DateTimeField(default=DatetimeBoundaries.MAX)
     comment = models.CharField(max_length=255, default="", blank=True)
 
 
@@ -119,7 +115,6 @@ class HubValueDate(models.Model):
             # The latest row of a hub is one lookup in this index
             models.Index(fields=["hub", "value_date_copy"]),
         ]
-
 
     # Both foreign keys are indexed by Django already
     hub = HubForeignKey(MontrekHubABC)

@@ -7,9 +7,11 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
 )
 from django.core.exceptions import FieldError, ValidationError
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.repositories.annotator import Annotator
 from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
 from baseclasses.repositories.filter_decoder import FilterDecoder
+from baseclasses.utils import to_date
 from django.db.models import (
     BooleanField,
     Exists,
@@ -56,12 +58,12 @@ class QueryBuilder:
         self.latest_ts = latest_ts
         self.hub_scope_pk = hub_scope_pk
         self.session_start_date = (
-            self.session_data.get("start_date", datetime.datetime.min)
+            self.session_data.get("start_date", DatetimeBoundaries.MIN)
             if session_start_date is None
             else session_start_date
         )
         self.session_end_date = (
-            self.session_data.get("end_date", datetime.datetime.max)
+            self.session_data.get("end_date", DatetimeBoundaries.MAX)
             if session_end_date is None
             else session_end_date
         )
@@ -189,8 +191,10 @@ class QueryBuilder:
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():
             return queryset
-        end_date = self.session_end_date
-        start_date = self.session_start_date
+        # value_date is a DateField: compare dates, as converting the datetime
+        # bounds to the local time zone overflows at the calendar boundaries.
+        end_date = to_date(self.session_end_date)
+        start_date = to_date(self.session_start_date)
         return queryset.filter(
             (Q(value_date__lte=end_date) & Q(value_date__gte=start_date))
             | Q(value_date__isnull=True)

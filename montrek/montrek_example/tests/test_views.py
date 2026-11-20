@@ -6,13 +6,13 @@ from typing import cast
 from unittest.mock import patch
 
 from baseclasses.dataclasses.alert import AlertEnum
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.utils import montrek_time
 from baseclasses.views import REST_API_QUERY_PARAM
 from bs4 import BeautifulSoup, Tag
 from django.contrib.auth.models import Permission
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
-from django.utils import timezone
 from file_upload.repositories.file_upload_registry_repository import (
     FileUploadRegistryRepository,
 )
@@ -889,9 +889,7 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         links = LinkHubBHubD.objects.all()
         self.assertEqual(links.count(), 2)
         for link in links:
-            self.assertEqual(
-                link.state_date_end, timezone.make_aware(timezone.datetime.max)
-            )
+            self.assertEqual(link.state_date_end, DatetimeBoundaries.MAX)
         repository = HubBRepository()
         satb1 = repository.receive().first()
         self.assertEqual(satb1.field_b1_str, "test")
@@ -907,12 +905,8 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         )
         links = LinkHubBHubD.objects.all()
         self.assertEqual(links.count(), 2)
-        self.assertEqual(
-            links[0].state_date_end, timezone.make_aware(timezone.datetime.max)
-        )
-        self.assertLess(
-            links[1].state_date_end, timezone.make_aware(timezone.datetime.max)
-        )
+        self.assertEqual(links[0].state_date_end, DatetimeBoundaries.MAX)
+        self.assertLess(links[1].state_date_end, DatetimeBoundaries.MAX)
         satb1 = repository.receive().get(pk=satb1.pk)
         self.assertEqual(satb1.field_b1_str, "test")
         self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)
@@ -922,9 +916,7 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         links = LinkHubBHubD.objects.all()
         self.assertEqual(links.count(), 2)
         for link in links:
-            self.assertEqual(
-                link.state_date_end, timezone.make_aware(timezone.datetime.max)
-            )
+            self.assertEqual(link.state_date_end, DatetimeBoundaries.MAX)
         repository = HubBRepository()
         satb1 = repository.receive().first()
         self.assertEqual(satb1.field_b1_str, "test")
@@ -942,12 +934,8 @@ class TestMontrekExampleBUpdate(MontrekUpdateViewTestCase):
         )
         links = LinkHubBHubD.objects.all()
         self.assertEqual(links.count(), 2)
-        self.assertLess(
-            links[0].state_date_end, timezone.make_aware(timezone.datetime.max)
-        )
-        self.assertLess(
-            links[1].state_date_end, timezone.make_aware(timezone.datetime.max)
-        )
+        self.assertLess(links[0].state_date_end, DatetimeBoundaries.MAX)
+        self.assertLess(links[1].state_date_end, DatetimeBoundaries.MAX)
         satb1 = repository.receive().get(pk=satb1.pk)
         self.assertEqual(satb1.field_b1_str, "test")
         self.assertEqual(satb1.hub.link_hub_b_hub_d.count(), 2)

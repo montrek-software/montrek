@@ -76,14 +76,8 @@ class TestModelUtils(TestCase):
     def test_state_date(self):
         test_satellites = TestMontrekSatellite.objects.all()
         for test_satellite in test_satellites:
-            self.assertEqual(
-                test_satellite.state_date_start,
-                datetime.datetime(2023, 6, 20, tzinfo=datetime.UTC),
-            )
-            self.assertEqual(
-                test_satellite.state_date_end,
-                datetime.datetime(2023, 7, 10, tzinfo=datetime.UTC),
-            )
+            self.assertEqual(test_satellite.state_date_start, montrek_time(2023, 6, 20))
+            self.assertEqual(test_satellite.state_date_end, montrek_time(2023, 7, 10))
 
 
 class TestSatelliteIdentifier(TestCase):
@@ -97,7 +91,7 @@ class TestSatelliteIdentifier(TestCase):
         )
 
     def test_new_satellite_has_correct_identifier_hash(self):
-        teststr = b"test_name2023-06-20 00:00:00+00:00"
+        teststr = f"test_name{montrek_time(2023, 6, 20)}".encode()
         test_hash = hashlib.sha256(teststr).hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name",
@@ -154,7 +148,7 @@ class TestSatelliteIdentifier(TestCase):
 class TestSatelliteValueHash(TestCase):
     def test_new_satellite_has_correct_value_hash(self):
         test_hash = hashlib.sha256(
-            b"test_nameNone02023-06-20 00:00:00+00:00"
+            f"test_nameNone0{montrek_time(2023, 6, 20)}".encode()
         ).hexdigest()
         test_satellite = TestMontrekSatelliteFactory(
             test_name="test_name",

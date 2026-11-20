@@ -16,6 +16,7 @@ from baseclasses.dataclasses.montrek_message import (
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
@@ -23,7 +24,6 @@ from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
-from django.utils import timezone
 from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
@@ -437,8 +437,8 @@ class MontrekTableManagerABC(
         return response
 
     def _make_datetime_naive(self, value):
-        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
-            value = timezone.make_naive(value)
+        if isinstance(value, datetime.datetime):
+            value = DatetimeBoundaries.to_naive_local_time(value)
         return value
 
     def _make_float(self, value):
