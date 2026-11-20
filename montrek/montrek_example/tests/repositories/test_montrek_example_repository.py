@@ -16,7 +16,9 @@ from baseclasses.repositories.subquery_builder import (
     TSRelativeChangeSubqueryBuilder,
 )
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.utils import montrek_time
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import Q
@@ -87,8 +89,8 @@ from montrek_example.tests.factories import montrek_example_factories as me_fact
 from user.models import MontrekUser
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
-MIN_DATE = timezone.make_aware(datetime.datetime.min)
-MAX_DATE = timezone.make_aware(datetime.datetime.max)
+MIN_DATE = DatetimeBoundaries.MIN
+MAX_DATE = DatetimeBoundaries.MAX
 
 
 class TestMontrekRepositorySatellite(TestCase):
@@ -411,7 +413,7 @@ class TestMontrekCreateObject(TestCase):
         self.assertGreater(updated_sat.state_date_start, snapshot_time)
         self.assertLess(
             me_models.SatA2.objects.first().state_date_end,
-            timezone.make_aware(timezone.datetime.max),
+            MAX_DATE,
         )
 
     def test_std_create_object_update_satellite_id_field(self):
@@ -2300,7 +2302,7 @@ class TestTimeSeries(TestCase):
         for i in range(2):
             self.assertEqual(
                 queryset[i].state_date_end,
-                timezone.make_aware(timezone.datetime.max),
+                MAX_DATE,
             )
             self.assertLess(queryset[i].state_date_start, timezone.now())
 
@@ -4157,7 +4159,7 @@ class TestRepositoryAsDF(TestCase):
                 {
                     "value_date": "datetime64[ns]",
                     "hub_entity_id": "Int64",
-                    "created_at": "datetime64[ns, UTC]",
+                    "created_at": f"datetime64[ns, {settings.TIME_ZONE}]",
                     "created_by": "string",
                     "comment": "string",
                     "field_a1_int": "Int64",
@@ -4174,7 +4176,7 @@ class TestRepositoryAsDF(TestCase):
                     "alert_level": "category",
                     "alert_message": "string",
                     "comment": "string",
-                    "created_at": "datetime64[ns, UTC]",
+                    "created_at": f"datetime64[ns, {settings.TIME_ZONE}]",
                     "created_by": "string",
                     "field_b1_date": "datetime64[ns]",
                     "field_b1_str": "string",
@@ -4191,7 +4193,7 @@ class TestRepositoryAsDF(TestCase):
                 HubARepository5,
                 {
                     "comment": "string",
-                    "created_at": "datetime64[ns, UTC]",
+                    "created_at": f"datetime64[ns, {settings.TIME_ZONE}]",
                     "created_by": "string",
                     "field_a5_str": "string",
                     "hub_entity_id": "Int64",
@@ -4272,8 +4274,8 @@ class TestRepositoryAsDF(TestCase):
         )
         self.assertEqual(
             str(df["created_at"].dtype.tz),
-            "UTC",
-            "created_at should be in UTC",
+            settings.TIME_ZONE,
+            "created_at should be in the configured time zone",
         )
 
     def test_ts_df(self):
@@ -4343,7 +4345,7 @@ class TestRepositoryAsDF(TestCase):
         df = repo.get_df()
 
         self.assertTrue(pd.api.types.is_datetime64tz_dtype(df["created_at"]))
-        self.assertEqual(str(df["created_at"].dtype.tz), "UTC")
+        self.assertEqual(str(df["created_at"].dtype.tz), settings.TIME_ZONE)
 
     def test_free_text_never_category(self):
         repo = HubARepository({})

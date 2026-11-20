@@ -16,6 +16,7 @@ from baseclasses.dataclasses.montrek_message import (
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import File
@@ -116,7 +117,7 @@ class MontrekTableManagerABC(
         if not self._document_name:
             manager_name = self.__class__.__name__.lower()
             self._document_name = (
-                f"{manager_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+                f"{manager_name}_{timezone.localtime().strftime('%Y%m%d%H%M%S')}"
             )
         return self._document_name
 
@@ -437,8 +438,8 @@ class MontrekTableManagerABC(
         return response
 
     def _make_datetime_naive(self, value):
-        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
-            value = timezone.make_naive(value)
+        if isinstance(value, datetime.datetime):
+            value = DatetimeBoundaries.to_naive_local_time(value)
         return value
 
     def _make_float(self, value):

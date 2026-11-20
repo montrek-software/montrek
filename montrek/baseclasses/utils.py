@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any
 
 import pandas as pd
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.typing import SessionDataType
 from django.conf import settings
 from django.db import models
@@ -66,22 +67,30 @@ def montrek_time(
 
 
 def montrek_today() -> datetime.date:
-    return timezone.now().date()
+    return timezone.localdate()
 
 
 def montrek_date_string(date: datetime.date) -> str:
     return date.strftime("%Y-%m-%d")
 
 
-def datetime_to_montrek_time(datetime: datetime.datetime) -> datetime.datetime:
+def datetime_to_montrek_time(value: datetime.datetime) -> datetime.datetime:
+    """Return ``value`` as an aware datetime in the current time zone.
+
+    A naive value is read as local wall time; an aware value keeps its instant.
+    """
+    if DatetimeBoundaries.is_boundary(value):
+        return value.replace(tzinfo=DatetimeBoundaries.MIN.tzinfo)
+    if timezone.is_aware(value):
+        return timezone.localtime(value)
     return montrek_time(
-        datetime.year,
-        datetime.month,
-        datetime.day,
-        datetime.hour,
-        datetime.minute,
-        datetime.second,
-        datetime.microsecond,
+        value.year,
+        value.month,
+        value.day,
+        value.hour,
+        value.minute,
+        value.second,
+        value.microsecond,
     )
 
 

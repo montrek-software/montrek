@@ -55,7 +55,7 @@ class ViewModelRepository:
         attrs = {
             "__module__": module_name,
             "Meta": Meta,
-            "reference_date": datetime.date.today(),
+            "reference_date": timezone.localdate(),
         }
         attrs.update(fields)
         model_name = repository_name + "ViewModel"

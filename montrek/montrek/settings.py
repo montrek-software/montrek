@@ -432,7 +432,7 @@ NUMBER_FORMATTING = SystemFormatting(config("NUMBER_FORMATTING", default="en"))
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-TIME_ZONE = "UTC"
+TIME_ZONE = config("TIME_ZONE", default="Europe/Berlin")
 
 USE_I18N = True
 

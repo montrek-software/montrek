@@ -15,11 +15,11 @@ import pandas as pd
 import requests
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 from django.template.loader import render_to_string
 from django.urls import NoReverseMatch, reverse
-from django.utils import timezone
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe
 from encrypted_fields.fields import EncryptedFieldMixin
@@ -632,6 +632,8 @@ class StringTableElement(AttrTableElement):
         value = super().get_value(obj)
         if pd.isna(value):
             return None
+        if isinstance(value, datetime.datetime):
+            return DatetimeBoundaries.to_naive_local_time(value)
         return value
 
     def _chunk_text(self, text: str) -> list[str]:
@@ -924,8 +926,8 @@ class DateTableBaseElement(AttrTableElement):
         value = super().get_value(obj)
         if value is None:
             return None
-        if isinstance(value, datetime.datetime) and not timezone.is_naive(value):
-            value = timezone.make_naive(value)
+        if isinstance(value, datetime.datetime):
+            value = DatetimeBoundaries.to_naive_local_time(value)
         return value
 
 

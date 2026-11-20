@@ -10,6 +10,7 @@ from baseclasses.models import (
     TestMontrekSatellite,
     TestMontrekTimeSeriesSatellite,
 )
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.repositories.annotator import (
     Annotator,
 )
@@ -449,6 +450,43 @@ class TestQueryBuilder(TestCase):
         query_builder.build_queryset(self.reference_date)
         self.assertIs(query_builder.messages, messages)
         self.assertEqual(len(messages), 1)
+
+
+class TestQueryBuilderSessionDates(TestCase):
+    def _value_dates(self, start_date: datetime.datetime, end_date: datetime.datetime):
+        annotator = Annotator(TestMontrekHub)
+        annotator.subquery_builder_to_annotations(
+            ["test_decimal"], TestMontrekTimeSeriesSatellite, TSSatelliteSubqueryBuilder
+        )
+        queryset = QueryBuilder(
+            annotator, {}, session_start_date=start_date, session_end_date=end_date
+        ).build_queryset(timezone.now())
+        return sorted(row.value_date for row in queryset)
+
+    def setUp(self):
+        hub = TestMontrekHubFactory.create()
+        for day in (1, 2, 3):
+            TestMontrekTimeSeriesSatelliteFactory.create(
+                hub_value_date__hub=hub,
+                value_date=datetime.date(2024, 1, day),
+            )
+
+    def test_aware_bounds_are_compared_in_the_local_time_zone(self):
+        # 23:30 UTC is already the next day in Berlin (UTC+1 in January).
+        start = datetime.datetime(2024, 1, 1, 23, 30, tzinfo=datetime.UTC)
+        end = datetime.datetime(2024, 1, 2, 23, 30, tzinfo=datetime.UTC)
+        with timezone.override("Europe/Berlin"):
+            value_dates = self._value_dates(start, end)
+        self.assertEqual(
+            value_dates, [datetime.date(2024, 1, 2), datetime.date(2024, 1, 3)]
+        )
+
+    def test_calendar_boundaries_include_all_value_dates(self):
+        with timezone.override("Europe/Berlin"):
+            value_dates = self._value_dates(
+                DatetimeBoundaries.MIN, DatetimeBoundaries.MAX
+            )
+        self.assertEqual(len(value_dates), 3)
 
 
 class TestQueryBuilderLatestTs(TestCase):
