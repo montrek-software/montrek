@@ -191,11 +191,17 @@ class QueryBuilder:
     def _filter_session_data(self, queryset: QuerySet) -> QuerySet:
         if not self.annotator.get_ts_satellite_classes():
             return queryset
-        # value_date is a DateField: compare dates, as converting the datetime
-        # bounds to the local time zone overflows at the calendar boundaries.
-        end_date = to_date(self.session_end_date)
-        start_date = to_date(self.session_start_date)
+        end_date = self._to_local_date(self.session_end_date)
+        start_date = self._to_local_date(self.session_start_date)
         return queryset.filter(
             (Q(value_date__lte=end_date) & Q(value_date__gte=start_date))
             | Q(value_date__isnull=True)
         )
+
+    @staticmethod
+    def _to_local_date(value: Any) -> datetime.date | None:
+        # value_date is a DateField. Django would convert an aware bound to the
+        # local time zone itself, but that overflows at the calendar boundaries.
+        if isinstance(value, datetime.datetime):
+            value = DatetimeBoundaries.to_naive_local_time(value)
+        return to_date(value)
