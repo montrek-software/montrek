@@ -976,12 +976,13 @@ class MoneyTableElement(NumberTableElement):
     serializer_field_class: ClassVar = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    # Symbol of the whole column, e.g. a fund's base currency
+    ccy_symbol: str = field(default="", kw_only=True)
     # Field of the row holding its currency symbol, for columns whose rows are
     # in different currencies. Overrides ``ccy_symbol``; a row without a
     # symbol shows none.
     ccy_symbol_field: str | None = field(default=None, kw_only=True)
     field_template: ClassVar[str | None] = "money"
-    ccy_symbol: ClassVar[str] = ""
 
     @property
     def column_ccy_symbol(self) -> str:
@@ -1038,12 +1039,14 @@ class MoneyTableElement(NumberTableElement):
         return formatted_value.replace(" &", f"{latex_ccy_symbol} &")
 
 
+@dataclass
 class EuroTableElement(MoneyTableElement):
-    ccy_symbol: ClassVar[str] = "€"
+    ccy_symbol: str = field(default="€", kw_only=True)
 
 
+@dataclass
 class DollarTableElement(MoneyTableElement):
-    ccy_symbol: ClassVar[str] = "$"
+    ccy_symbol: str = field(default="$", kw_only=True)
 
 
 @dataclass
