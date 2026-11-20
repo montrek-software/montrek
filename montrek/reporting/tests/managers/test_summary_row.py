@@ -83,6 +83,17 @@ class MockSameFieldSummaryTableManager(MockSummaryRowTableManager):
         )
 
 
+class MockRowCurrencySummaryTableManager(MockSummaryRowDataFrameTableManager):
+    @property
+    def table_elements(self):
+        return (
+            te.StringTableElement(name="Name", attr="field_a"),
+            te.MoneyTableElement(
+                name="Amount", attr="field_e", ccy_symbol_field="ccy_symbol"
+            ),
+        )
+
+
 class MockLinkFirstSummaryTableManager(MockSummaryRowTableManager):
     @property
     def table_elements(self):
@@ -297,6 +308,34 @@ class TestSummaryRowOfDataFrames(TestCase):
         self.assertEqual(values["Field B"], 3)
         self.assertAlmostEqual(values["Field C"], 1.5)
         self.assertAlmostEqual(values["Field E"], 30.0)
+
+
+class TestSummaryRowOfRowCurrencies(TestCase):
+    """The total of rows in different currencies is in none of them."""
+
+    def setUp(self):
+        df = pd.DataFrame(
+            {
+                "field_a": ["a", "b"],
+                "field_e": [10.0, 5.0],
+                "ccy_symbol": ["€", "$"],
+            }
+        )
+        self.manager = MockRowCurrencySummaryTableManager(
+            {"df_data": df.to_dict(orient="records")}
+        )
+
+    def test_html_total_has_no_symbol(self):
+        fields = self.manager.get_summary_fields(self.manager.table_elements)
+
+        self.assertEqual(fields[1].display_value.strip(), "15.00")
+
+    def test_latex_rows_have_their_symbol_and_the_total_none(self):
+        latex = self.manager.to_latex()
+
+        self.assertIn("10.00€\\\\\n", latex)
+        self.assertIn("5.00\\$\\\\\n", latex)
+        self.assertIn("\\bfseries \\color{textdark} 15.00\\\\\n", latex)
 
 
 class TestSummaryRowInExports(TestCase):
