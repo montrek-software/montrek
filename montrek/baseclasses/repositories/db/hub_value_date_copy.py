@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import cast
 
 from django.apps import apps
-from psycopg2 import sql
 from django.db import connection, models
 from django.db.models import (
     Exists,
@@ -110,9 +109,8 @@ class HubValueDateCopy:
             if not model.objects.exists():
                 continue
             with connection.cursor() as cursor:
-                cursor.execute(
-                    sql.SQL("ANALYZE {}").format(sql.Identifier(model._meta.db_table))
-                )
+                table = connection.ops.quote_name(model._meta.db_table)
+                cursor.execute(f"ANALYZE {table}")
             analyzed.append(model)
         return analyzed
 
