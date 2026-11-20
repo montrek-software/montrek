@@ -25,7 +25,7 @@ from django.utils.safestring import mark_safe
 from encrypted_fields.fields import EncryptedFieldMixin
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
-from reporting.core.text_converter import HtmlLatexConverter
+from reporting.core.text_converter import HtmlLatexConverter, LaTeXEscaper
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
@@ -1030,7 +1030,11 @@ class MoneyTableElement(NumberTableElement):
         if ccy_symbol is None:
             ccy_symbol = self.column_ccy_symbol
         formatted_value = super().format_latex(value)
-        latex_ccy_symbol = HtmlLatexConverter.latex_syntax(ccy_symbol)
+        # The symbol can come from row data. Syntax first, as the plain-text
+        # rules emit backslashes and $ of their own.
+        latex_ccy_symbol = LaTeXEscaper.escape(
+            HtmlLatexConverter.latex_syntax(ccy_symbol)
+        )
         return formatted_value.replace(" &", f"{latex_ccy_symbol} &")
 
 

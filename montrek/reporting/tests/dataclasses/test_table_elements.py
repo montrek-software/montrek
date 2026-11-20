@@ -2409,7 +2409,15 @@ class TestMoneyTableElementRowCurrency(TestCase):
                 )
 
     def test_latex_escapes_the_symbol(self):
-        for symbol, expected in (("$", "\\$"), ("R$", "R\\$"), ("{x}", "\\{x\\}")):
+        for symbol, expected in (
+            ("$", "\\$"),
+            ("R$", "R\\$"),
+            ("{x}", "\\{x\\}"),
+            ("A&B", "A\\&B"),
+            ("#%_", "\\#\\%\\_"),
+            ("<", "$<$"),
+            ("\\#", "\\textbackslash{}\\#"),
+        ):
             with self.subTest(symbol=symbol):
                 row = self.rows(symbol)["dict"]
 
