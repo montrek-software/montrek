@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import io
 import re
@@ -544,6 +545,19 @@ class TestTableElementFilterFields(TestCase):
         self.assertEqual(manager.table_elements_reads, 1)
 
 
+class UnsortableFieldBDataFrameTableManager(MockMontrekDataFrameTableManager):
+    @property
+    def table_elements(self):
+        return tuple(
+            (
+                dataclasses.replace(element, sortable=False)
+                if getattr(element, "attr", None) == "field_b"
+                else element
+            )
+            for element in super().table_elements
+        )
+
+
 class TestMontrekDataFrameTableManager(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
@@ -864,6 +878,16 @@ class TestMontrekDataFrameTableManager(TestCase):
     def test_order_on_a_table_without_rows(self):
         manager = self.ordered_manager("field_b", [])
         self.assertEqual(manager.get_table(), [])
+        self.assertEqual(manager.messages, [])
+
+    def test_order_by_an_unsortable_column_keeps_the_rows(self):
+        manager = UnsortableFieldBDataFrameTableManager(
+            self.ordered_manager("-field_b").session_data
+        )
+        self.assertEqual(
+            [row["field_a"] for row in manager.get_table()], ["a", "b", "c"]
+        )
+        self.assertIsNone(manager.order_field)
         self.assertEqual(manager.messages, [])
 
     def test_source_session_data_has_no_filter(self):

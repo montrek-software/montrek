@@ -18,7 +18,7 @@ from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from baseclasses.datetime_boundaries import DatetimeBoundaries
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import FieldError, ImproperlyConfigured
 from django.core.files.base import File
 from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
@@ -137,8 +137,32 @@ class MontrekTableManagerABC(
         return order_field
 
     def set_order_field(self):
+        self.drop_unsortable_order_field()
         if self.order_field:
             self.repository.set_order_fields((str(self.order_field),))
+
+    def get_unsortable_fields(self) -> set[str]:
+        """Fields of the columns that cannot be sorted, unless another column
+        sorts by the same field."""
+        elements = self.table_elements
+        sortable = {element.attr for element in elements if element.sortable}
+        return {element.attr for element in elements if not element.sortable} - (
+            sortable
+        )
+
+    def drop_unsortable_order_field(self) -> None:
+        """Drops an order by a column that cannot be sorted, e.g. one stored in
+        the session before the column was made unsortable."""
+        if self.order_field and self._order_column() in self.get_unsortable_fields():
+            self._drop_order_field()
+
+    def _order_column(self) -> str:
+        order_field = str(self.order_field)
+        return order_field[1:] if self.order_descending else order_field
+
+    def _drop_order_field(self) -> None:
+        self.order_field = None
+        self.order_descending = False
 
     def get_table(self) -> TableDataType:
         raise NotImplementedError("Method get_table must be implemented")
@@ -531,7 +555,17 @@ class MontrekTableManager(MontrekTableManagerABC):
         if self._full_table is not None:
             return self._full_table
         self.set_order_field()
-        full_table = self.repository.receive()
+        try:
+            full_table = self.repository.receive()
+        except FieldError as e:
+            if not self.order_field:
+                raise
+            # The order is kept in the session: failing here would fail every
+            # request to the page, so the table falls back to its default order
+            self.add_message(MontrekMessageError(f"Table could not be sorted: {e}"))
+            self._drop_order_field()
+            self.repository.set_order_fields(())
+            full_table = self.repository.receive()
         self._full_table = full_table
         return full_table
 
@@ -738,9 +772,10 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         """Sorts the rows by the order field, empty values last. Rows with equal
         values keep their order. A field the rows cannot be sorted by leaves
         them as given."""
+        self.drop_unsortable_order_field()
         if not self.order_field or not self.df_data:
             return
-        column = self.order_field[1:] if self.order_descending else self.order_field
+        column = self._order_column()
         if not any(column in row for row in self.df_data):
             self.add_message(
                 MontrekMessageError(f"Table could not be sorted: no field {column}")

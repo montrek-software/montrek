@@ -600,6 +600,8 @@ class MontrekListView(
         return HttpResponseRedirect(self.request.path)
 
     def set_order_field(self, val: str | None):
+        if val in self.manager.get_unsortable_fields():
+            return HttpResponseRedirect(self.request.path)
         request_path = self.session_data["request_path"]
         request_data = self.request.session
         field = "order_fields"

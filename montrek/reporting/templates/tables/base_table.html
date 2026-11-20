@@ -11,6 +11,13 @@
           <th class="{{ table_element.th_classes_str }}">
             {% if pdf_mode %}
               {{ table_element.name }}
+            {% elif not table_element.sortable %}
+              <div class="th-flex">
+                <span>
+                  {{ table_element.name }}
+                  {% include "tables/partials/header_help_icon.html" %}
+                </span>
+              </div>
             {% else %}
               <button type="submit" onclick="document.getElementById('form-order_by-action').value='{{ table_element.attr }}'" class="btn-order-field">
                 <div class="th-flex">
