@@ -67,7 +67,7 @@ def montrek_time(
 
 
 def montrek_today() -> datetime.date:
-    return timezone.now().date()
+    return timezone.localdate()
 
 
 def montrek_date_string(date: datetime.date) -> str:

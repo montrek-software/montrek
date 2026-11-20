@@ -24,6 +24,7 @@ from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse
+from django.utils import timezone
 from django_pandas.io import read_frame
 from mailing.managers.mailing_manager import MailingManager
 from reporting.core import reporting_text as rt
@@ -116,7 +117,7 @@ class MontrekTableManagerABC(
         if not self._document_name:
             manager_name = self.__class__.__name__.lower()
             self._document_name = (
-                f"{manager_name}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+                f"{manager_name}_{timezone.localtime().strftime('%Y%m%d%H%M%S')}"
             )
         return self._document_name
 

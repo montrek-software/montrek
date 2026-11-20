@@ -1,4 +1,3 @@
-import datetime
 import re
 from io import BytesIO
 from typing import Any
@@ -87,7 +86,7 @@ class LogFileMixin(LogFileChecksMixin):
         log_sr = pd.Series(
             {
                 "Upload Message": message,
-                "Upload Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Upload Date": timezone.localtime().strftime("%Y-%m-%d %H:%M:%S"),
                 "Uploaded By": user_mail,
             },
             name="Log Meta Data",
@@ -104,7 +103,7 @@ class LogFileMixin(LogFileChecksMixin):
             hub = self.file_upload_registry_hub.hub
         registry_log_file_link = hub.link_file_upload_registry_file_log_file
         create_data = {"file": file}
-        now = timezone.make_aware(datetime.datetime.now())
+        now = timezone.now()
         existing_log_file = registry_log_file_link.filter(
             state_date_end__gt=now, state_date_start__lt=now
         )
