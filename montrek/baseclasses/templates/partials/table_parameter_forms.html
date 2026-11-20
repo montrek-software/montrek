@@ -1,0 +1,28 @@
+{% load data_table_filters %}
+
+{% for form in parameter_forms %}
+  <form method="get" class="w-100 mt-2" id="id_parameter_form_{{ form.session_key }}">
+    <input type="hidden" name="{{ parameter_form_param }}" value="{{ form.session_key }}">
+    <div class="row mb-1 align-items-end">
+      {% for field in form %}
+        <div class="col-lg-3 px-1">
+          <span class="input-group-text bg-primary-light-custom">{{ field.label }}</span>
+          {% if field.widget_type == "select" %}
+            {{ field|add_class:"form-select" }}
+          {% else %}
+            {{ field|add_class:"form-control" }}
+          {% endif %}
+          {% for error in field.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <div class="col-lg-2 px-1">
+        <button type="submit" class="btn btn-custom py-0">{{ form.submit_label }}</button>
+      </div>
+    </div>
+    {% for error in form.non_field_errors %}
+      <div class="text-danger small">{{ error }}</div>
+    {% endfor %}
+  </form>
+{% endfor %}

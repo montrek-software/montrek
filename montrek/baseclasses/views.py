@@ -62,7 +62,9 @@ from baseclasses.forms import (
     LocalizedText,
     LocalizedTexts,
     MontrekCreateForm,
+    MontrekParameterForm,
 )
+from baseclasses.parameter_forms import SUBMITTED_FORM_PARAM, ParameterForms
 from baseclasses.managers.montrek_manager import (
     MontrekManager,
     MontrekManagerNotImplemented,
@@ -443,6 +445,10 @@ class MontrekListView(
     template_name = "montrek_table.html"
     do_simple_file_upload = False
     simple_file_upload_permission: list[str] = []
+    # Forms next to the filter, whose values the manager reads from
+    # ``session_data[<form>.session_key]``
+    parameter_form_classes: tuple[type[MontrekParameterForm], ...] = ()
+    _parameter_forms: ParameterForms | None = None
 
     def get(self, request, *args, **kwargs):
         q = request.GET
@@ -490,10 +496,20 @@ class MontrekListView(
         # A live row refresh only reads the table state: it polls every few
         # seconds, and writing the session each time could overwrite a filter
         # the user changed meanwhile.
-        table_meta_session_data = TableMetaSessionData(
-            self.request, persist=not self.is_live_row_request(self.request)
+        persist = not self.is_live_row_request(self.request)
+        table_meta_session_data = TableMetaSessionData(self.request, persist=persist)
+        session_data = table_meta_session_data.update_session_data(session_data)
+        self._parameter_forms = ParameterForms(
+            self.parameter_form_classes, self.request, persist=persist
         )
-        return table_meta_session_data.update_session_data(session_data)
+        return self._parameter_forms.update_session_data(session_data)
+
+    @property
+    def parameter_forms(self) -> list[MontrekParameterForm]:
+        # The forms are bound while the session data is built
+        if self._parameter_forms is None:
+            _ = self.session_data
+        return self._parameter_forms.forms if self._parameter_forms else []
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -511,6 +527,8 @@ class MontrekListView(
         context["paginate_by"] = self.manager.paginate_by
         context["is_large"] = self.manager.is_large
         context["is_compact_format"] = self.manager.is_current_compact_format
+        context["parameter_forms"] = self.parameter_forms
+        context["parameter_form_param"] = SUBMITTED_FORM_PARAM
         session_filter = self.session_data.get("filter", {})
         session_filter = session_filter.get(self.session_data["request_path"], {})
         filter_count = self.session_data.get("filter_count", {})

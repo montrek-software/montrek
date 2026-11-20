@@ -125,6 +125,57 @@ class TestMontrekExampleAListView(MontrekListViewTestCase):
         self.assertEqual(overview_html, exp_overview_html)
 
 
+class TestMontrekExampleAListViewParameterForm(MontrekListViewTestCase):
+    """The factor of the computed TestField column is a parameter of the list."""
+
+    viewname = "montrek_example_a_list"
+    view_class = me_views.MontrekExampleAList
+    expected_no_of_rows = 1
+
+    def build_factories(self):
+        sata1 = me_factories.SatA1Factory()
+        me_factories.SatA2Factory(hub_entity=sata1.hub_entity, field_a2_float=1.5)
+
+    def submit_factor(self, factor: str):
+        return self.client.get(
+            self.url,
+            data={"parameter_form": "example_factor", "example_factor-factor": factor},
+        )
+
+    def test_form_is_shown_with_its_initial_value(self):
+        soup = BeautifulSoup(self.client.get(self.url).content, "html.parser")
+        form = soup.find("form", id="id_parameter_form_example_factor")
+        self.assertIsNotNone(form)
+        factor_input = form.find("input", attrs={"name": "example_factor-factor"})
+        self.assertEqual(factor_input["value"], "2")
+        self.assertContains(self.client.get(self.url), "3.000")
+
+    def test_submitted_factor_is_applied_and_kept(self):
+        self.assertContains(self.submit_factor("3"), "4.500")
+        self.assertContains(self.client.get(self.url), "4.500")
+
+    def test_export_uses_the_submitted_factor(self):
+        self.submit_factor("3")
+
+        response = self.client.get(self.url, data={"gen_csv": "true"})
+
+        self.assertIn("4.5", response.content.decode())
+
+    def test_invalid_factor_keeps_the_previous_one(self):
+        self.submit_factor("3")
+
+        response = self.submit_factor("99")
+
+        self.assertContains(response, "4.500")
+        self.assertContains(response, "text-danger")
+
+    def test_list_without_parameter_forms_shows_none(self):
+        response = self.client.get(reverse("montrek_example_b_list"))
+
+        self.assertEqual(response.context["parameter_forms"], [])
+        self.assertNotContains(response, "id_parameter_form_")
+
+
 class TestMontrekExampleAListViewPages(MontrekListViewTestCase):
     viewname = "montrek_example_a_list"
     view_class = me_views.MontrekExampleAList

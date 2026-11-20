@@ -103,6 +103,7 @@ class MontrekExampleAUpdate(views.MontrekUpdateView):
 
 class MontrekExampleAList(views.MontrekListView):
     manager_class = mem.HubAManager
+    parameter_form_classes = (forms.ExampleFactorForm,)
     page_class = pages.MontrekExampleAAppPage
     tab = "tab_example_a_list"
     title = "Example A List"

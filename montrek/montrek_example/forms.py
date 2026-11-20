@@ -1,4 +1,6 @@
-from baseclasses.forms import MontrekCreateForm
+from django import forms
+
+from baseclasses.forms import MontrekCreateForm, MontrekParameterForm
 
 
 class ExampleABaseForm(MontrekCreateForm): ...
@@ -41,3 +43,12 @@ class ExampleCCreateForm(MontrekCreateForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+class ExampleFactorForm(MontrekParameterForm):
+    """Factor the computed TestField column multiplies A2 Float by."""
+
+    session_key = "example_factor"
+    factor = forms.IntegerField(
+        label="TestField Factor", initial=2, min_value=1, max_value=10
+    )

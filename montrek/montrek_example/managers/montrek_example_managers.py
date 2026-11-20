@@ -1,3 +1,5 @@
+from dataclasses import dataclass, field
+
 import pandas as pd
 from baseclasses.typing import TableElementsType
 from django.http import HttpResponse
@@ -7,6 +9,7 @@ from montrek_example.repositories.hub_a_repository import (
     HubARepository,
     HubARepository5,
 )
+from montrek_example.forms import ExampleFactorForm
 from montrek_example.repositories.hub_b_repository import HubBRepository
 from montrek_example.repositories.hub_c_repository import (
     HubCRepository,
@@ -84,15 +87,24 @@ class CompactHubAManager(MontrekTableManager):
         )
 
 
+@dataclass
 class ExampleIndividualTableElement(te.FloatTableElement):
+    factor: int = field(default=2, kw_only=True)
+
     def get_value(self, obj):
         if obj.field_a2_float is None:
             return None
-        return obj.field_a2_float * 2
+        return obj.field_a2_float * self.factor
 
 
 class HubAManager(MontrekTableManager):
     repository_class = HubARepository
+
+    @property
+    def factor(self) -> int:
+        """Set by the list view's parameter form, as submitted."""
+        values = self.session_data.get(ExampleFactorForm.session_key, {})
+        return int(values.get("factor") or 2)
 
     @property
     def table_elements(self) -> TableElementsType:
@@ -108,7 +120,9 @@ class HubAManager(MontrekTableManager):
             ),
             te.FloatTableElement(name="A2 Float", attr="field_a2_float"),
             te.StringTableElement(name="B1 String", attr="field_b1_str"),
-            ExampleIndividualTableElement(name="TestField", attr="individual_field"),
+            ExampleIndividualTableElement(
+                name="TestField", attr="individual_field", factor=self.factor
+            ),
             te.LinkTableElement(
                 name="View",
                 url="montrek_example_a_details",

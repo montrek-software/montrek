@@ -106,6 +106,20 @@ class PercentFloatFormField(forms.FloatField):
         return super().prepare_value(value)
 
 
+class MontrekParameterForm(forms.Form):
+    """A parameter of a list view that changes what its table shows, e.g. the
+    currency amounts are converted into.
+
+    Its values are kept per page in the session and handed to the manager as
+    ``session_data[session_key]``, a dict of the field values as submitted.
+    The initial values of the fields are the defaults.
+    """
+
+    # Key of the values in the session data; also the prefix of the fields
+    session_key: str = ""
+    submit_label: str = "Apply"
+
+
 class DateRangeForm(forms.Form):
     start_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "id": "id_date_range_start"})
