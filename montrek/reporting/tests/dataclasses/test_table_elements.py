@@ -2380,3 +2380,131 @@ class TestLinkTableElementQueryKwargs(TestCase):
         )
 
         self.assertTrue(query_kwargs_field.kw_only)
+
+
+class TestMoneyTableElementRowCurrency(TestCase):
+    def build_element(self) -> te.MoneyTableElement:
+        return te.MoneyTableElement(
+            name="NAV", attr="nav", ccy_symbol_field="ccy_symbol"
+        )
+
+    def rows(self, symbol: Any) -> dict[str, Any]:
+        """The same row as a dict, as from a dataframe, and as an object."""
+        row = {"nav": 1234.5, "ccy_symbol": symbol}
+        return {"dict": row, "object": SimpleNamespace(**row)}
+
+    def test_html_shows_the_symbol_of_the_row(self):
+        for kind, row in self.rows("€").items():
+            with self.subTest(kind=kind):
+                display_field = self.build_element().get_display_field(row)
+
+                self.assertEqual(display_field.display_value.strip(), "1,234.50€")
+
+    def test_latex_shows_the_symbol_of_the_row(self):
+        for kind, row in self.rows("€").items():
+            with self.subTest(kind=kind):
+                self.assertEqual(
+                    self.build_element().get_attribute(row, "latex"),
+                    "\\color{textdark} 1,234.50€ &",
+                )
+
+    def test_latex_escapes_the_symbol(self):
+        for symbol, expected in (
+            ("$", "\\$"),
+            ("R$", "R\\$"),
+            ("{x}", "\\{x\\}"),
+            ("A&B", "A\\&B"),
+            ("#%_", "\\#\\%\\_"),
+            ("<", "$<$"),
+            ("\\#", "\\textbackslash{}\\#"),
+        ):
+            with self.subTest(symbol=symbol):
+                row = self.rows(symbol)["dict"]
+
+                self.assertEqual(
+                    self.build_element().get_attribute(row, "latex"),
+                    f"\\color{{textdark}} 1,234.50{expected} &",
+                )
+
+    def test_html_does_not_escape_the_symbol_for_latex(self):
+        row = self.rows("$")["dict"]
+
+        display_field = self.build_element().get_display_field(row)
+
+        self.assertEqual(display_field.display_value.strip(), "1,234.50$")
+
+    def test_width_includes_the_symbol_of_the_row(self):
+        for kind, row in self.rows("CHF").items():
+            with self.subTest(kind=kind):
+                self.assertEqual(
+                    self.build_element().get_value_len(row), len("1,234.50CHF")
+                )
+
+    def test_a_row_without_a_symbol_shows_none(self):
+        missing_rows = {
+            "None in dict": {"nav": 1234.5, "ccy_symbol": None},
+            "NaN in dict": {"nav": 1234.5, "ccy_symbol": float("nan")},
+            "key missing": {"nav": 1234.5},
+            "None attribute": SimpleNamespace(nav=1234.5, ccy_symbol=None),
+            "attribute missing": SimpleNamespace(nav=1234.5),
+        }
+        for kind, row in missing_rows.items():
+            with self.subTest(kind=kind):
+                element = self.build_element()
+
+                self.assertEqual(
+                    element.get_display_field(row).display_value.strip(), "1,234.50"
+                )
+                self.assertEqual(
+                    element.get_attribute(row, "latex"),
+                    "\\color{textdark} 1,234.50 &",
+                )
+                self.assertEqual(element.get_value_len(row), len("1,234.50"))
+
+    def test_empty_value_renders_as_empty_cell(self):
+        row = {"nav": None, "ccy_symbol": "€"}
+
+        self.assertEqual(
+            self.build_element().get_attribute(row, "latex"),
+            " \\color{textfaint} -- &",
+        )
+
+    def test_the_symbol_does_not_carry_over_between_rows(self):
+        element = self.build_element()
+        element.get_display_field({"nav": 1.0, "ccy_symbol": "€"})
+
+        display_field = element.get_display_field({"nav": 2.0, "ccy_symbol": "$"})
+
+        self.assertEqual(display_field.display_value.strip(), "2.00$")
+
+    def test_the_total_has_no_symbol(self):
+        element = self.build_element()
+        element.get_display_field({"nav": 1.0, "ccy_symbol": "€"})
+
+        self.assertEqual(
+            element.get_sum_display_field(1000).display_value.strip(), "1,000.00"
+        )
+        self.assertEqual(
+            element.get_sum_latex(1000), "\\bfseries \\color{textdark} 1,000.00 &"
+        )
+        self.assertEqual(element.get_sum_value_len(1000), len("1,000.00"))
+
+    def test_a_column_symbol_needs_no_row_first(self):
+        element = te.EuroTableElement(name="test", attr="test_value")
+
+        self.assertEqual(element.format_latex(1.0), "\\color{textdark} 1.00€ &")
+        self.assertEqual(element.get_sum_value_len(1000), len("1,000.00€"))
+        self.assertEqual(
+            element.get_sum_display_field(1000).display_value.strip(), "1,000.00€"
+        )
+
+    def test_the_row_symbol_field_is_keyword_only(self):
+        """A positional field would shift the positional arguments of every
+        money table element subclass."""
+        ccy_symbol_field = next(
+            field
+            for field in dataclasses.fields(te.MoneyTableElement)
+            if field.name == "ccy_symbol_field"
+        )
+
+        self.assertTrue(ccy_symbol_field.kw_only)

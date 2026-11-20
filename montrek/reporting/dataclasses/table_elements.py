@@ -25,7 +25,7 @@ from django.utils.safestring import mark_safe
 from encrypted_fields.fields import EncryptedFieldMixin
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
-from reporting.core.text_converter import HtmlLatexConverter
+from reporting.core.text_converter import HtmlLatexConverter, LaTeXEscaper
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
@@ -976,12 +976,43 @@ class MoneyTableElement(NumberTableElement):
     serializer_field_class: ClassVar = serializers.FloatField
     attr: str
     shortener: NumberShortenerABC = NoShortening()
+    # Field of the row holding its currency symbol, for columns whose rows are
+    # in different currencies. Overrides ``ccy_symbol``; a row without a
+    # symbol shows none.
+    ccy_symbol_field: str | None = field(default=None, kw_only=True)
     field_template: ClassVar[str | None] = "money"
     ccy_symbol: ClassVar[str] = ""
-    latex_escape: ClassVar[bool] = False
 
-    def get_field_context_data(self, _value: Any, _obj: Any) -> dict[str, Any]:
-        return {"ccy_symbol": self.ccy_symbol}
+    @property
+    def column_ccy_symbol(self) -> str:
+        """Symbol shared by the whole column, also used for its total.
+
+        Empty when each row has its own, as the total of mixed currencies
+        has none.
+        """
+        return "" if self.ccy_symbol_field else self.ccy_symbol
+
+    def get_ccy_symbol(self, obj: Any) -> str:
+        if self.ccy_symbol_field is None:
+            return self.ccy_symbol
+        if isinstance(obj, dict):
+            symbol = obj.get(self.ccy_symbol_field)
+        else:
+            symbol = getattr(obj, self.ccy_symbol_field, None)
+        if symbol is None or (isinstance(symbol, float) and pd.isna(symbol)):
+            return ""
+        return str(symbol)
+
+    def get_field_context_data(self, _value: Any, obj: Any) -> dict[str, Any]:
+        return {"ccy_symbol": self.get_ccy_symbol(obj)}
+
+    def get_attribute(self, obj: Any, tag: str = "html") -> str | None:
+        # format_latex only gets the value, but the symbol depends on the row
+        if tag == "latex":
+            value = self.get_value(obj)
+            if not self.empty_value(value):
+                return self.format_latex(value, self.get_ccy_symbol(obj))
+        return super().get_attribute(obj, tag)
 
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, 2, self.thousands)
@@ -990,18 +1021,21 @@ class MoneyTableElement(NumberTableElement):
         value = self.get_value(obj)
         if not isinstance(value, int | float | Decimal):
             return super().get_value_len(obj)
-        return len(self._format_value(value)) + len(self.ccy_symbol)
+        return len(self._format_value(value)) + len(self.get_ccy_symbol(obj))
 
     def get_sum_value_len(self, total: Any) -> int:
-        return super().get_sum_value_len(total) + len(self.ccy_symbol)
+        return super().get_sum_value_len(total) + len(self.column_ccy_symbol)
 
-    def format_latex(self, value):
+    def format_latex(self, value, ccy_symbol: str | None = None):
+        if ccy_symbol is None:
+            ccy_symbol = self.column_ccy_symbol
         formatted_value = super().format_latex(value)
-        latex_ccy_symbol = (
-            f"\\{self.ccy_symbol}" if self.latex_escape else self.ccy_symbol
+        # The symbol can come from row data. Syntax first, as the plain-text
+        # rules emit backslashes and $ of their own.
+        latex_ccy_symbol = LaTeXEscaper.escape(
+            HtmlLatexConverter.latex_syntax(ccy_symbol)
         )
-        formatted_value = formatted_value.replace(" &", f"{latex_ccy_symbol} &")
-        return formatted_value
+        return formatted_value.replace(" &", f"{latex_ccy_symbol} &")
 
 
 class EuroTableElement(MoneyTableElement):
@@ -1009,7 +1043,6 @@ class EuroTableElement(MoneyTableElement):
 
 
 class DollarTableElement(MoneyTableElement):
-    latex_escape: ClassVar[bool] = True
     ccy_symbol: ClassVar[str] = "$"
 
 
