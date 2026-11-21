@@ -9,7 +9,9 @@ from baseclasses.models import HubValueDate, MontrekHubABC, MontrekSatelliteABC
 
 
 class MontrekUserManager(BaseUserManager):
-    def create_user(self, password=None, **extra_fields):
+    # Keyword-only: Django's UserManager takes the username first, and a caller
+    # written for it (mozilla-django-oidc, say) would set that as the password.
+    def create_user(self, *, password=None, **extra_fields):
         email = extra_fields.get("email")
         if not email:
             raise ValueError("User must have an email address.")

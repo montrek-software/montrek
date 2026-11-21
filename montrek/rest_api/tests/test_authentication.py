@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.test import APIRequestFactory
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.tokens import AccessToken
@@ -53,6 +54,18 @@ class TestMontrekApiAuthentication(TestCase):
         self.assertEqual(token, KEYCLOAK_TOKEN)
 
     @override_settings(ENABLE_OIDC=True)
+    def test_provider_token_of_an_inactive_user_is_rejected(self):
+        self.user.is_active = False
+        self.user.save()
+
+        with (
+            patch(OIDC_AUTHENTICATE, return_value=(self.user, KEYCLOAK_TOKEN)),
+            patch("mozilla_django_oidc.contrib.drf.get_oidc_backend"),
+            self.assertRaises(AuthenticationFailed),
+        ):
+            self.authentication.authenticate(request_with_token(KEYCLOAK_TOKEN))
+
+    @override_settings(ENABLE_OIDC=True)
     def test_montrek_token_does_not_reach_keycloak(self):
         token = str(AccessToken.for_user(self.user))
 
@@ -82,6 +95,19 @@ class TestRestApiViewWithKeycloakToken(TestCase):
             response = self.get_uploads()
 
         self.assertEqual(response.status_code, 200, response.content)
+
+    @override_settings(ENABLE_OIDC=True)
+    def test_keycloak_token_of_an_inactive_user_is_unauthorized(self):
+        self.user.is_active = False
+        self.user.save()
+
+        with (
+            patch(OIDC_AUTHENTICATE, return_value=(self.user, KEYCLOAK_TOKEN)),
+            patch("mozilla_django_oidc.contrib.drf.get_oidc_backend"),
+        ):
+            response = self.get_uploads()
+
+        self.assertEqual(response.status_code, 401, response.content)
 
     @override_settings(ENABLE_OIDC=False)
     def test_keycloak_token_is_unauthorized_without_keycloak(self):

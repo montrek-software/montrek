@@ -370,7 +370,7 @@ LOGIN_EXEMPT_PATHS = [
     r"^rest_api/token/.*$",
     # The user app's pages for signed-out users, by name: anything else under
     # user/, such as password_change, needs the login.
-    r"^user/(signup|login|logout|logged_out|password_reset)/?$",
+    r"^user/(signup|login|login_failed|logout|logged_out|password_reset)/?$",
     r"^user/password_reset_confirm/[^/]+/[^/]+/?$",
     r"^user/password_reset_complete/?$",
     r"^user/oidc/(authenticate|callback|logout)/?$",
@@ -395,6 +395,10 @@ if ENABLE_OIDC:
     )
     OIDC_RP_SCOPES = config("OIDC_SCOPES", default="openid email")
     OIDC_RP_SIGN_ALGO = "RS256"
+    # Off: the provider signs in only users montrek already has (matched by
+    # email). Needed where the provider's directory holds more people than
+    # should use montrek, such as an Entra ID tenant.
+    OIDC_CREATE_USER = config("OIDC_CREATE_USER", default=True, cast=bool)
     # With an issuer URL, the endpoints come from its discovery document
     # (user.modules.oidc_provider). Without one, they are those of the Keycloak
     # realm behind auth-<PROJECT_NAME>.<DEPLOY_HOST>.
@@ -424,6 +428,9 @@ if ENABLE_OIDC:
 else:
     LOGIN_URL = reverse_lazy("login")
 LOGIN_REDIRECT_URL = reverse_lazy("home")
+# Where a refused OIDC sign-in goes. Not a page that needs a login: that sends
+# the user to the provider, whose open session sends them straight back.
+LOGIN_REDIRECT_URL_FAILURE = reverse_lazy("login_failed")
 
 
 # Number formatting

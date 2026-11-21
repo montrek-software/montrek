@@ -141,6 +141,15 @@ class MontrekLoggedOutView(generic_views.TemplateView):
         return context
 
 
+class MontrekLoginFailedView(generic_views.TemplateView):
+    template_name = "user/login_failed.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = "Sign-in refused"
+        return context
+
+
 class MontrekPasswordResetConfirmView(
     PasswordLoginMixin, auth_views.PasswordResetConfirmView
 ):

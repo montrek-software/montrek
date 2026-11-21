@@ -1,5 +1,5 @@
 from django.conf import settings
-from rest_framework import authentication
+from rest_framework import authentication, exceptions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
 
@@ -30,7 +30,12 @@ class MontrekApiAuthentication(authentication.BaseAuthentication):
         # Imported here: the OIDC backend only exists when OIDC is enabled.
         from mozilla_django_oidc.contrib.drf import OIDCAuthentication
 
-        return OIDCAuthentication().authenticate(request)
+        result = OIDCAuthentication().authenticate(request)
+        # The library checks only that the user exists. A user deactivated in
+        # montrek may still be active at the provider and hold a valid token.
+        if result is not None and not result[0].is_active:
+            raise exceptions.AuthenticationFailed("User is inactive.")
+        return result
 
     def authenticate_header(self, request):
         return f'Bearer realm="{self.www_authenticate_realm}"'
