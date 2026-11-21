@@ -24,8 +24,11 @@ def remove_derived_passwords(apps, schema_editor):
     for user in user_model.objects.exclude(
         password__startswith=UNUSABLE_PASSWORD_PREFIX
     ).only("pk", "email", "password"):
-        # The provider may have sent the email in other case than montrek
-        # stores it.
+        # The password was derived from the email exactly as the provider sent
+        # it, but normalize_email() lowercased the domain before it was stored,
+        # so that casing is lost. Covered: the email as stored, and all
+        # lowercase, which is what Keycloak sends. Not covered: a provider
+        # that sent uppercase letters in the domain.
         candidates = {user.email, user.email.lower()}
         if any(check_password(derived_password(c), user.password) for c in candidates):
             user.password = unusable

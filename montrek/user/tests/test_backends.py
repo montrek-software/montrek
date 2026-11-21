@@ -146,6 +146,44 @@ class TestRemoveDerivedPasswords(TestCase):
         self.assertTrue(own.check_password("a password of their own"))
         self.assertFalse(without.has_usable_password())
 
+    def derived_user(self, provider_email):
+        # As mozilla-django-oidc created them: the password derived from the
+        # email as the provider sent it, the email stored normalized.
+        return get_user_model().objects.create_user(
+            email=provider_email,
+            password=default_username_algo(provider_email),
+        )
+
+    def test_removes_a_password_derived_from_a_lowercase_provider_email(self):
+        user = self.derived_user("someone@example.com")
+
+        self.migration.remove_derived_passwords(django_apps, None)
+
+        user.refresh_from_db()
+        self.assertFalse(user.has_usable_password())
+
+    def test_removes_a_password_derived_from_a_mixed_case_local_part(self):
+        user = self.derived_user("Someone@example.com")
+
+        self.migration.remove_derived_passwords(django_apps, None)
+
+        user.refresh_from_db()
+        self.assertFalse(user.has_usable_password())
+
+    def test_cannot_recover_an_uppercase_domain(self):
+        # The domain's casing is lost when the email is stored, so this
+        # password stays. The limit the migration documents; Keycloak sends
+        # lowercase emails, and users created from now on get no password.
+        user = self.derived_user("someone@Example.com")
+        self.assertEqual(user.email, "someone@example.com")
+
+        self.migration.remove_derived_passwords(django_apps, None)
+
+        user.refresh_from_db()
+        self.assertTrue(
+            user.check_password(default_username_algo("someone@Example.com"))
+        )
+
     def test_spells_the_library_algorithm(self):
         email = "Someone@Example.com"
         self.assertEqual(
