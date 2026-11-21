@@ -530,6 +530,20 @@ class TestOidcOnlySignIn(TestCase):
                 response = getattr(self.client, method)(reverse("admin:login"))
                 self.assertEqual(response.status_code, 405)
 
+    def test_a_refused_sign_in_shows_a_page_without_login(self):
+        response = self.client.get(
+            reverse("oidc_authentication_callback"),
+            {"error": "access_denied"},
+            follow=True,
+        )
+
+        # Not a page that needs a login, which would start the sign-in at the
+        # provider again.
+        self.assertEqual(response.redirect_chain, [(reverse("login_failed"), 302)])
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "user/login_failed.html")
+        self.assertContains(response, f'action="{reverse("logout")}"')
+
     def test_navbar_does_not_link_to_password_pages(self):
         self.client.force_login(self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
 

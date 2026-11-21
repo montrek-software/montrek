@@ -17,3 +17,10 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         if issuer and payload.get("iss") != issuer:
             raise SuspiciousOperation("ID token from another issuer")
         return payload
+
+    def create_user(self, claims: dict[str, Any]) -> Any:
+        # The base class passes a username derived from the email as the first
+        # argument, which MontrekUserManager.create_user takes as the password:
+        # anyone knowing the email could sign in with it wherever the Django
+        # password is accepted. A user from the provider gets none.
+        return self.UserModel.objects.create_user(email=claims.get("email"))

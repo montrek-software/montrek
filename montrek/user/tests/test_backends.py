@@ -1,9 +1,13 @@
+import importlib
 from unittest import mock
+
+from django.apps import apps as django_apps
 
 from django.core.cache import cache
 from django.core.exceptions import SuspiciousOperation
 from django.test import TestCase, override_settings
-from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+from django.contrib.auth import get_user_model
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username_algo
 from user.backends import MontrekOIDCAuthenticationBackend
 from user.tests import oidc_mocks
 
@@ -72,3 +76,78 @@ class TestMontrekOIDCAuthenticationBackend(TestCase):
             self.assertEqual(
                 MontrekOIDCAuthenticationBackend().verify_token("token"), payload
             )
+
+
+@override_settings(**OIDC_SETTINGS)
+class TestUserFromTheProvider(TestCase):
+    email = "new@example.com"
+
+    def sign_in(self):
+        with mock.patch.object(
+            MontrekOIDCAuthenticationBackend,
+            "get_userinfo",
+            return_value={"email": self.email},
+        ):
+            return MontrekOIDCAuthenticationBackend().get_or_create_user(
+                "access-token", "id-token", {}
+            )
+
+    def test_an_unknown_user_is_created(self):
+        user = self.sign_in()
+
+        self.assertEqual(user.email, self.email)
+        self.assertTrue(get_user_model().objects.filter(email=self.email).exists())
+
+    def test_a_created_user_has_no_password(self):
+        user = self.sign_in()
+
+        self.assertFalse(user.has_usable_password())
+        self.assertFalse(user.check_password(default_username_algo(self.email)))
+
+    @override_settings(OIDC_CREATE_USER=False)
+    def test_without_user_creation_an_unknown_user_is_refused(self):
+        self.assertIsNone(self.sign_in())
+        self.assertFalse(get_user_model().objects.filter(email=self.email).exists())
+
+    @override_settings(OIDC_CREATE_USER=False)
+    def test_without_user_creation_a_known_user_signs_in(self):
+        known = get_user_model().objects.create_user(email=self.email)
+
+        self.assertEqual(self.sign_in(), known)
+
+
+class TestMontrekUserManager(TestCase):
+    def test_a_positional_argument_is_never_taken_as_the_password(self):
+        with self.assertRaises(TypeError):
+            get_user_model().objects.create_user("username", email="a@example.com")
+
+
+class TestRemoveDerivedPasswords(TestCase):
+    migration = importlib.import_module("user.migrations.0007_remove_derived_passwords")
+
+    def test_only_derived_passwords_are_removed(self):
+        user_model = get_user_model()
+        derived = user_model.objects.create_user(
+            email="oidc@example.com",
+            password=default_username_algo("oidc@example.com"),
+        )
+        own = user_model.objects.create_user(
+            email="own@example.com",
+            password="a password of their own",  # nosec: B106: Testpasswort
+        )
+        without = user_model.objects.create_user(email="none@example.com")
+
+        self.migration.remove_derived_passwords(django_apps, None)
+
+        derived.refresh_from_db()
+        own.refresh_from_db()
+        without.refresh_from_db()
+        self.assertFalse(derived.has_usable_password())
+        self.assertTrue(own.check_password("a password of their own"))
+        self.assertFalse(without.has_usable_password())
+
+    def test_spells_the_library_algorithm(self):
+        email = "Someone@Example.com"
+        self.assertEqual(
+            self.migration.derived_password(email), default_username_algo(email)
+        )

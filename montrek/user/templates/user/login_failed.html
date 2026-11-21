@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="row mt-1">
+    <div class="col-6">
+      <p>montrek could not sign you in with this account.</p>
+      <p>If you have no montrek account yet, ask your administrator to create one.</p>
+      {# Signing out at the provider too lets the next sign-in use another account. #}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-default">Sign in with another account</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
