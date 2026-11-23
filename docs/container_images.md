@@ -58,6 +58,10 @@ Uploads under `/uploads/` are only served to logged-in users (paths in
 `MEDIA_X_ACCEL_REDIRECT` set to an internal nginx location (compose sets
 `/protected-uploads/`), it answers with an `X-Accel-Redirect` and nginx sends
 the file. Without nginx, leave it empty and Django streams the file itself.
+With another storage backend (see below), the view redirects to the URL the
+storage hands out for the file, for a private container a signed one that
+expires; the redirect is never cached. A storage without URLs of its own is
+streamed by Django.
 
 All other file access (uploads, upload logs, exports, mailed tables, report
 PDFs attached to mail drafts) goes through Django's default storage.
@@ -69,9 +73,7 @@ creates the configured storage once, so a wrong path or a missing setting fails
 `migrate`, and with it the release step, rather than the first upload. A backend
 passes `testing/test_cases/storage_contract_test_case.py`, the behaviour the
 storage code relies on; core runs it against the filesystem and against the
-object storage stand-in the other tests use. The `/uploads/` view still reads
-`uploads` from the disk, so it does not serve files from another backend
-yet. Upload processors that read the file
+object storage stand-in the other tests use. Upload processors that read the file
 by path get the stored file's path, or a temporary copy on a backend without
 local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
 tables and report PDFs after seven days.
