@@ -78,9 +78,37 @@ Requirements in Keycloak:
   that matches a montrek user, or montrek cannot map the token to a user.
 - Refresh with `grant_type=refresh_token` against the same endpoint.
 
-montrek checks Keycloak tokens against Keycloak's userinfo endpoint and maps
-them to the Django user with the same email, as the browser login does
-(`rest_api/authentication.py`).
+How montrek checks a provider's token (`rest_api/authentication.py`):
+
+- **Without `OIDC_API_AUDIENCE`** (the default): at the provider's userinfo
+  endpoint, mapped to the user as the browser login does.
+- **With `OIDC_API_AUDIENCE`**: montrek checks the token itself
+  (`rest_api/modules/provider_access_token.py`): signature against the
+  provider's published keys, issuer, audience, expiry, and the scope or app
+  role `OIDC_API_SCOPE`. The token's subject must be linked to a montrek user:
+  a person has signed in through the browser once, or, for an application, an
+  admin has entered its issuer and subject at a montrek user created for it.
+  Required for Entra ID, whose userinfo endpoint (Microsoft Graph) accepts
+  tokens issued to any app of the tenant.
+
+### c) Entra ID
+
+Set in the app registration:
+
+- **Expose an API**: an Application ID URI and a scope, e.g. `montrek.api`,
+  which users delegate to API clients.
+- **App roles**: a role with the same value for applications (allowed member
+  type Applications); assign it to each client app that calls without a user.
+- **Manifest**: `"requestedAccessTokenVersion": 2` (shown as
+  `accessTokenAcceptedVersion` in older manifests), so tokens carry the v2.0
+  issuer of `OIDC_ISSUER_URL`.
+
+and in montrek `OIDC_API_AUDIENCE=<the app's client ID>` and
+`OIDC_API_SCOPE=montrek.api`. A client gets a token for scope
+`<Application ID URI>/montrek.api`, e.g. `api://<client ID>/montrek.api` (on behalf of a user) or
+`<Application ID URI>/.default` (client credentials). An application's
+subject is its service principal's object ID: create a montrek user for it and
+enter that ID with the tenant's issuer in the admin.
 
 ## 2. Call the API
 

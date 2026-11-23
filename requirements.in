@@ -18,6 +18,7 @@ django==5.2.9
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
 mozilla-django-oidc==4.0.1
+PyJWT==2.15.1
 # Third Wave
 celery==5.6.0
 redis==7.1.0
