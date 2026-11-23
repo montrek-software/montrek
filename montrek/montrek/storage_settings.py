@@ -36,16 +36,23 @@ class StorageSettings:
             raise ImproperlyConfigured(
                 "STORAGE_BACKEND=azure needs AZURE_STORAGE_ACCOUNT_NAME."
             )
+        # Every url() is a SAS valid this long. 0 would make the backend hand
+        # out the bare blob URL, and a negative value an expired SAS; a private
+        # container refuses both, so downloads fail while uploads still work.
+        expiration_secs = self.config(
+            "AZURE_STORAGE_URL_EXPIRATION_SECS", default=300, cast=int
+        )
+        if expiration_secs <= 0:
+            raise ImproperlyConfigured(
+                "AZURE_STORAGE_URL_EXPIRATION_SECS must be a positive number of "
+                f"seconds, not {expiration_secs}."
+            )
         options: dict[str, Any] = {
             "account_name": account_name,
             "azure_container": self.config(
                 "AZURE_STORAGE_CONTAINER", default="uploads"
             ),
-            # Every url() is a SAS valid this long. Without an expiry the backend
-            # hands out the bare blob URL, which a private container refuses.
-            "expiration_secs": self.config(
-                "AZURE_STORAGE_URL_EXPIRATION_SECS", default=300, cast=int
-            ),
+            "expiration_secs": expiration_secs,
         }
         connection_string = self.config("AZURE_STORAGE_CONNECTION_STRING", default="")
         if connection_string:

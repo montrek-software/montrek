@@ -93,6 +93,16 @@ class TestStorageSettings(ConfigurationTestCase):
         ):
             self.default_storage({"STORAGE_BACKEND": "azure"})
 
+    def test_azure_needs_a_positive_url_expiration(self):
+        for value in ("0", "-60"):
+            with self.subTest(value=value), self.assertRaisesMessage(
+                ImproperlyConfigured,
+                "AZURE_STORAGE_URL_EXPIRATION_SECS must be a positive number",
+            ):
+                self.default_storage(
+                    {**AZURE_WITH_KEY, "AZURE_STORAGE_URL_EXPIRATION_SECS": value}
+                )
+
     def test_an_unknown_backend_is_refused(self):
         with self.assertRaisesMessage(
             ImproperlyConfigured, "STORAGE_BACKEND must be one of filesystem, azure"
