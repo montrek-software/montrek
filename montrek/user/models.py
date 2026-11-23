@@ -33,11 +33,26 @@ class MontrekUserManager(BaseUserManager):
 class MontrekUser(AbstractUser):
     username = None  # type: ignore[assignment]  # removes AbstractUser.username (documented Django pattern)
     email = models.EmailField(("email address"), unique=True)
+    # Who the user is at the OpenID provider: its issuer and the user's subject
+    # there (the sub claim). Set at the first sign-in through the provider, by
+    # email; from then on the user is matched by these, not by email, which
+    # the provider may let its users change.
+    oidc_issuer = models.CharField(max_length=255, blank=True, default="")
+    oidc_subject = models.CharField(max_length=255, blank=True, default="")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects: ClassVar[MontrekUserManager] = MontrekUserManager()  # type: ignore[assignment]  # email based, replaces the username based UserManager
+
+    class Meta(AbstractUser.Meta):  # type: ignore[name-defined]  # django-stubs does not declare the model's Meta
+        constraints = [
+            models.UniqueConstraint(
+                fields=["oidc_issuer", "oidc_subject"],
+                condition=~models.Q(oidc_subject=""),
+                name="unique_oidc_subject",
+            )
+        ]
 
     def __str__(self):
         return self.email

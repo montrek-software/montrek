@@ -7,6 +7,8 @@ from django.core.cache import cache
 from django.utils.functional import lazy
 from mozilla_django_oidc.utils import import_from_settings
 
+from montrek.utils import get_keycloak_base_url
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,6 +62,12 @@ class OidcProvider:
                 f"{settings.OIDC_ISSUER_URL} publishes no {cls.ENDPOINT_KEYS[attr]}"
             )
         return endpoint
+
+    @staticmethod
+    def issuer() -> str:
+        """The issuer users are signed in by: OIDC_ISSUER_URL, or the Keycloak
+        realm the endpoints belong to without one."""
+        return settings.OIDC_ISSUER_URL or get_keycloak_base_url()
 
     @classmethod
     def logout_url(cls) -> str | None:
