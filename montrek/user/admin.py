@@ -22,6 +22,17 @@ class MontrekUserAdmin(UserAdmin):
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (
+            "Sign-in through the OpenID provider",
+            {
+                "fields": ("oidc_issuer", "oidc_subject"),
+                "description": (
+                    "Set at the first sign-in through the provider. Clear both "
+                    "if the user's account there was recreated: the next "
+                    "sign-in links the user again by email."
+                ),
+            },
+        ),
+        (
             "Permissions",
             {
                 "fields": ("is_staff", "is_active", "groups", "user_permissions"),

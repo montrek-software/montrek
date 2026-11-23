@@ -5,10 +5,12 @@ from django.apps import apps as django_apps
 
 from django.core.cache import cache
 from django.core.exceptions import SuspiciousOperation
+from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username_algo
 from user.backends import MontrekOIDCAuthenticationBackend
+from user.repositories.user_repository import MontrekUserRepository
 from user.tests import oidc_mocks
 
 OIDC_SETTINGS = {
@@ -81,22 +83,31 @@ class TestMontrekOIDCAuthenticationBackend(TestCase):
 @override_settings(**OIDC_SETTINGS)
 class TestUserFromTheProvider(TestCase):
     email = "new@example.com"
+    subject = "subject-1"
 
-    def sign_in(self):
+    def sign_in(self, email=None, subject=None, id_token_subject=None):
+        subject = subject or self.subject
+        claims = {"sub": subject, "email": email or self.email}
+        payload = {"sub": id_token_subject or subject}
         with mock.patch.object(
-            MontrekOIDCAuthenticationBackend,
-            "get_userinfo",
-            return_value={"email": self.email},
+            OIDCAuthenticationBackend, "get_userinfo", return_value=claims
         ):
             return MontrekOIDCAuthenticationBackend().get_or_create_user(
-                "access-token", "id-token", {}
+                "access-token", "id-token", payload
             )
 
-    def test_an_unknown_user_is_created(self):
+    def user(self, email=None, issuer="", subject=""):
+        return get_user_model().objects.create_user(
+            email=email or self.email, oidc_issuer=issuer, oidc_subject=subject
+        )
+
+    def test_an_unknown_user_is_created_and_linked(self):
         user = self.sign_in()
 
         self.assertEqual(user.email, self.email)
-        self.assertTrue(get_user_model().objects.filter(email=self.email).exists())
+        self.assertEqual(
+            (user.oidc_issuer, user.oidc_subject), (oidc_mocks.ISSUER_URL, self.subject)
+        )
 
     def test_a_created_user_has_no_password(self):
         user = self.sign_in()
@@ -110,10 +121,146 @@ class TestUserFromTheProvider(TestCase):
         self.assertFalse(get_user_model().objects.filter(email=self.email).exists())
 
     @override_settings(OIDC_CREATE_USER=False)
-    def test_without_user_creation_a_known_user_signs_in(self):
-        known = get_user_model().objects.create_user(email=self.email)
+    def test_a_known_user_is_linked_by_email_at_the_first_sign_in(self):
+        known = self.user()
 
         self.assertEqual(self.sign_in(), known)
+        known.refresh_from_db()
+        self.assertEqual(
+            (known.oidc_issuer, known.oidc_subject),
+            (oidc_mocks.ISSUER_URL, self.subject),
+        )
+
+    def test_a_linked_user_is_found_by_subject_after_an_email_change(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+
+        self.assertEqual(self.sign_in(email="renamed@example.com"), known)
+        known.refresh_from_db()
+        self.assertEqual(known.email, "renamed@example.com")
+
+    def test_an_email_another_user_has_is_not_taken_over(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+        self.user(email="other@example.com")
+
+        with self.assertLogs("user.backends", "WARNING"):
+            self.assertEqual(self.sign_in(email="Other@example.com"), known)
+        known.refresh_from_db()
+        self.assertEqual(known.email, self.email)
+
+    @override_settings(ADMIN_EMAIL="new@example.com")
+    def test_the_provisioned_admin_keeps_admin_email(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+
+        with self.assertLogs("user.backends", "WARNING"):
+            self.sign_in(email="renamed@example.com")
+        known.refresh_from_db()
+        self.assertEqual(known.email, self.email)
+
+    def test_an_email_two_users_have_in_different_case_is_refused(self):
+        self.user(email="Person@example.com")
+        self.user(email="person@example.com", issuer=oidc_mocks.ISSUER_URL, subject="2")
+
+        with self.assertRaises(SuspiciousOperation):
+            self.sign_in(email="person@example.com")
+
+    def test_a_link_made_meanwhile_by_another_subject_is_kept(self):
+        known = self.user()
+        backend = MontrekOIDCAuthenticationBackend()
+        stale = get_user_model().objects.get(pk=known.pk)
+        backend.update_user(known, {"sub": "subject-2", "email": self.email})
+
+        with self.assertRaises(SuspiciousOperation):
+            backend.update_user(stale, {"sub": self.subject, "email": self.email})
+        known.refresh_from_db()
+        self.assertEqual(known.oidc_subject, "subject-2")
+
+    def test_a_concurrent_change_to_the_same_email_keeps_the_old_one(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+        with mock.patch.object(
+            get_user_model(), "save", side_effect=IntegrityError("duplicate")
+        ):
+            changed = MontrekUserRepository().change_email(known, "taken@example.com")
+        self.assertFalse(changed)
+        self.assertEqual(known.email, self.email)
+
+    def test_a_change_of_case_only_keeps_the_email(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+
+        self.sign_in(email="New@Example.com")
+        known.refresh_from_db()
+        self.assertEqual(known.email, self.email)
+
+    def test_another_subject_with_the_email_of_a_linked_user_is_refused(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject="subject-2")
+
+        for create_user in (True, False):
+            with (
+                self.subTest(create_user=create_user),
+                override_settings(OIDC_CREATE_USER=create_user),
+            ):
+                try:
+                    user = self.sign_in()
+                except SuspiciousOperation:
+                    user = None
+                self.assertIsNone(user)
+                known.refresh_from_db()
+                self.assertEqual(known.oidc_subject, "subject-2")
+                self.assertEqual(get_user_model().objects.count(), 1)
+
+    def test_a_user_linked_at_another_issuer_is_linked_again_by_email(self):
+        # After a switch of provider, e.g. from Keycloak to Entra ID.
+        known = self.user(issuer="https://old.example.com/realms/r", subject="old")
+
+        self.assertEqual(self.sign_in(), known)
+        known.refresh_from_db()
+        self.assertEqual(
+            (known.oidc_issuer, known.oidc_subject),
+            (oidc_mocks.ISSUER_URL, self.subject),
+        )
+
+    def test_userinfo_of_another_subject_than_the_id_token_is_refused(self):
+        response = mock.Mock()
+        response.json.return_value = {"sub": "subject-2", "email": self.email}
+        with (
+            override_settings(OIDC_OP_USER_ENDPOINT="https://login.example.com/u"),
+            mock.patch("mozilla_django_oidc.auth.requests.get", return_value=response),
+            self.assertRaises(SuspiciousOperation),
+        ):
+            MontrekOIDCAuthenticationBackend().get_userinfo(
+                "access-token", "id-token", {"sub": self.subject}
+            )
+
+    def test_claims_without_a_subject_are_refused(self):
+        backend = MontrekOIDCAuthenticationBackend()
+        self.assertFalse(backend.verify_claims({"email": self.email}))
+        self.assertTrue(
+            backend.verify_claims({"sub": self.subject, "email": self.email})
+        )
+
+    def test_a_rest_api_token_without_id_token_signs_in(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+        with mock.patch.object(
+            OIDCAuthenticationBackend,
+            "get_userinfo",
+            return_value={"sub": self.subject, "email": self.email},
+        ):
+            user = MontrekOIDCAuthenticationBackend().get_or_create_user(
+                "access-token", None, None
+            )
+        self.assertEqual(user, known)
+
+    @override_settings(
+        OIDC_ISSUER_URL="",
+        PROJECT_NAME="default",
+        DEPLOY_HOST="example.com",
+        KEYCLOAK_REALM="r",
+        OIDC_OP_TOKEN_ENDPOINT="https://kc/token",  # nosec B106: a URL
+        OIDC_OP_USER_ENDPOINT="https://kc/userinfo",
+        OIDC_OP_JWKS_ENDPOINT="https://kc/certs",
+    )
+    def test_without_issuer_url_users_are_linked_to_the_keycloak_realm(self):
+        user = self.sign_in()
+        self.assertEqual(user.oidc_issuer, "https://auth-default.example.com/realms/r")
 
 
 class TestMontrekUserManager(TestCase):
