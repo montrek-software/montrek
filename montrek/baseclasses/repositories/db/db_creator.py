@@ -6,6 +6,7 @@ from typing import cast
 
 import pandas as pd
 from baseclasses.errors.montrek_user_error import MontrekError
+from baseclasses.datetime_boundaries import DatetimeBoundaries
 from baseclasses.models import (
     HubValueDate,
     MontrekHubABC,
@@ -331,9 +332,7 @@ class DbCreator:
         # Detach from the old hub; a new one is assigned before the satellite is saved
         static_sat.hub_entity = None  # type: ignore[assignment]  # FK is non-nullable
         existing_sat.state_date_start = self.creation_date
-        existing_sat.state_date_end = timezone.make_aware(
-            datetime.datetime.max, timezone.get_default_timezone()
-        )
+        existing_sat.state_date_end = DatetimeBoundaries.MAX
         existing_sat.pk = None
         existing_sat.id = None  # type: ignore[assignment]  # reset to insert a copy
         self._stall_new_satellite(existing_sat)
