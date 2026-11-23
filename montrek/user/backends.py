@@ -20,7 +20,8 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     montrek links the user it has under that email to the subject; from then on
     only the subject counts. An account already linked to another subject of
     the same issuer is never taken over by an email. A new email at the
-    provider becomes the user's, unless another user has it.
+    provider becomes the user's, unless another user has it or the user is
+    the one ADMIN_EMAIL provisions.
     """
 
     get_settings = staticmethod(OidcProvider.get_settings)
@@ -54,6 +55,10 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         if linked.exists():
             return linked
         by_email = users.with_email(claims.get("email") or "")
+        # Emails are unique only as stored, so Person@ and person@ can be two
+        # users: which one the provider means is unknown.
+        if by_email.count() > 1:
+            raise SuspiciousOperation("Several users have the provider's email")
         unlinked = by_email.exclude(oidc_issuer=issuer)
         if by_email.exists() and not unlinked.exists():
             logger.warning(
@@ -83,17 +88,33 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     def update_user(self, user: Any, claims: dict[str, Any]) -> Any:
         users = MontrekUserRepository()
         link = (OidcProvider.issuer(), claims["sub"])
-        if (user.oidc_issuer, user.oidc_subject) != link:
+        if (user.oidc_issuer, user.oidc_subject) != link and not (
             users.link_oidc_subject(user, *link)
+        ):
+            raise SuspiciousOperation("User linked to another subject meanwhile")
         email = claims.get("email")
-        if email and email.lower() != user.email.lower():
-            if users.email_taken(email, by_other_than=user):
-                logger.warning(
-                    "OIDC sign-in of %s: the provider's email %s belongs to "
-                    "another user, so it is kept.",
-                    user.email,
-                    email,
-                )
-            else:
-                users.change_email(user, email)
+        if not email or email.lower() == user.email.lower():
+            return user
+        if self.is_provisioned_admin(user):
+            # The release step creates a superuser under ADMIN_EMAIL whenever
+            # none has it, and that one would be linked to whoever next signs
+            # in with it.
+            logger.warning(
+                "OIDC sign-in of %s: the email stays ADMIN_EMAIL, not the "
+                "provider's %s.",
+                user.email,
+                email,
+            )
+        elif not users.change_email(user, email):
+            logger.warning(
+                "OIDC sign-in of %s: the provider's email %s belongs to another "
+                "user, so it is kept.",
+                user.email,
+                email,
+            )
         return user
+
+    @staticmethod
+    def is_provisioned_admin(user: Any) -> bool:
+        admin_email = settings.ADMIN_EMAIL or ""
+        return user.email.lower() == admin_email.lower()

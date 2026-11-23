@@ -5,10 +5,12 @@ from django.apps import apps as django_apps
 
 from django.core.cache import cache
 from django.core.exceptions import SuspiciousOperation
+from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username_algo
 from user.backends import MontrekOIDCAuthenticationBackend
+from user.repositories.user_repository import MontrekUserRepository
 from user.tests import oidc_mocks
 
 OIDC_SETTINGS = {
@@ -143,6 +145,42 @@ class TestUserFromTheProvider(TestCase):
         with self.assertLogs("user.backends", "WARNING"):
             self.assertEqual(self.sign_in(email="Other@example.com"), known)
         known.refresh_from_db()
+        self.assertEqual(known.email, self.email)
+
+    @override_settings(ADMIN_EMAIL="new@example.com")
+    def test_the_provisioned_admin_keeps_admin_email(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+
+        with self.assertLogs("user.backends", "WARNING"):
+            self.sign_in(email="renamed@example.com")
+        known.refresh_from_db()
+        self.assertEqual(known.email, self.email)
+
+    def test_an_email_two_users_have_in_different_case_is_refused(self):
+        self.user(email="Person@example.com")
+        self.user(email="person@example.com", issuer=oidc_mocks.ISSUER_URL, subject="2")
+
+        with self.assertRaises(SuspiciousOperation):
+            self.sign_in(email="person@example.com")
+
+    def test_a_link_made_meanwhile_by_another_subject_is_kept(self):
+        known = self.user()
+        backend = MontrekOIDCAuthenticationBackend()
+        stale = get_user_model().objects.get(pk=known.pk)
+        backend.update_user(known, {"sub": "subject-2", "email": self.email})
+
+        with self.assertRaises(SuspiciousOperation):
+            backend.update_user(stale, {"sub": self.subject, "email": self.email})
+        known.refresh_from_db()
+        self.assertEqual(known.oidc_subject, "subject-2")
+
+    def test_a_concurrent_change_to_the_same_email_keeps_the_old_one(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+        with mock.patch.object(
+            get_user_model(), "save", side_effect=IntegrityError("duplicate")
+        ):
+            changed = MontrekUserRepository().change_email(known, "taken@example.com")
+        self.assertFalse(changed)
         self.assertEqual(known.email, self.email)
 
     def test_a_change_of_case_only_keeps_the_email(self):
