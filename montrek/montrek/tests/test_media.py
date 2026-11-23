@@ -135,6 +135,25 @@ class SignedUrlStorage(ObjectStorage):
         return f"https://files.example.com/{quote(name)}?sig=signature"
 
 
+class SelfAbsoluteUrlStorage(ObjectStorage):
+    """Hands out absolute URLs of /uploads/ on this host."""
+
+    def url(self, name):
+        return f"https://testserver{settings.MEDIA_URL}{quote(name)}"
+
+
+class SelfProtocolRelativeUrlStorage(ObjectStorage):
+    def url(self, name):
+        return f"//testserver{settings.MEDIA_URL}{quote(name)}"
+
+
+class DownloadEndpointStorage(ObjectStorage):
+    """Hands out relative URLs of another endpoint."""
+
+    def url(self, name):
+        return f"/downloads/{quote(name)}"
+
+
 def storage(backend: type) -> dict:
     return {
         **settings.STORAGES,
@@ -211,3 +230,40 @@ class TestServeMediaFromStorage(TestCase):
         self.login()
         response = self.client.get(f"{settings.MEDIA_URL}x/../media_test/report 1.csv")
         self.assertEqual(response.status_code, 404)
+
+    def test_a_url_back_to_uploads_on_this_host_is_streamed(self):
+        # Redirected, it would lead back here, again and again.
+        for backend in (SelfAbsoluteUrlStorage, SelfProtocolRelativeUrlStorage):
+            with self.subTest(backend.__name__), override_settings(
+                STORAGES=storage(backend)
+            ):
+                self.store()
+                self.login()
+                response = self.client.get(self.url)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(b"".join(response.streaming_content), b"a,b\n")
+
+    @override_settings(
+        STORAGES=storage(SelfAbsoluteUrlStorage),
+        ALLOWED_HOSTS=["testserver", "other.example.com"],
+    )
+    def test_a_url_to_uploads_on_another_host_is_followed(self):
+        self.store()
+        self.login()
+        response = self.client.get(self.url, headers={"host": "other.example.com"})
+        self.assertRedirects(
+            response,
+            "https://testserver/uploads/media_test/report%201.csv",
+            fetch_redirect_response=False,
+        )
+
+    @override_settings(STORAGES=storage(DownloadEndpointStorage))
+    def test_a_relative_url_to_another_endpoint_is_followed(self):
+        self.store()
+        self.login()
+        response = self.client.get(self.url)
+        self.assertRedirects(
+            response,
+            "/downloads/media_test/report%201.csv",
+            fetch_redirect_response=False,
+        )

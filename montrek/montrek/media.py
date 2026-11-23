@@ -11,18 +11,25 @@ under runserver or on a host without nginx, Django streams the file itself.
 
 From any other storage, such as a private object storage container, it
 redirects to the URL the storage hands out for the file, a signed one that
-expires. A storage without URLs of its own, whose url() points back here, is
-streamed by Django.
+expires. A storage without URLs of its own, whose url() points back to
+/uploads/ on this host, is streamed by Django instead, rather than redirected to
+itself.
 """
 
 import mimetypes
 from pathlib import Path
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 from baseclasses.utils import htmx_aware_redirect
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage, default_storage
-from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    FileResponse,
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+)
 from django.http.response import HttpResponseBase
 from django.utils.cache import patch_cache_control
 from django.views.decorators.http import require_safe
@@ -47,7 +54,7 @@ def serve_media(request, path: str) -> HttpResponseBase:
     if isinstance(default_storage, FileSystemStorage):
         response = media_file.from_disk()
     else:
-        response = media_file.from_storage()
+        response = media_file.from_storage(request)
     if request.user.is_authenticated or isinstance(response, HttpResponseRedirect):
         # The browser may keep it, but has to ask again before each use, so a
         # file is not shown from the cache after the session has ended, and a
@@ -81,17 +88,28 @@ class MediaFile:
             return response
         return FileResponse(file_path.open("rb"))
 
-    def from_storage(self) -> HttpResponseBase:
+    def from_storage(self, request: HttpRequest) -> HttpResponseBase:
         # On an object storage a directory is only a prefix of the stored
         # names, so exists() is False for it, as for a missing file.
         if not self.path or not default_storage.exists(self.path):
             raise Http404
         url = default_storage.url(self.path)
-        if urlparse(url).netloc:
+        if not self.served_here(request, url):
+            # As the storage hands it out: resolved against the request, a
+            # relative URL could come out as http behind a proxy.
             return HttpResponseRedirect(url)
         return FileResponse(
             default_storage.open(self.path, "rb"),
             content_type=self.content_type(self.path),
+        )
+
+    @staticmethod
+    def served_here(request: HttpRequest, url: str) -> bool:
+        """Whether `url` leads back to this view: relative, protocol-relative
+        or absolute, on this host and under MEDIA_URL."""
+        target = urlparse(request.build_absolute_uri(url))
+        return target.netloc == request.get_host() and unquote(target.path).startswith(
+            settings.MEDIA_URL
         )
 
     @staticmethod
