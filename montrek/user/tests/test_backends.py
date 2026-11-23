@@ -397,6 +397,28 @@ class TestRolesFromTheProvider(TestCase):
         self.assertTrue(user.is_staff)
         self.assertEqual(self.group_names(user), {"Writers"})
 
+    def test_the_staff_role_also_grants_its_group(self):
+        GroupFactory(name="Admin")
+
+        user = self.sign_in({"roles": ["Admin"]})
+
+        self.assertTrue(user.is_staff)
+        self.assertEqual(self.group_names(user), {"Admin"})
+
+    def test_the_staff_role_is_not_logged_as_a_role_without_group(self):
+        with self.assertNoLogs("user.backends", "INFO"):
+            self.sign_in({"roles": ["Admin", "Readers"]})
+
+    def test_a_revoking_sign_in_with_a_stale_user_revokes_staff(self):
+        stale = get_user_model().objects.get(pk=self.user.pk)
+        self.sign_in({"roles": ["Admin"]})
+
+        MontrekOIDCAuthenticationBackend.assign_roles(stale, {"roles": []})
+
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_staff)
+        self.assertFalse(stale.is_staff)
+
     @override_settings(OIDC_STAFF_ROLE="")
     def test_without_a_staff_role_is_staff_stays_as_set_in_montrek(self):
         self.user.is_staff = True

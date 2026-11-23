@@ -50,11 +50,10 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
             raise SuspiciousOperation(f"{settings.OIDC_ROLES_CLAIM} is no list")
         roles = {role for role in claim if isinstance(role, str)}
         staff_role = settings.OIDC_STAFF_ROLE
+        # The staff role grants the group of its name as well, if there is one.
         unknown = MontrekUserRepository().assign_roles(
-            user,
-            roles - {staff_role},
-            is_staff=staff_role in roles if staff_role else None,
-        )
+            user, roles, is_staff=staff_role in roles if staff_role else None
+        ) - {staff_role}
         if unknown:
             logger.info(
                 "OIDC sign-in of %s: no group for the roles %s.",

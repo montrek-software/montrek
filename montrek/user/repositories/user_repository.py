@@ -53,10 +53,15 @@ class MontrekUserRepository:
         sets is_staff unless it is None. Returns the names without a group."""
         groups = list(Group.objects.filter(name__in=group_names))
         with transaction.atomic():
-            user.groups.set(groups)
-            if is_staff is not None and user.is_staff != is_staff:
-                user.is_staff = is_staff
-                user.save(update_fields=["is_staff"])
+            # Locked and read again: `user` may be older than a concurrent
+            # sign-in's change, and two sign-ins apply their roles one after
+            # the other.
+            persisted = MontrekUser.objects.select_for_update().get(pk=user.pk)
+            persisted.groups.set(groups)
+            if is_staff is not None and persisted.is_staff != is_staff:
+                persisted.is_staff = is_staff
+                persisted.save(update_fields=["is_staff"])
+            user.is_staff = persisted.is_staff
         return group_names - {group.name for group in groups}
 
 
