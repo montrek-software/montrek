@@ -355,6 +355,16 @@ AUTH_USER_MODEL = "user.MontrekUser"
 ENABLE_KEYCLOAK = config("ENABLE_KEYCLOAK", default=False, cast=bool)
 ENABLE_OIDC = ENABLE_KEYCLOAK or config("ENABLE_OIDC", default=False, cast=bool)
 OIDC_ISSUER_URL = config("OIDC_ISSUER_URL", default="")
+# REST API calls with a provider's access token: with an audience, montrek
+# checks the token itself and requires the scope or app role; without, it asks
+# the provider's userinfo endpoint (rest_api.authentication).
+OIDC_API_AUDIENCE = config("OIDC_API_AUDIENCE", default="")
+OIDC_API_SCOPE = config("OIDC_API_SCOPE", default="")
+if OIDC_API_AUDIENCE and not OIDC_API_SCOPE:
+    raise ImproperlyConfigured(
+        "OIDC_API_AUDIENCE needs OIDC_API_SCOPE: without a scope or app role "
+        "to require, any token issued for the audience would be accepted."
+    )
 # With OIDC, every sign-in goes through the provider and its second factor:
 # no password form, password reset or /rest_api/token/. ALLOW_PASSWORD_LOGIN
 # keeps the Django password as a fallback, through Django's admin login.
