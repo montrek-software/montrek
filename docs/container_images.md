@@ -60,8 +60,13 @@ Uploads under `/uploads/` are only served to logged-in users (paths in
 the file. Without nginx, leave it empty and Django streams the file itself.
 
 All other file access (uploads, upload logs, exports, mailed tables, report
-PDFs attached to mail drafts) goes through Django's default storage, which is
-the filesystem under `uploads` for now. Upload processors that read the file
+PDFs attached to mail drafts) goes through Django's default storage.
+`STORAGE_BACKEND` picks it: `filesystem` (the default) is `uploads`, and
+`azure` is a private Blob Storage container (`AZURE_STORAGE_*` in
+`env.schema.toml`), for a platform without a shared disk. Without an account
+key, montrek signs in as the managed identity, which needs the Storage Blob
+Data Contributor role. The `/uploads/` view still reads `uploads` from the
+disk, so it does not serve Blob files yet. Upload processors that read the file
 by path get the stored file's path, or a temporary copy on a backend without
 local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
 tables and report PDFs after seven days.

@@ -27,6 +27,7 @@ from reporting.core.reporting_colors import ReportingColors
 
 from montrek.configuration import config
 from montrek.env_schema import raise_for_invalid_settings
+from montrek.storage_settings import StorageSettings
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
 
@@ -452,16 +453,19 @@ LANGUAGE_CODE = config("LANGUAGE_CODE", default="en-us")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, "..", "static"))
-# Compressed, but not the manifest variant: that one turns a template's
-# reference to a missing static file into a 500 instead of a 404.
-STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
-}
 
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 MEDIA_X_ACCEL_REDIRECT = config("MEDIA_X_ACCEL_REDIRECT", default="")
+
+# "default" holds uploads, exports and other stored files, on the backend
+# STORAGE_BACKEND picks. "staticfiles" is compressed, but not the manifest
+# variant: that one turns a template's reference to a missing static file into
+# a 500 instead of a 404.
+STORAGES = {
+    "default": StorageSettings(config).default_storage(),
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

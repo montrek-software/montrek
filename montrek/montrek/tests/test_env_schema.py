@@ -29,6 +29,8 @@ from montrek.tests.test_configuration import ConfigurationTestCase
 from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
 
 SETTINGS_FILE = Path(__file__).resolve().parent.parent / "settings.py"
+# Every module that reads settings for settings.py.
+SETTINGS_FILES = [SETTINGS_FILE, SETTINGS_FILE.parent / "storage_settings.py"]
 
 
 class TestCoreSchema(SimpleTestCase):
@@ -39,7 +41,11 @@ class TestCoreSchema(SimpleTestCase):
 
     def test_every_setting_is_declared_with_app_scope(self):
         schema = load_schema(CORE_SCHEMA_FILE)
-        read = set(re.findall(r'config\(\s*"([A-Z0-9_]+)"', SETTINGS_FILE.read_text()))
+        read = {
+            name
+            for path in SETTINGS_FILES
+            for name in re.findall(r'config\(\s*"([A-Z0-9_]+)"', path.read_text())
+        }
         self.assertTrue(read)
         self.assertEqual(read - set(schema), set())
         self.assertEqual({name for name in read if schema[name].scope != "app"}, set())
