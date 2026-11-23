@@ -71,6 +71,6 @@ class StorageSettings:
 
             options["token_credential"] = DefaultAzureCredential()
         return {
-            "BACKEND": "storages.backends.azure_storage.AzureStorage",
+            "BACKEND": "storage.modules.montrek_azure_storage.MontrekAzureStorage",
             "OPTIONS": options,
         }
