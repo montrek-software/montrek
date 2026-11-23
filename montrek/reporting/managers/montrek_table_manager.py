@@ -824,20 +824,37 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
         return pd.DataFrame(self.df_data, columns=self.df_columns)
 
     def get_excel_col_formats(self) -> dict[int, str | None]:
-        """By the column of the data each element shows: the sheet holds all
-        columns of the data, not only those of the table, and two columns may
-        share a header. ``get_df`` keeps the order of the columns."""
+        """By the column of the data each element shows, as two columns may
+        share a header."""
         formats = {
             element.attr: element.excel_format_str
             for element in self.table_elements
             if isinstance(element, te.AttrTableElement)
         }
         return {
-            index: formats.get(column) for index, column in enumerate(self.df.columns)
+            index: formats.get(column)
+            for index, column in enumerate(self.get_output_columns())
         }
 
     def get_df(self) -> pd.DataFrame:
         return self.df.rename(columns=self.get_field_table_elements_name_map())
+
+    def get_output_columns(self) -> list[str]:
+        """The columns of ``df`` the exports write, in the order they write
+        them. Number formats are assigned by them, so a subclass narrowing or
+        reordering the output overrides this rather than ``get_output_df``."""
+        return list(self.df.columns)
+
+    def get_output_df(self) -> pd.DataFrame:
+        df = self.get_df()
+        return df.iloc[:, self._output_column_positions()]
+
+    def _output_column_positions(self) -> list[int]:
+        # Columns sharing a name are taken in their order in ``df``
+        positions: dict[str, list[int]] = {}
+        for index, column in enumerate(self.df.columns):
+            positions.setdefault(column, []).append(index)
+        return [positions[column].pop(0) for column in self.get_output_columns()]
 
     def _get_table_dimensions(self) -> int:
         return self.df.shape[0] * self.df.shape[1]
