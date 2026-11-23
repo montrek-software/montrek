@@ -22,9 +22,45 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     the same issuer is never taken over by an email. A new email at the
     provider becomes the user's, unless another user has it or the user is
     the one ADMIN_EMAIL provisions.
+
+    With OIDC_ROLES_CLAIM, the roles the ID token carries decide at every
+    sign-in which groups the user is in (a role names a group) and, with
+    OIDC_STAFF_ROLE, whether the user is staff. Superusers are left as they are.
     """
 
     get_settings = staticmethod(OidcProvider.get_settings)
+
+    def get_or_create_user(
+        self, access_token: Any, id_token: Any, payload: dict[str, Any] | None
+    ) -> Any:
+        user = super().get_or_create_user(access_token, id_token, payload)
+        # payload is the verified ID token; None for a REST API token, whose
+        # calls leave the roles as the last sign-in set them.
+        if user is not None and payload is not None and settings.OIDC_ROLES_CLAIM:
+            self.assign_roles(user, payload)
+        return user
+
+    @staticmethod
+    def assign_roles(user: Any, id_token_claims: dict[str, Any]) -> None:
+        if user.is_superuser:
+            return
+        # Entra ID leaves the claim out for a user without roles.
+        claim = id_token_claims.get(settings.OIDC_ROLES_CLAIM) or []
+        if not isinstance(claim, list):
+            raise SuspiciousOperation(f"{settings.OIDC_ROLES_CLAIM} is no list")
+        roles = {role for role in claim if isinstance(role, str)}
+        staff_role = settings.OIDC_STAFF_ROLE
+        unknown = MontrekUserRepository().assign_roles(
+            user,
+            roles - {staff_role},
+            is_staff=staff_role in roles if staff_role else None,
+        )
+        if unknown:
+            logger.info(
+                "OIDC sign-in of %s: no group for the roles %s.",
+                user.email,
+                ", ".join(sorted(unknown)),
+            )
 
     def verify_token(self, token: Any, **kwargs: Any) -> dict[str, Any]:
         payload = super().verify_token(token, **kwargs)

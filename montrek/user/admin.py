@@ -38,7 +38,9 @@ class MontrekUserAdmin(UserAdmin):
                 "fields": ("is_staff", "is_active", "groups", "user_permissions"),
                 "description": (
                     "Users are not deleted, so the history keeps who created "
-                    "what. To stop a user from signing in, untick Active."
+                    "what. To stop a user from signing in, untick Active. With "
+                    "OIDC_ROLES_CLAIM, groups (and with OIDC_STAFF_ROLE, Staff) "
+                    "follow the provider's roles at every sign-in."
                 ),
             },
         ),

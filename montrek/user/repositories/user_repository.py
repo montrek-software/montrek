@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
 
@@ -44,6 +45,19 @@ class MontrekUserRepository:
             user.oidc_issuer, user.oidc_subject = issuer, subject
             user.save(update_fields=["oidc_issuer", "oidc_subject"])
         return True
+
+    def assign_roles(
+        self, user: MontrekUser, group_names: set[str], is_staff: bool | None
+    ) -> set[str]:
+        """Puts `user` in exactly the groups named, of those that exist, and
+        sets is_staff unless it is None. Returns the names without a group."""
+        groups = list(Group.objects.filter(name__in=group_names))
+        with transaction.atomic():
+            user.groups.set(groups)
+            if is_staff is not None and user.is_staff != is_staff:
+                user.is_staff = is_staff
+                user.save(update_fields=["is_staff"])
+        return group_names - {group.name for group in groups}
 
 
 class UserAssignmentRepository(MontrekRepository):

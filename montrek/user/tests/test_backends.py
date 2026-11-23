@@ -12,6 +12,7 @@ from mozilla_django_oidc.auth import OIDCAuthenticationBackend, default_username
 from user.backends import MontrekOIDCAuthenticationBackend
 from user.repositories.user_repository import MontrekUserRepository
 from user.tests import oidc_mocks
+from user.tests.factories.group_factories import GroupFactory
 
 OIDC_SETTINGS = {
     "OIDC_ISSUER_URL": oidc_mocks.ISSUER_URL,
@@ -336,3 +337,106 @@ class TestRemoveDerivedPasswords(TestCase):
         self.assertEqual(
             self.migration.derived_password(email), default_username_algo(email)
         )
+
+
+@override_settings(**OIDC_SETTINGS, OIDC_ROLES_CLAIM="roles", OIDC_STAFF_ROLE="Admin")
+class TestRolesFromTheProvider(TestCase):
+    subject = "subject-1"
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="user@example.com",
+            oidc_issuer=oidc_mocks.ISSUER_URL,
+            oidc_subject=self.subject,
+        )
+        self.readers = GroupFactory(name="Readers")
+        self.writers = GroupFactory(name="Writers")
+
+    def sign_in(self, payload, user=None):
+        user = user or self.user
+        claims = {"sub": user.oidc_subject, "email": user.email}
+        with mock.patch.object(
+            OIDCAuthenticationBackend, "get_userinfo", return_value=claims
+        ):
+            signed_in = MontrekOIDCAuthenticationBackend().get_or_create_user(
+                "access-token", "id-token", {"sub": user.oidc_subject, **payload}
+            )
+        signed_in.refresh_from_db()
+        return signed_in
+
+    def group_names(self, user):
+        return set(user.groups.values_list("name", flat=True))
+
+    def test_the_roles_decide_the_groups(self):
+        self.user.groups.add(self.writers)
+
+        user = self.sign_in({"roles": ["Readers"]})
+
+        self.assertEqual(self.group_names(user), {"Readers"})
+
+    def test_a_role_without_a_group_is_ignored(self):
+        with self.assertLogs("user.backends", "INFO"):
+            user = self.sign_in({"roles": ["Readers", "Unknown"]})
+
+        self.assertEqual(self.group_names(user), {"Readers"})
+
+    def test_without_roles_the_user_is_in_no_group_and_no_staff(self):
+        # Entra ID leaves the claim out for a user without roles.
+        self.user.groups.add(self.readers)
+        self.user.is_staff = True
+        self.user.save()
+
+        user = self.sign_in({})
+
+        self.assertEqual(self.group_names(user), set())
+        self.assertFalse(user.is_staff)
+
+    def test_the_staff_role_makes_staff(self):
+        user = self.sign_in({"roles": ["Admin", "Writers"]})
+
+        self.assertTrue(user.is_staff)
+        self.assertEqual(self.group_names(user), {"Writers"})
+
+    @override_settings(OIDC_STAFF_ROLE="")
+    def test_without_a_staff_role_is_staff_stays_as_set_in_montrek(self):
+        self.user.is_staff = True
+        self.user.save()
+
+        self.assertTrue(self.sign_in({"roles": []}).is_staff)
+
+    @override_settings(OIDC_ROLES_CLAIM="")
+    def test_without_a_roles_claim_the_groups_stay_as_set_in_montrek(self):
+        self.user.groups.add(self.writers)
+
+        user = self.sign_in({"roles": ["Readers"]})
+
+        self.assertEqual(self.group_names(user), {"Writers"})
+
+    def test_a_superuser_is_left_as_it_is(self):
+        admin = get_user_model().objects.create_superuser(
+            "admin@example.com", "a password"  # nosec B106: test password
+        )
+        admin.oidc_issuer, admin.oidc_subject = oidc_mocks.ISSUER_URL, "admin"
+        admin.save()
+        admin.groups.add(self.writers)
+
+        admin = self.sign_in({"roles": []}, user=admin)
+
+        self.assertTrue(admin.is_staff)
+        self.assertEqual(self.group_names(admin), {"Writers"})
+
+    def test_a_roles_claim_that_is_no_list_is_refused(self):
+        with self.assertRaises(SuspiciousOperation):
+            self.sign_in({"roles": "Readers"})
+
+    def test_a_rest_api_token_leaves_the_roles_alone(self):
+        self.user.groups.add(self.writers)
+        with mock.patch.object(
+            OIDCAuthenticationBackend,
+            "get_userinfo",
+            return_value={"sub": self.subject, "email": self.user.email},
+        ):
+            MontrekOIDCAuthenticationBackend().get_or_create_user(
+                "access-token", None, None
+            )
+        self.assertEqual(self.group_names(self.user), {"Writers"})
