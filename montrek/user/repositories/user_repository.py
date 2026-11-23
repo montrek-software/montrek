@@ -14,6 +14,13 @@ class MontrekUserRepository:
     def with_email(self, email: str) -> QuerySet[MontrekUser]:
         return MontrekUser.objects.filter(email__iexact=email)
 
+    def email_taken(self, email: str, by_other_than: MontrekUser) -> bool:
+        return self.with_email(email).exclude(pk=by_other_than.pk).exists()
+
+    def change_email(self, user: MontrekUser, email: str) -> None:
+        user.email = MontrekUser.objects.normalize_email(email)
+        user.save(update_fields=["email"])
+
     def link_oidc_subject(self, user: MontrekUser, issuer: str, subject: str) -> None:
         user.oidc_issuer, user.oidc_subject = issuer, subject
         user.save(update_fields=["oidc_issuer", "oidc_subject"])

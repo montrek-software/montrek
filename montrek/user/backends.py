@@ -19,7 +19,8 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
     another account had (nOAuth). At the first sign-in through the provider,
     montrek links the user it has under that email to the subject; from then on
     only the subject counts. An account already linked to another subject of
-    the same issuer is never taken over by an email.
+    the same issuer is never taken over by an email. A new email at the
+    provider becomes the user's, unless another user has it.
     """
 
     get_settings = staticmethod(OidcProvider.get_settings)
@@ -80,7 +81,19 @@ class MontrekOIDCAuthenticationBackend(OIDCAuthenticationBackend):
         )
 
     def update_user(self, user: Any, claims: dict[str, Any]) -> Any:
+        users = MontrekUserRepository()
         link = (OidcProvider.issuer(), claims["sub"])
         if (user.oidc_issuer, user.oidc_subject) != link:
-            MontrekUserRepository().link_oidc_subject(user, *link)
+            users.link_oidc_subject(user, *link)
+        email = claims.get("email")
+        if email and email.lower() != user.email.lower():
+            if users.email_taken(email, by_other_than=user):
+                logger.warning(
+                    "OIDC sign-in of %s: the provider's email %s belongs to "
+                    "another user, so it is kept.",
+                    user.email,
+                    email,
+                )
+            else:
+                users.change_email(user, email)
         return user

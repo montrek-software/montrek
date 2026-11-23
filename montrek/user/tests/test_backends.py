@@ -134,6 +134,22 @@ class TestUserFromTheProvider(TestCase):
 
         self.assertEqual(self.sign_in(email="renamed@example.com"), known)
         known.refresh_from_db()
+        self.assertEqual(known.email, "renamed@example.com")
+
+    def test_an_email_another_user_has_is_not_taken_over(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+        self.user(email="other@example.com")
+
+        with self.assertLogs("user.backends", "WARNING"):
+            self.assertEqual(self.sign_in(email="Other@example.com"), known)
+        known.refresh_from_db()
+        self.assertEqual(known.email, self.email)
+
+    def test_a_change_of_case_only_keeps_the_email(self):
+        known = self.user(issuer=oidc_mocks.ISSUER_URL, subject=self.subject)
+
+        self.sign_in(email="New@Example.com")
+        known.refresh_from_db()
         self.assertEqual(known.email, self.email)
 
     def test_another_subject_with_the_email_of_a_linked_user_is_refused(self):
