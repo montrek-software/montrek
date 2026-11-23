@@ -358,6 +358,11 @@ OIDC_ISSUER_URL = config("OIDC_ISSUER_URL", default="")
 # REST API calls with a provider's access token: with an audience, montrek
 # checks the token itself and requires the scope or app role; without, it asks
 # the provider's userinfo endpoint (rest_api.authentication).
+# The ID token claim with the user's roles (Entra ID: roles, its app roles).
+# Set, a role decides the group of the same name at every sign-in, and
+# OIDC_STAFF_ROLE whether the user is staff (user.backends).
+OIDC_ROLES_CLAIM = config("OIDC_ROLES_CLAIM", default="")
+OIDC_STAFF_ROLE = config("OIDC_STAFF_ROLE", default="")
 OIDC_API_AUDIENCE = config("OIDC_API_AUDIENCE", default="")
 OIDC_API_SCOPE = config("OIDC_API_SCOPE", default="")
 if OIDC_API_AUDIENCE and not OIDC_API_SCOPE:
