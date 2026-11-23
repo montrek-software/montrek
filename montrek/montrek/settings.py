@@ -27,6 +27,7 @@ from reporting.core.reporting_colors import ReportingColors
 
 from montrek.configuration import config
 from montrek.env_schema import raise_for_invalid_settings
+from montrek.storage_settings import StorageSettings
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
 
@@ -452,55 +453,17 @@ LANGUAGE_CODE = config("LANGUAGE_CODE", default="en-us")
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, "..", "static"))
+
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 MEDIA_X_ACCEL_REDIRECT = config("MEDIA_X_ACCEL_REDIRECT", default="")
 
-# Where uploads, exports and other stored files go. "filesystem" is MEDIA_ROOT;
-# "azure" is a Blob Storage container, for a platform without a shared disk.
-STORAGE_BACKEND = config("STORAGE_BACKEND", default="filesystem")
-if STORAGE_BACKEND == "azure":
-    # Lowercase, so the credentials are no settings of their own.
-    azure_account_name = config("AZURE_STORAGE_ACCOUNT_NAME", default="")
-    azure_account_key = config("AZURE_STORAGE_ACCOUNT_KEY", default="")
-    azure_connection_string = config("AZURE_STORAGE_CONNECTION_STRING", default="")
-    if not azure_account_name:
-        raise ImproperlyConfigured(
-            "STORAGE_BACKEND=azure needs AZURE_STORAGE_ACCOUNT_NAME."
-        )
-    azure_options: dict[str, Any] = {
-        "account_name": azure_account_name,
-        "azure_container": config("AZURE_STORAGE_CONTAINER", default="uploads"),
-        # Every url() is a SAS valid this long. Without an expiry the backend
-        # hands out the bare blob URL, which a private container refuses.
-        "expiration_secs": config(
-            "AZURE_STORAGE_URL_EXPIRATION_SECS", default=300, cast=int
-        ),
-    }
-    if azure_connection_string:
-        # Another endpoint, such as Azurite. URLs are still signed with the
-        # account key, so that is needed as well.
-        azure_options["connection_string"] = azure_connection_string
-    if azure_account_key:
-        azure_options["account_key"] = azure_account_key
-    else:
-        # No key: sign in as the container app's managed identity (AZURE_CLIENT_ID
-        # picks a user-assigned one), and sign URLs with a user delegation key.
-        # Imported here: only an Azure install needs azure-identity loaded.
-        from azure.identity import DefaultAzureCredential
-
-        azure_options["token_credential"] = DefaultAzureCredential()
-    MEDIA_STORAGE: dict[str, Any] = {
-        "BACKEND": "storages.backends.azure_storage.AzureStorage",
-        "OPTIONS": azure_options,
-    }
-else:
-    MEDIA_STORAGE = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
-
-# Compressed, but not the manifest variant: that one turns a template's
-# reference to a missing static file into a 500 instead of a 404.
+# "default" holds uploads, exports and other stored files, on the backend
+# STORAGE_BACKEND picks. "staticfiles" is compressed, but not the manifest
+# variant: that one turns a template's reference to a missing static file into
+# a 500 instead of a 404.
 STORAGES = {
-    "default": MEDIA_STORAGE,
+    "default": StorageSettings(config).default_storage(),
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 
