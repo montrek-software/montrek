@@ -21,6 +21,13 @@ class MockSharedHeaderDataFrameTableManager(MockMontrekDataFrameTableManager):
         )
 
 
+class MockNarrowedOutputDataFrameTableManager(MockMontrekDataFrameTableManager):
+    """Writes fewer columns than the data holds, in another order."""
+
+    def get_output_columns(self) -> list[str]:
+        return ["field_a", "field_e", "field_b"]
+
+
 class TestDecimalsAsFloats(TestCase):
     def test_decimals_become_floats(self):
         frame = pd.DataFrame({"amount": [Decimal("1.25"), None], "name": ["a", "b"]})
@@ -114,3 +121,26 @@ class TestDataFrameTableExcel(TestCase):
         self.assertEqual([cell.value for cell in sheet[1]], ["Name", "Value", "Value"])
         self.assertEqual(sheet["B2"].number_format, "#,##0")
         self.assertEqual(sheet["C2"].number_format, "#,##0.00%")
+
+    def test_formats_follow_a_narrowed_output(self):
+        df = pd.DataFrame(
+            {
+                "field_a": ["a"],
+                "helper": [True],
+                "field_b": [1000],
+                "field_e": [Decimal("1000.25")],
+            }
+        )
+        manager = MockNarrowedOutputDataFrameTableManager(
+            {"df_data": df.to_dict(orient="records")}
+        )
+
+        sheet = load_workbook(manager.to_excel(io.BytesIO())).active
+
+        self.assertEqual(
+            [cell.value for cell in sheet[1]], ["Field_A", "Field E", "Field B"]
+        )
+        self.assertEqual(sheet["A2"].alignment.horizontal, "left")
+        self.assertEqual(sheet["B2"].number_format, "#,##0.00")
+        self.assertEqual(sheet["B2"].alignment.horizontal, "right")
+        self.assertEqual(sheet["C2"].number_format, "#,##0")
