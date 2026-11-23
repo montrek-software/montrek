@@ -1,8 +1,12 @@
 from pathlib import Path
+from urllib.parse import quote
 
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+from testing.decorators.object_storage import ObjectStorage
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
@@ -122,3 +126,88 @@ class TestServeMedia(TestCase):
         self.login()
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, 405)
+
+
+class SignedUrlStorage(ObjectStorage):
+    """An object storage that hands out URLs of its own, as signed ones are."""
+
+    def url(self, name):
+        return f"https://files.example.com/{quote(name)}?sig=signature"
+
+
+def storage(backend: type) -> dict:
+    return {
+        **settings.STORAGES,
+        "default": {"BACKEND": f"{backend.__module__}.{backend.__qualname__}"},
+    }
+
+
+class TestServeMediaFromStorage(TestCase):
+    """Each test stores its file itself: the storage is the one its
+    override_settings configures, which setUp does not see yet."""
+
+    url = reverse_lazy("media", args=["media_test/report 1.csv"])
+
+    def store(self):
+        default_storage.save("media_test/report 1.csv", ContentFile(b"a,b\n"))
+
+    def login(self):
+        self.client.force_login(MontrekUserFactory())
+
+    @override_settings(STORAGES=storage(ObjectStorage))
+    def test_streams_from_a_storage_without_urls_of_its_own(self):
+        self.store()
+        self.login()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), b"a,b\n")
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("private", response["Cache-Control"])
+
+    @override_settings(STORAGES=storage(SignedUrlStorage))
+    def test_redirects_to_the_storage_url(self):
+        self.store()
+        self.login()
+        response = self.client.get(self.url)
+        self.assertRedirects(
+            response,
+            "https://files.example.com/media_test/report%201.csv?sig=signature",
+            fetch_redirect_response=False,
+        )
+        self.assertIn("no-cache", response["Cache-Control"])
+
+    @override_settings(
+        STORAGES=storage(SignedUrlStorage),
+        LOGIN_EXEMPT_PATHS=[r"^uploads/media_test/.*$"],
+    )
+    def test_a_public_redirect_is_not_cached(self):
+        # The signed URL it leads to expires.
+        self.store()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("no-cache", response["Cache-Control"])
+        self.assertNotIn("public", response["Cache-Control"])
+
+    @override_settings(STORAGES=storage(SignedUrlStorage))
+    def test_needs_a_login(self):
+        self.store()
+        response = self.client.get(self.url)
+        self.assertRedirects(
+            response, settings.LOGIN_URL, fetch_redirect_response=False
+        )
+
+    @override_settings(STORAGES=storage(SignedUrlStorage))
+    def test_missing_file_and_directory_are_not_found(self):
+        self.store()
+        self.login()
+        for path in ("media_test/missing.csv", "media_test", "media_test/"):
+            with self.subTest(path):
+                response = self.client.get(reverse("media", args=[path]))
+                self.assertEqual(response.status_code, 404)
+
+    @override_settings(STORAGES=storage(SignedUrlStorage))
+    def test_dot_segments_are_not_found(self):
+        self.store()
+        self.login()
+        response = self.client.get(f"{settings.MEDIA_URL}x/../media_test/report 1.csv")
+        self.assertEqual(response.status_code, 404)
