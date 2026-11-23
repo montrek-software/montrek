@@ -47,7 +47,8 @@ class TestStorageSettings(ConfigurationTestCase):
             {**AZURE_WITH_KEY, "AZURE_STORAGE_URL_EXPIRATION_SECS": "60"}
         )
         self.assertEqual(
-            default_storage["BACKEND"], "storages.backends.azure_storage.AzureStorage"
+            default_storage["BACKEND"],
+            "storage.modules.montrek_azure_storage.MontrekAzureStorage",
         )
         self.assertEqual(default_storage["OPTIONS"]["azure_container"], "uploads")
         self.assertEqual(default_storage["OPTIONS"]["expiration_secs"], 60)
