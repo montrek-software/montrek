@@ -44,7 +44,7 @@ RUN apt-get update && \
   postgresql-client-16 \
   && curl --fail --silent --show-error --location \
   --proto '=https' --proto-redir '=https' --tlsv1.2 \
-  https://deb.nodesource.com/setup_20.x | bash - \
+  https://deb.nodesource.com/setup_24.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
   && chown -R appuser:appgroup ${DOCKERHOME} \
   && apt-get clean \
