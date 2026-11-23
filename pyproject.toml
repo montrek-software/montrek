@@ -33,6 +33,7 @@ module = [
   "pypandoc.*",
   "querycount.*",
   "requests.*",
+  "storages.*",
   "rest_framework.*",
   "tqdm.*",
   "vcr.*",

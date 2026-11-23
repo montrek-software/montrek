@@ -65,8 +65,12 @@ PDFs attached to mail drafts) goes through Django's default storage.
 `azure` is a private Blob Storage container (`AZURE_STORAGE_*` in
 `env.schema.toml`), for a platform without a shared disk. Without an account
 key, montrek signs in as the managed identity, which needs the Storage Blob
-Data Contributor role. The `/uploads/` view still reads `uploads` from the
-disk, so it does not serve Blob files yet. Upload processors that read the file
+Data Contributor role. The backend is django-storages' with Django's
+`listdir()` (`storage/modules/montrek_azure_storage.py`). The `/uploads/` view
+still reads `uploads` from the disk, so it does not serve Blob files yet.
+`storage/tests/test_azure_blob_storage.py` runs the storage code against the
+Azurite emulator (a service in CI; locally it is skipped unless Azurite runs,
+see the module docstring). Upload processors that read the file
 by path get the stored file's path, or a temporary copy on a backend without
 local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
 tables and report PDFs after seven days.
