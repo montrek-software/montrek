@@ -1,11 +1,16 @@
 import os
+import tempfile
+
 from django.test import TestCase
+
 from storage.managers.tmp_storage_manager import TmpStorageManager
 
 
 class TestTmpStorageManager(TestCase):
     def test_save_and_cleanup(self):
-        test_file_name = "test.txt"
+        source = tempfile.TemporaryDirectory()
+        self.addCleanup(source.cleanup)
+        test_file_name = os.path.join(source.name, "test.txt")
         with open(test_file_name, "w") as f:
             f.write("test")
         tmp_storage_manager = TmpStorageManager()
@@ -21,6 +26,7 @@ class TestTmpStorageManager(TestCase):
 
     def test_load(self):
         tmp_storage_manager = TmpStorageManager()
+        self.addCleanup(tmp_storage_manager.cleanup)
         with open(os.path.join(tmp_storage_manager.storage_path, "test.txt"), "w") as f:
             f.write("test")
         loaded_file = tmp_storage_manager.load("test.txt")

@@ -61,16 +61,17 @@ the file. Without nginx, leave it empty and Django streams the file itself.
 
 All other file access (uploads, upload logs, exports, mailed tables, report
 PDFs attached to mail drafts) goes through Django's default storage.
-`STORAGE_BACKEND` picks it: `filesystem` (the default) is `uploads`, and
-`azure` is a private Blob Storage container (`AZURE_STORAGE_*` in
-`env.schema.toml`), for a platform without a shared disk. Without an account
-key, montrek signs in as the managed identity, which needs the Storage Blob
-Data Contributor role. The backend is django-storages' with Django's
-`listdir()` (`storage/modules/montrek_azure_storage.py`). The `/uploads/` view
-still reads `uploads` from the disk, so it does not serve Blob files yet.
-`storage/tests/test_azure_blob_storage.py` runs the storage code against the
-Azurite emulator (a service in CI; locally it is skipped unless Azurite runs,
-see the module docstring). Upload processors that read the file
+`STORAGE_BACKEND` picks it: `filesystem` (the default) is `uploads`. For a
+platform without a shared disk it is the dotted path of a storage class from an
+extension app, which reads its own settings (listed in that app's
+`env.schema.toml`); core installs no cloud SDK. The `storage` system check
+creates the configured storage once, so a wrong path or a missing setting fails
+`migrate`, and with it the release step, rather than the first upload. A backend
+passes `testing/test_cases/storage_contract_test_case.py`, the behaviour the
+storage code relies on; core runs it against the filesystem and against the
+object storage stand-in the other tests use. The `/uploads/` view still reads
+`uploads` from the disk, so it does not serve files from another backend
+yet. Upload processors that read the file
 by path get the stored file's path, or a temporary copy on a backend without
 local paths. A daily Celery Beat task, scheduled by a migration, deletes mailed
 tables and report PDFs after seven days.

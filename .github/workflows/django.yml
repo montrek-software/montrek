@@ -31,10 +31,6 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
-      # Blob Storage emulator for storage/tests/test_azure_blob_storage.py. Its
-      # default command listens on 0.0.0.0, so the job container reaches it.
-      azurite:
-        image: mcr.microsoft.com/azure-storage/azurite:3.38.0
 
     steps:
       - uses: actions/checkout@v3
@@ -50,10 +46,6 @@ jobs:
           echo "DB_HOST=postgres" >> .env
           echo "SECRET_KEY=testkey" >> .env
       - name: Run Tests
-        env:
-          # Set, so a missing Azurite fails the Blob Storage tests instead of
-          # skipping them.
-          AZURITE_BLOB_URL: http://azurite:10000/devstoreaccount1
         run: |
           . .venv/bin/activate
           cd montrek
