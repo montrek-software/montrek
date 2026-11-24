@@ -459,6 +459,8 @@ class MontrekListView(
             response = self.list_to_csv()
         elif q.get("gen_excel") == "true":
             response = self.list_to_excel()
+        elif q.get("gen_md") == "true":
+            response = self.list_to_markdown()
         elif q.get("gen_pdf") in ("true", "latex"):
             response = (
                 self.list_to_pdf_latex()
@@ -570,6 +572,14 @@ class MontrekListView(
             self.manager.document_name, DownloadType.API
         )
         return Response(self.manager.to_json(), status=status.HTTP_200_OK)
+
+    def list_to_markdown(self):
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DownloadType.MD
+        )
+        response = self.manager.download_or_mail_markdown()
+        self.show_messages()
+        return response
 
     def refresh_data(self):
         self.manager.refresh_data_task.delay()
@@ -753,6 +763,8 @@ class MontrekDetailView(
             return self.list_to_pdf_latex()
         if request_get.get("gen_excel") == "true":
             return self.details_to_excel()
+        if request_get.get("gen_md") == "true":
+            return self.details_to_markdown()
         if self._is_rest(request):
             return self.list_to_rest_api()
         return super().get(request, *args, **kwargs)
@@ -769,6 +781,19 @@ class MontrekDetailView(
         filename = f"{self.manager.document_name}.xlsx"
         DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
             self.manager.document_name, DownloadType.XLSX
+        )
+        response["Content-Type"] = get_content_type(filename)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        self.show_messages()
+        return response
+
+    def details_to_markdown(self) -> HttpResponse:
+        """The details block as a Markdown file, answered from this view as
+        the Excel export is."""
+        filename = f"{self.manager.document_name}.md"
+        response = HttpResponse(self.manager.to_markdown())
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DownloadType.MD
         )
         response["Content-Type"] = get_content_type(filename)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'

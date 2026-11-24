@@ -169,6 +169,23 @@ class ExcelTestCaseMixin:
         self.assertEqual(len(workbook.sheetnames), 1)
 
 
+class MarkdownTestCaseMixin:
+    def markdown_view_test(self):
+        """Every list and details view offers the Markdown export, so every
+        view test renders its elements as Markdown. A table too large for a
+        direct download is mailed, which redirects."""
+        if self._is_base_test_class():
+            return
+        query_params = self.query_params()
+        query_params.update({"gen_md": "true"})
+        response = self.client.get(self.url, query_params=query_params)
+        self.assertIn(response.status_code, (200, 302))
+        if response.status_code == 302:
+            return
+        self.assertEqual(response["Content-Type"], "text/markdown")
+        self.assertIn("attachment;", response["Content-Disposition"])
+
+
 class WithoutPermissions:
     """Give the test user nothing, for a test that asserts the gate refuses.
 
@@ -347,7 +364,7 @@ class MontrekViewTestCase(TestCase):
 
 
 class MontrekListViewTestCase(
-    MontrekViewTestCase, RestApiTestCaseMixin, PdfTestCaseMixin
+    MontrekViewTestCase, RestApiTestCaseMixin, PdfTestCaseMixin, MarkdownTestCaseMixin
 ):
     expected_no_of_rows: int = 0
     expected_columns: list[str] = []
@@ -377,6 +394,9 @@ class MontrekListViewTestCase(
     @mock_plotly_write_dummy_png()
     def test_gen_pdf(self, mock_write_image):
         self.pdf_view_test()
+
+    def test_gen_markdown(self):
+        self.markdown_view_test()
 
 
 class MontrekObjectViewBaseTestCase(MontrekViewTestCase):
@@ -477,6 +497,7 @@ class MontrekDetailViewTestCase(
     RestApiTestCaseMixin,
     PdfTestCaseMixin,
     ExcelTestCaseMixin,
+    MarkdownTestCaseMixin,
 ):
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekDetailViewTestCase"
@@ -496,6 +517,9 @@ class MontrekDetailViewTestCase(
 
     def test_gen_excel(self):
         self.excel_view_test()
+
+    def test_gen_markdown(self):
+        self.markdown_view_test()
 
 
 class MontrekCreateViewTestCase(MontrekCreateUpdateViewTestCase, GetObjectLastMixin):

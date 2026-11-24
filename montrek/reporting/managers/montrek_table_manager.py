@@ -16,6 +16,7 @@ from baseclasses.dataclasses.montrek_message import (
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
+from baseclasses.utils import get_content_type
 from baseclasses.datetime_boundaries import DatetimeBoundaries
 from django.conf import settings
 from django.core.exceptions import FieldError, ImproperlyConfigured
@@ -376,7 +377,7 @@ class MontrekTableManagerABC(
         export_manager = self.export_manager
         if base_url is None:
             base_url = export_manager.session_data.get("host_url", "")
-        elements = self._get_export_elements(export_manager.table_elements)
+        elements = export_manager.get_markdown_elements()
         table = export_manager.get_full_table()
         export_manager._preload_container(table)
         rows = [
@@ -399,6 +400,10 @@ class MontrekTableManagerABC(
         if not export_manager.table_title:
             return markdown_table
         return f"## {export_manager.table_title}\n\n{markdown_table}"
+
+    def get_markdown_elements(self) -> list[te.TableElement]:
+        """The columns of the Markdown table: those of the other exports."""
+        return self._get_export_elements(self.table_elements)
 
     def get_excel_frame(self) -> pd.DataFrame:
         """The sheet's rows, and the summary row under them. CSV and JSON
@@ -456,6 +461,10 @@ class MontrekTableManagerABC(
         export_manager = self.export_manager
         return export_manager._download_or_mail("xlsx", export_manager._download_excel)
 
+    def download_or_mail_markdown(self) -> HttpResponse:
+        export_manager = self.export_manager
+        return export_manager._download_or_mail("md", export_manager._download_markdown)
+
     def _download_or_mail(
         self, filetype: str, download_method: Callable[[], HttpResponse]
     ) -> HttpResponse:
@@ -494,6 +503,14 @@ class MontrekTableManagerABC(
         )
         return response
 
+    def _download_markdown(self):
+        response = HttpResponse(self.to_markdown())
+        return self.do_download(
+            response=response,
+            filename=f"{self.document_name}.md",
+            content_type=get_content_type("md"),
+        )
+
     def do_download(self, response, filename, content_type):
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -521,6 +538,8 @@ class MontrekTableManagerABC(
                 self.to_excel(output)
             elif filetype == "csv":
                 self.get_output_df().to_csv(output, index=False)
+            elif filetype == "md":
+                output.write(self.to_markdown().encode())
             else:
                 return
             output.seek(0)
@@ -883,6 +902,19 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def get_output_df(self) -> pd.DataFrame:
         df = self.get_df()
         return df.iloc[:, self._output_column_positions()]
+
+    def get_markdown_elements(self) -> list[te.TableElement]:
+        """The elements showing the output columns, in their order, as CSV and
+        Excel write them. A column may be shown by several elements, e.g. as
+        text and as a link."""
+        elements_by_field: dict[str, list[te.TableElement]] = {}
+        for element in super().get_markdown_elements():
+            elements_by_field.setdefault(element.field_name, []).append(element)
+        return [
+            element
+            for column in dict.fromkeys(self.get_output_columns())
+            for element in elements_by_field.get(column, [])
+        ]
 
     def _output_column_positions(self) -> list[int]:
         # Columns sharing a name are taken in their order in ``df``

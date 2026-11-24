@@ -107,9 +107,10 @@ markdown = HubCTableManager(session_data).to_markdown()
 markdown = HubCDetailsManager(session_data).to_markdown(base_url="")
 ```
 
-- A table has the columns of its export manager, as the CSV and Excel downloads, and the rows of all pages. Numeric columns are aligned right, and a sum row is shown as in Excel.
+- A table has the columns of its export manager, as the CSV and Excel downloads, and the rows of all pages. A `MontrekDataFrameTableManager` follows `get_output_columns()`: the elements showing those columns, in their order. Numeric columns are aligned right, and a sum row is shown as in Excel.
 - A details block is a table of labels and values. An element with `markdown_section=True` follows the table as a section of its own, so that the line breaks of a long text survive; `TextTableElement` does so by default. Empty sections are left out.
 - Icon links (`LinkTableElement`) are left out, as in the other exports. Links of `LinkTextTableElement` and `LinkListTableElement` become Markdown links. They start with `base_url`, by default the host of the request (`session_data["host_url"]`), so that they work where the Markdown is read; pass `base_url=""` for relative links.
+- List and details views offer the Markdown as a download next to CSV and Excel (`?gen_md=true`). A table too large for a direct download is mailed, as its CSV and Excel are.
 - Each element renders its cell with `get_markdown(obj, base_url)`. HTML in a value is converted to Markdown (`HtmlMarkdownConverter`), plain text is kept as it is, so Markdown typed into a field renders. Override `format_markdown(value)` for a value that needs no row, `get_markdown()` for one that does.
 
 ## Summary

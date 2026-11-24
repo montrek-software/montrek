@@ -346,6 +346,27 @@ class TestMontrekTableManager(TestCase):
                 "Table is too large to download. Sending it by mail.",
             )
 
+    @add_logged_in_user()
+    def test_download_markdown(self):
+        manager = MockMontrekTableManager({"user_id": self.user.id})
+        response = manager.download_or_mail_markdown()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/markdown")
+        self.assertRegex(
+            response["Content-Disposition"],
+            r'attachment; filename="mockmontrektablemanager_\d{14}\.md"',
+        )
+        self.assertEqual(response.content.decode(), manager.to_markdown())
+
+    @add_logged_in_user()
+    def test_large_download_markdown(self):
+        manager = MockLongMontrekTableManager(
+            {"user_id": self.user.id, "host_url": "test_server"}
+        )
+        response = manager.download_or_mail_markdown()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(mail.outbox[0].subject.endswith(".md is ready for download"))
+
     def test_set_paginate_by(self):
         test_manager = MockLongMontrekTableManager({})
         self.assertEqual(test_manager.paginate_by, 10)
@@ -1098,3 +1119,40 @@ class TestMontrekTableManagerMarkdown(TestCase):
     def test_empty_table(self):
         markdown = MockEmptyMontrekTableManager().to_markdown()
         self.assertTrue(markdown.endswith("| --- | ---: | ---: | --- | ---: | --- |\n"))
+
+
+@override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+class TestMontrekDataFrameTableManagerMarkdown(TestCase):
+    df_data = [
+        {
+            "field_a": "a",
+            "helper": True,
+            "field_b": 1000,
+            "field_c": 1.5,
+            "field_d": datetime.date(2024, 7, 13),
+            "field_e": Decimal("2.25"),
+        }
+    ]
+
+    def test_columns_of_the_data_frame(self):
+        markdown = MockMontrekDataFrameTableManager(
+            {"df_data": self.df_data}
+        ).to_markdown(base_url="")
+        self.assertIn(
+            "| Field_A | Link Text | Field B | Field C | Field D | Field E |", markdown
+        )
+
+    def test_columns_follow_a_narrowed_output(self):
+        class NarrowedManager(MockMontrekDataFrameTableManager):
+            def get_output_columns(self) -> list[str]:
+                return ["field_a", "field_e", "field_b"]
+
+        markdown = NarrowedManager({"df_data": self.df_data}).to_markdown(base_url="")
+        self.assertEqual(
+            markdown.splitlines()[:3],
+            [
+                "| Field_A | Link Text | Field E | Field B |",
+                "| --- | --- | ---: | ---: |",
+                "| a | [a](/home) | 2.25€ | 1,000 |",
+            ],
+        )

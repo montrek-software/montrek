@@ -9,21 +9,28 @@
   </div>
   <div class="col-2">
     <div class="row tile">
-      <div class="col-4">
+      <div class="col-3">
         <form method="get">
           {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_pdf" %}
           <input type="hidden" name="gen_pdf" value="true" />
           <button type="submit" class="btn btn-light-custom" title="Export to pdf"><span class="bi bi-file-earmark-pdf"></span></button>
         </form>
       </div>
-      <div class="col-4">
+      <div class="col-3">
         <form method="get">
           {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_excel" %}
           <input type="hidden" name="gen_excel" value="true" />
           <button type="submit" class="btn btn-light-custom" title="Export to Excel"><span class="bi bi-file-earmark-excel"></span></button>
         </form>
       </div>
-      <div class="col-4">
+      <div class="col-3">
+        <form method="get">
+          {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_md" %}
+          <input type="hidden" name="gen_md" value="true" />
+          <button type="submit" class="btn btn-light-custom" title="Export to Markdown"><span class="bi bi-markdown"></span></button>
+        </form>
+      </div>
+      <div class="col-3">
         <form action="" method="get">
           {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_rest_api" %}
           <input type="hidden" name="gen_rest_api" value="true" />
