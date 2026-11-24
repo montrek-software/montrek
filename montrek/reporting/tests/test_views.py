@@ -89,6 +89,19 @@ class TestMontrekReportFormView(TestCase):
         response = MockMontrekReportWithFormView.as_view()(request)
         self.assertIn("Init", str(response.content))
 
+    def test_report_view__markdown(self):
+        request = self.factory.get("/?gen_md=true")
+        request.user = self.user
+        request.session = {}
+        response = MockMontrekReportView.as_view()(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/markdown")
+        self.assertEqual(
+            response["Content-Disposition"], 'attachment; filename="document.md"'
+        )
+        self.assertEqual(response.content.decode(), "# Mock Report\n\nInit\n")
+        self.assertEqual(DownloadRegistryRepository().receive().count(), 1)
+
     def test_get_report_form__post(self):
         form_data = {"field_1": "ABC"}
         request = self.factory.post("/example/", data=form_data)

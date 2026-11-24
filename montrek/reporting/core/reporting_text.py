@@ -15,7 +15,8 @@ from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.contrib.staticfiles import finders
 from reporting.core import workbench
-from reporting.core.text_converter import HtmlLatexConverter
+from reporting.core.text_converter import HtmlLatexConverter, HtmlMarkdownConverter
+from reporting.modules.report_element_markdown import ReportElementMarkdown
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,9 @@ class ReportingElement:
         html_text = self.to_html()
         return HtmlLatexConverter.convert(html_text)
 
+    def to_markdown(self) -> str:
+        return HtmlMarkdownConverter.convert(self.to_html())
+
     def to_json(self) -> dict[str, Any]:
         raise NotImplementedError("Method to_json must be implemented")
 
@@ -52,8 +56,17 @@ class ReportingText(ReportingElement):
             text = ""
         self.text = str(text)
 
+    # Markdown put around the text, e.g. "**" for bold
+    markdown_mark: str = ""
+
     def to_latex(self) -> str:
         return HtmlLatexConverter.convert(self.text)
+
+    def to_markdown(self) -> str:
+        text = HtmlMarkdownConverter.convert(self.text)
+        if not self.markdown_mark or not text.strip():
+            return text
+        return f"{self.markdown_mark}{text.strip()}{self.markdown_mark}"
 
     def get_context_data(self) -> ContextTypes:
         return {"text": HtmlSanitizer().display_text_as_html(self.text)}
@@ -105,9 +118,16 @@ class ReportingEditableText(ReportingParagraph):
         latex_str += super().to_latex()
         return latex_str
 
+    def to_markdown(self) -> str:
+        text = super().to_markdown()
+        if not self.header:
+            return text
+        return f"{ReportingHeader2(self.header).to_markdown()}\n\n{text}"
+
 
 class ReportingBold(ReportingText):
     template_name = "bold"
+    markdown_mark = "**"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -116,6 +136,7 @@ class ReportingBold(ReportingText):
 
 class ReportingBoldParagraph(ReportingText):
     template_name = "bold_paragraph"
+    markdown_mark = "**"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -124,6 +145,7 @@ class ReportingBoldParagraph(ReportingText):
 
 class ReportingItalic(ReportingText):
     template_name = "italic"
+    markdown_mark = "*"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -132,6 +154,7 @@ class ReportingItalic(ReportingText):
 
 class ReportingItalicParagraph(ReportingText):
     template_name = "italic_paragraph"
+    markdown_mark = "*"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -156,6 +179,7 @@ class ReportingUnderlineParagraph(ReportingText):
 
 class ReportingStrikethrough(ReportingText):
     template_name = "strikethrough"
+    markdown_mark = "~~"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -164,6 +188,7 @@ class ReportingStrikethrough(ReportingText):
 
 class ReportingCode(ReportingText):
     template_name = "code"
+    markdown_mark = "`"
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -172,6 +197,7 @@ class ReportingCode(ReportingText):
 
 class ReportingKeyboard(ReportingText):
     template_name = "keyboard"
+    markdown_mark = "`"
 
     def to_latex(self) -> str:
         # approximation
@@ -189,6 +215,9 @@ class ReportingHeader1(ReportingText):
         escaped = HtmlLatexConverter.convert(self.text)
         return f"\\section*{{{escaped}}}"
 
+    def to_markdown(self) -> str:
+        return f"# {HtmlMarkdownConverter.convert(self.text)}"
+
     def to_json(self) -> dict[str, str]:
         return {"reporting_header_1": self.text}
 
@@ -203,6 +232,9 @@ class ReportingHeader2(ReportingText):
         escaped = HtmlLatexConverter.convert(self.text)
         return f"\\subsection*{{{escaped}}}"
 
+    def to_markdown(self) -> str:
+        return f"## {HtmlMarkdownConverter.convert(self.text)}"
+
     def to_json(self) -> dict[str, str]:
         return {"reporting_header_2": self.text}
 
@@ -216,6 +248,9 @@ class Vspace(ReportingElement):
     def to_latex(self) -> str:
         return f"\\vspace{{{self.space}mm}}"
 
+    def to_markdown(self) -> str:
+        return ""
+
     def to_json(self) -> ContextTypes:
         return {"vspace": self.space}
 
@@ -228,6 +263,9 @@ class NewPage(ReportingElement):
 
     def to_latex(self) -> str:
         return "\\newpage"
+
+    def to_markdown(self) -> str:
+        return "---"
 
     def to_json(self) -> dict[str, bool]:
         return {"new_page": True}
@@ -317,6 +355,9 @@ class ReportingImage(ReportingElement):
     def to_json(self) -> dict[str, str]:
         return {"reporting_image": self.image_path}
 
+    def to_markdown(self) -> str:
+        return f"![]({self.image_path})"
+
     def get_context_data(self) -> ContextTypes:
         # Use an integer percentage to avoid locale-dependent decimal separators (e.g. "100,0" in de)
         # that can break parsing of the HTML width/size attributes
@@ -338,6 +379,9 @@ class ReportingMap(ReportingElement):
     def to_latex(self) -> str:
         # TODO: Implement LaTeX conversion for iframe
         return ""
+
+    def to_markdown(self) -> str:
+        return f"[Map]({self.embedded_url})"
 
     def to_json(self) -> dict[str, str]:
         return {"reporting_map": self.embedded_url}
@@ -421,6 +465,9 @@ class MarkdownReportingElement(ReportingElement):
     def to_json(self) -> dict[str, str]:
         return {"markdown_reporting_element": self.markdown_text}
 
+    def to_markdown(self) -> str:
+        return self.markdown_text
+
     def get_context_data(self) -> ContextTypes:
         return {"text": self.convert_to_html()}
 
@@ -450,6 +497,10 @@ class ReportingError(ReportingElement):
             f"{texts}\n"
             "\\end{tcolorbox}"
         )
+
+    def to_markdown(self) -> str:
+        lines = [f"**{self.error_header}**", *self.error_texts]
+        return "\n".join(f"> {line}" for line in lines)
 
 
 class ReportingFooter(ReportingText):
@@ -485,6 +536,9 @@ class CollapsibleSection(ReportingElement):
     def to_latex(self) -> str:
         header_latex = HtmlLatexConverter.convert(f"<h2>{self.header}</h2>")
         return header_latex + self.content.to_latex()
+
+    def to_markdown(self) -> str:
+        return f"## {self.header}\n\n{ReportElementMarkdown.convert(self.content)}"
 
     def to_json(self) -> dict:
         return {"header": self.header, "content": self.content.to_json()}

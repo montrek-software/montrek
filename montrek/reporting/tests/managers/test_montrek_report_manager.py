@@ -248,3 +248,28 @@ class TestComprehensiveReport(TestCase):
         pdf_path = report_manager.compile_report()
         self.assertIn("document.pdf", pdf_path)
         mock_write_image.assert_called_once()
+
+
+class TestMontrekReportManagerMarkdown(TestCase):
+    def test_title_and_elements(self):
+        markdown = mocks.MockComprehensiveReportManager(session_data={}).to_markdown()
+        self.assertEqual(
+            markdown,
+            "# Mock Comprehensive Report\n\n"
+            "# Hallo\n\n"
+            "One\n\nTwo\n\n*Plot: Test Plot*\n\nFour\n",
+        )
+
+    def test_elements_without_to_markdown_give_their_html_text(self):
+        class Manager(mocks.MockMontrekReportManager):
+            def collect_report_elements(self):
+                self.append_report_element(mocks.MockReportElement())
+
+        self.assertEqual(
+            Manager(session_data={}).to_markdown(), "# Mock Report\n\nhtml\n"
+        )
+
+    def test_elements_are_cleaned_up(self):
+        manager = mocks.MockComprehensiveReportManager(session_data={})
+        manager.to_markdown()
+        self.assertEqual(manager.report_elements, [])

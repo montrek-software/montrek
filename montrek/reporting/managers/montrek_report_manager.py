@@ -9,6 +9,7 @@ from django.utils.safestring import mark_safe
 from mailing.repositories.mailing_repository import MailingRepository
 from reporting.core import reporting_text as rt
 from reporting.lib.protocols import ReportElementProtocol
+from reporting.modules.report_element_markdown import ReportElementMarkdown
 
 
 class MontrekReportManager(MontrekManager):
@@ -106,6 +107,19 @@ class MontrekReportManager(MontrekManager):
             latex_str += report_element.to_latex()
         self.cleanup_report_elements()
         return latex_str
+
+    def to_markdown(self) -> str:
+        """The report in Markdown, its elements one below the other."""
+        self.collect_report_elements()
+        try:
+            parts = [
+                ReportElementMarkdown.convert(report_element)
+                for report_element in self.report_elements
+            ]
+        finally:
+            self.cleanup_report_elements()
+        markdown = "\n\n".join(part.strip() for part in parts if part.strip())
+        return f"# {self.document_title}\n\n{markdown}\n"
 
     def to_json(self) -> list[dict]:
         self.collect_report_elements()

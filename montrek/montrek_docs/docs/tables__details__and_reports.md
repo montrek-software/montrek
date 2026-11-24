@@ -113,6 +113,8 @@ markdown = HubCDetailsManager(session_data).to_markdown(base_url="")
 - List and details views offer the Markdown as a download next to CSV and Excel (`?gen_md=true`). A table too large for a direct download is mailed, as its CSV and Excel are.
 - Each element renders its cell with `get_markdown(obj, base_url)`. HTML in a value is converted to Markdown (`HtmlMarkdownConverter`), plain text is kept as it is, so Markdown typed into a field renders. Override `format_markdown(value)` for a value that needs no row, `get_markdown()` for one that does.
 
+A report renders as Markdown too (`MontrekReportManager.to_markdown()`, or `?gen_md=true` on a report view): its title, then its elements one below the other. Grids lose their columns, plots are named by their title, a `MarkdownReportingElement` is kept as it is. A report element of another app without `to_markdown()` is converted from its HTML (`ReportElementMarkdown`), which keeps its text.
+
 ## Summary
 
 In summary, Montrek provides a range of tools and classes for generating tables, details, and reports. These components can be used to display and manage data in a structured and meaningful way. By connecting these components to Django models or views, developers can create powerful and data-driven applications.
