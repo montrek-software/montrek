@@ -118,8 +118,7 @@ class MontrekReportManager(MontrekManager):
             ]
         finally:
             self.cleanup_report_elements()
-        markdown = "\n\n".join(part.strip() for part in parts if part.strip())
-        return f"# {self.document_title}\n\n{markdown}\n"
+        return f"# {self.document_title}\n\n{ReportElementMarkdown.join(parts)}\n"
 
     def to_json(self) -> list[dict]:
         self.collect_report_elements()

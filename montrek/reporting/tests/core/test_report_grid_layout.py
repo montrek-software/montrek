@@ -4,7 +4,11 @@ from reporting.core.reporting_grid_layout import (
     EmptyReportGridElement,
     ReportGridLayout,
 )
-from reporting.core.reporting_text import ReportingParagraph, ReportingText
+from reporting.core.reporting_text import (
+    MarkdownReportingElement,
+    ReportingParagraph,
+    ReportingText,
+)
 
 
 class _PdfAwareElement:
@@ -276,3 +280,11 @@ class TestReportGridLayoutToMarkdown(TestCase):
         outer.add_report_grid_element(inner, 0, 0)
         outer.add_report_grid_element(ReportingText("Outer"), 0, 1)
         self.assertEqual(outer.to_markdown(), "Inner\n\nOuter")
+
+    def test_indentation_of_a_cell_is_kept(self):
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(
+            MarkdownReportingElement("\n    code line\n    second\n"), 0, 0
+        )
+        grid.add_report_grid_element(ReportingText("After"), 0, 1)
+        self.assertEqual(grid.to_markdown(), "    code line\n    second\n\nAfter")

@@ -348,7 +348,7 @@ class HtmlMarkdownConverter:
         if not content.strip():
             return content
         if node.name == "code":
-            return cls._code_span(content)
+            return cls.code_span(content)
         mark = cls._INLINE_MARKS.get(node.name, "")
         if not mark:
             return content
@@ -360,7 +360,7 @@ class HtmlMarkdownConverter:
         return f"{leading}{mark}{stripped}{mark}{trailing}"
 
     @staticmethod
-    def _code_span(content: str) -> str:
+    def code_span(content: str) -> str:
         """A code span showing content as it is: delimited by a backtick run
         longer than any in it, and padded by a space where a backtick or the
         space at its edges would otherwise be taken as part of the delimiter."""

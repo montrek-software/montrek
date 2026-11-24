@@ -134,12 +134,11 @@ class ReportGridLayout(ReportingElement):
     def to_markdown(self) -> str:
         """The elements one below the other, row by row: Markdown has no
         columns."""
-        parts = [
+        return ReportElementMarkdown.join(
             ReportElementMarkdown.convert(element)
             for row in self.report_grid_elements.report_grid_elements_container
             for element in row
-        ]
-        return "\n\n".join(part.strip() for part in parts if part.strip())
+        )
 
     def to_json(self) -> dict[str, list]:
         return_list = []

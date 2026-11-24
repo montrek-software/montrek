@@ -799,6 +799,15 @@ class TestReportingElementsMarkdown(TestCase):
             with self.subTest(element=type(element).__name__):
                 self.assertEqual(element.to_markdown(), expected)
 
+    def test_code_with_backticks_and_markup(self):
+        self.assertEqual(ReportingCode("a`b").to_markdown(), "``a`b``")
+        self.assertEqual(ReportingKeyboard("`").to_markdown(), "`` ` ``")
+        self.assertEqual(ReportingCode("<b>x</b>").to_markdown(), "`<b>x</b>`")
+        self.assertEqual(ReportingCode(" ").to_markdown(), "")
+
+    def test_keyboard_latex_is_typewriter_once(self):
+        self.assertEqual(ReportingKeyboard("Ctrl").to_latex().count("texttt"), 1)
+
     def test_headers(self):
         self.assertEqual(ReportingHeader1("Title").to_markdown(), "# Title")
         self.assertEqual(ReportingHeader2("Sub").to_markdown(), "## Sub")

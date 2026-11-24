@@ -188,7 +188,12 @@ class ReportingStrikethrough(ReportingText):
 
 class ReportingCode(ReportingText):
     template_name = "code"
-    markdown_mark = "`"
+
+    def to_markdown(self) -> str:
+        # The text as it is: markup in code is shown, not converted
+        if not self.text.strip():
+            return ""
+        return HtmlMarkdownConverter.code_span(self.text)
 
     def to_latex(self) -> str:
         latex = super().to_latex()
@@ -197,7 +202,7 @@ class ReportingCode(ReportingText):
 
 class ReportingKeyboard(ReportingText):
     template_name = "keyboard"
-    markdown_mark = "`"
+    to_markdown = ReportingCode.to_markdown
 
     def to_latex(self) -> str:
         # approximation
