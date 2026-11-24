@@ -25,7 +25,11 @@ from django.utils.safestring import mark_safe
 from encrypted_fields.fields import EncryptedFieldMixin
 from pandas.core.tools.datetimes import DateParseError
 from reporting.core.reporting_colors import Color, ReportingColors
-from reporting.core.text_converter import HtmlLatexConverter, LaTeXEscaper
+from reporting.core.text_converter import (
+    HtmlLatexConverter,
+    HtmlMarkdownConverter,
+    LaTeXEscaper,
+)
 from reporting.dataclasses.display_field import DisplayField
 from rest_framework import serializers
 
@@ -59,6 +63,9 @@ class TableElement:
     # Whether the header sorts the table by ``attr``. Turn it off for a column
     # the query cannot order by, e.g. one whose value is computed in Python.
     sortable: bool = field(default=True, kw_only=True)
+    # Whether a details block in Markdown shows the value as a section of its
+    # own below the table, e.g. a long text whose line breaks have to survive.
+    markdown_section: bool = field(default=False, kw_only=True)
     style_attrs: ClassVar[StyleAttrsType] = {}
     td_classes: ClassVar[TdClassesType] = ["text-start"]
     th_classes: ClassVar[TdClassesType | None] = None
@@ -90,7 +97,23 @@ class TableElement:
             if self.empty_value(value):
                 return " \\color{textfaint} -- &"
             return self.format_latex(value)
+        if tag == "markdown":
+            return self.get_markdown(obj)
         raise KeyError(f"Unknown tag {tag}")
+
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        """The cell as Markdown, "-" when empty.
+
+        ``base_url`` is put in front of the links into montrek, which are
+        relative otherwise, e.g. the host for a file read elsewhere.
+        """
+        value = self.get_value(obj)
+        if self.empty_value(value):
+            return "-"
+        return self.format_markdown(value)
+
+    def format_markdown(self, value: Any) -> str:
+        return HtmlMarkdownConverter.convert(value)
 
     def get_value(self, _obj: Any) -> Any:
         raise NotImplementedError
@@ -285,6 +308,13 @@ class ExternalLinkTableElement(AttrTableElement):
     def format_latex(self, value):
         return f" \\url{{{value}}} &"
 
+    def format_markdown(self, value: Any) -> str:
+        # Only a URL becomes a link; a subclass may show a note instead
+        text = str(value)
+        if "://" in text and not any(char.isspace() for char in text):
+            return f"<{text}>"
+        return super().format_markdown(value)
+
 
 class GetDottetAttrsOrArgMixin:
     @staticmethod
@@ -323,7 +353,24 @@ class BaseLinkTableElement(TableElement, GetDottetAttrsOrArgMixin):
             if self.empty_value(value):
                 return " \\color{textfaint} -- &"
             return self.format_latex(value)
+        if tag == "markdown":
+            return self.get_markdown(obj)
         raise KeyError(f"Unknown tag {tag}")
+
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        text = self.get_value(obj)
+        if self.empty_value(text) or not str(text).strip():
+            return "-"
+        text = HtmlMarkdownConverter.convert(text)
+        url = self.get_url(obj)
+        if not url:
+            return text
+        return self.markdown_link(text, f"{base_url}{url}")
+
+    @staticmethod
+    def markdown_link(text: str, url: str) -> str:
+        text = " ".join(text.split()).replace("[", "\\[").replace("]", "\\]")
+        return f"[{text}]({url})"
 
     def is_active(self, _value: Any, _obj: Any) -> bool:
         # May be overwritten with logic
@@ -437,6 +484,13 @@ class LinkTableElement(BaseLinkTableElement):
         latex_icon = self.icon_latex_map.get(self.icon, "cross mark")
         return f" \\color{{textdark}} \\twemoji{{{latex_icon}}} &"
 
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        # The icon has no text, so the hover text names the link
+        url = self.get_url(obj)
+        if not url:
+            return "-"
+        return self.markdown_link(self.hover_text or self.name, f"{base_url}{url}")
+
 
 @dataclass
 class HtmxLinkTableElement(LinkTableElement):
@@ -496,6 +550,12 @@ class PostActionTableElement(LinkTableElement):
 
     def get_method(self, _obj: Any) -> str:
         return "post"
+
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        # A link would trigger the action by GET, which it must not be
+        if self.get_method(obj) == "get":
+            return super().get_markdown(obj, base_url)
+        return self.hover_text or self.name
 
     def get_link(self, obj: Any) -> str | None:
         url = self.get_url(obj)
@@ -610,6 +670,26 @@ class LinkListTableElement(TableElement, GetDottetAttrsOrArgMixin):
     def format_latex(self, value):
         return " \\color{{textdark}} {} &".format(", ".join(self._unique_list(value)))
 
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        texts = self.get_value(obj)
+        if not texts:
+            return "-"
+        link_element = LinkTextTableElement(
+            name=self.name,
+            text=self.text,
+            url=self.url,
+            kwargs={self.list_kwarg: self.list_attr},
+            static_kwargs=self.static_kwargs,
+        )
+        return ", ".join(
+            link_element.get_markdown(
+                {self.text: text, self.list_attr: list_value}, base_url
+            )
+            for list_value, text in self._unique_list(
+                zip(self.get_list_values(obj), texts, strict=True)
+            )
+        )
+
     @staticmethod
     def _unique_list(items: Iterable[T]) -> list[T]:
         return list(dict.fromkeys(items))
@@ -654,7 +734,9 @@ class StringTableElement(AttrTableElement):
 
 
 @dataclass
-class TextTableElement(StringTableElement): ...
+class TextTableElement(StringTableElement):
+    # A long text keeps its line breaks in a section of its own
+    markdown_section: bool = field(default=True, kw_only=True)
 
 
 @dataclass
@@ -679,6 +761,12 @@ class ListTableElement(AttrTableElement):
         if isinstance(value, list):
             return value
         return json.loads(value)
+
+    def format_markdown(self, value: Any) -> str:
+        return "\n".join(
+            HtmlMarkdownConverter.convert(item).strip()
+            for item in self._parse_values(value)
+        )
 
 
 @dataclass
@@ -777,6 +865,11 @@ class NumberTableElement(AttrTableElement):
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, 2, self.thousands)
 
+    def format_markdown(self, value: Any) -> str:
+        if not isinstance(value, int | float | Decimal):
+            return super().format_markdown(value)
+        return self._format_value(value)
+
     def get_value(self, obj: Any) -> Any:
         return self._to_number(super().get_value(obj))
 
@@ -818,6 +911,10 @@ class NumberTableElement(AttrTableElement):
     def get_sum_value_len(self, total: Any) -> int:
         """Width of the summary row's cell, for the column sizes of LaTeX."""
         return len(self._analyze_value(self._to_number(total)))
+
+    def get_sum_markdown(self, total: Any) -> str:
+        """Markdown cell of the summary row, in bold."""
+        return f"**{self.format_markdown(self._to_number(total))}**"
 
 
 @dataclass
@@ -892,6 +989,11 @@ class ProgressBarTableElement(NumberTableElement):
         per_value = value * 100
         return f"\\progressbar{{ {per_value} }}{{ {per_value:0.2f}\\% }} &"
 
+    def format_markdown(self, value: Any) -> str:
+        if not isinstance(value, int | float | Decimal):
+            return super().format_markdown(value)
+        return f"{value * 100:.0f}%"
+
     def get_value_len(self, obj: Any) -> int:
         return 14
 
@@ -915,6 +1017,9 @@ class DateTableBaseElement(AttrTableElement):
 
     def format_latex(self, value):
         return f" \\color{{textdark}} {self.format_date(value)} &"
+
+    def format_markdown(self, value: Any) -> str:
+        return str(self.format_date(value))
 
     def format_date(self, value):
         if isinstance(value, (datetime.date | datetime.datetime)):
@@ -973,6 +1078,9 @@ class BooleanTableElement(AttrTableElement):
             return "\\twemoji{white_check_mark} &"
         return "\\twemoji{cross mark} &"
 
+    def format_markdown(self, value: Any) -> str:
+        return "✅" if value else "❌"
+
 
 @dataclass
 class MoneyTableElement(NumberTableElement):
@@ -1021,6 +1129,18 @@ class MoneyTableElement(NumberTableElement):
     def _format_value(self, value) -> str:
         return self.shortener.shorten(value, 2, self.thousands)
 
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        value = self.get_value(obj)
+        if self.empty_value(value):
+            return "-"
+        if not isinstance(value, int | float | Decimal):
+            return self.format_markdown(value)
+        return f"{self.format_markdown(value)}{self.get_ccy_symbol(obj)}"
+
+    def get_sum_markdown(self, total: Any) -> str:
+        value = self.format_markdown(self._to_number(total))
+        return f"**{value}{self.column_ccy_symbol}**"
+
     def get_value_len(self, obj: Any) -> int:
         value = self.get_value(obj)
         if not isinstance(value, int | float | Decimal):
@@ -1060,6 +1180,9 @@ class ImageTableElement(AttrTableElement):
 
     def get_field_context_data(self, _value: Any, _obj: Any) -> dict[str, Any]:
         return {"alt": self.alt}
+
+    def format_markdown(self, value: Any) -> str:
+        return f"![{self.alt}]({value})"
 
     def format_latex(self, value):
         def _return_string(value):
@@ -1357,6 +1480,13 @@ class ComparisonTableElement(AttrTableElement):
 
     def format_latex(self, value) -> str:
         return value.latex_val + " &"
+
+    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+        value = self.get_value(obj)
+        if value == CompValues.NONE.value:
+            return "-"
+        # Both values and how they compare, as the hover text shows them
+        return str(self.get_hover_text(obj, value))
 
     def get_hover_text(self, obj: Any, value: Any) -> str | None:
         start_value = self._round(super().get_value(obj))

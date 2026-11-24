@@ -14,6 +14,7 @@ from reporting.dataclasses.display_field import DisplayField
 from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
 from reporting.modules.excel_formatter import MontrekDetailsExcelFormatter
+from reporting.modules.markdown_table import MarkdownTable
 from reporting.modules.table_serializer import TableSerializer
 
 
@@ -184,6 +185,32 @@ class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
             latex_str += "\\end{minipage}"
         latex_str += "\\par\n"
         return latex_str
+
+    def to_markdown(self, base_url: str | None = None) -> str:
+        """The details in Markdown: a table of labels and values, without the
+        icon links, as the Excel sheet.
+
+        Elements with ``markdown_section`` follow the table as sections of
+        their own, and are left out when empty. Links into montrek start with
+        ``base_url``, by default the host of the request.
+        """
+        if base_url is None:
+            base_url = self.session_data.get("host_url", "")
+        rows = []
+        sections = []
+        for table_element in self.excel_table_elements:
+            value = table_element.get_markdown(self.object_query, base_url)
+            if not table_element.markdown_section:
+                rows.append([table_element.name, value])
+            elif value != "-" and value.strip():
+                sections.append(f"### {table_element.name}\n\n{value.strip()}")
+        parts = []
+        if self.table_title:
+            parts.append(f"## {self.table_title}")
+        if rows:
+            parts.append(MarkdownTable(rows=rows).to_markdown().strip())
+        parts += sections
+        return "\n\n".join(parts) + "\n"
 
     def to_json(self) -> dict:
         serializer = TableSerializer(self.table_elements)

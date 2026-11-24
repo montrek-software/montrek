@@ -37,6 +37,7 @@ from reporting.lib.protocols import ReportElementProtocol
 from reporting.managers.excel_export import ExcelSheetMixin
 from reporting.modules.data_frame_filter import DataFrameFilter
 from reporting.modules.mailed_downloads import MailedDownloads
+from reporting.modules.markdown_table import MarkdownTable
 from reporting.modules.summary_row import SummaryRow
 from reporting.modules.excel_formatter import MontrekExcelFormatter
 from reporting.modules.table_serializer import TableSerializer
@@ -174,6 +175,9 @@ class MontrekTableManagerABC(
 
     def get_df(self) -> pd.DataFrame:
         raise NotImplementedError("Method get_df must be implemented")
+
+    def _preload_container(self, queryset: TableDataType) -> None:
+        """Hook for subclasses to bulk-prefetch data before row iteration."""
 
     def _get_table_dimensions(self) -> int:
         raise NotImplementedError("Method _get_table_dimensions must be implemented")
@@ -361,6 +365,40 @@ class MontrekTableManagerABC(
                 None if summary is None else summary[0].latex_cells(summary[1])
             ),
         ).to_latex()
+
+    def to_markdown(self, base_url: str | None = None) -> str:
+        """The table in Markdown, with the columns and rows of the exports.
+
+        Links into montrek start with ``base_url``, by default the host of the
+        request, so that they work where the Markdown is read. People read it,
+        so it has the summary row, as Excel and LaTeX have.
+        """
+        export_manager = self.export_manager
+        if base_url is None:
+            base_url = export_manager.session_data.get("host_url", "")
+        elements = self._get_export_elements(export_manager.table_elements)
+        table = export_manager.get_full_table()
+        export_manager._preload_container(table)
+        rows = [
+            [element.get_markdown(row, base_url) for element in elements]
+            for row in table
+        ]
+        summary = export_manager._get_summary(elements) if rows else None
+        if summary is not None:
+            summary_row, sums = summary
+            rows.append(summary_row.markdown_cells(sums))
+        markdown_table = MarkdownTable(
+            rows=rows,
+            headers=[element.name for element in elements],
+            right_aligned=frozenset(
+                index
+                for index, element in enumerate(elements)
+                if "text-end" in element.th_classes_str
+            ),
+        ).to_markdown()
+        if not export_manager.table_title:
+            return markdown_table
+        return f"## {export_manager.table_title}\n\n{markdown_table}"
 
     def get_excel_frame(self) -> pd.DataFrame:
         """The sheet's rows, and the summary row under them. CSV and JSON
@@ -622,9 +660,6 @@ class MontrekTableManager(MontrekTableManagerABC):
         queryset = self.get_full_table()
         self._preload_container(queryset)
         return self._build_df(list(queryset))
-
-    def _preload_container(self, queryset: TableDataType) -> None:
-        """Hook for subclasses to bulk-prefetch data before row iteration."""
 
     def _build_df(self, queryset: list) -> pd.DataFrame:
         table_data = {}

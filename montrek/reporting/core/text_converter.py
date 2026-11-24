@@ -2,6 +2,8 @@ import re
 from html import unescape
 from typing import Any
 
+from bs4 import BeautifulSoup, Comment, NavigableString, PageElement, Tag
+
 # Ordered escaping rules for LaTeX special characters.
 # Rules are applied via successive str.replace() calls, so order matters:
 #   1. HTML entity decoding must come before raw-char escaping so that e.g.
@@ -284,3 +286,93 @@ class HtmlTextConverter:
         if not isinstance(text, str):
             return text
         return unescape(text)
+
+
+class HtmlMarkdownConverter:
+    """Convert a value that may hold HTML to Markdown.
+
+    Covers the markup values carry: paragraphs and line breaks, bold and
+    italic, links, images, lists and inline code. Other tags keep only their
+    text. Plain text passes unchanged, so Markdown typed into a field renders.
+    """
+
+    _INLINE_MARKS = {"strong": "**", "b": "**", "em": "*", "i": "*"}
+    # Name of the method converting a tag; any other tag goes to _inline
+    _TAG_HANDLERS = {
+        "br": "_line_break",
+        "ul": "_list_block",
+        "ol": "_list_block",
+        "a": "_link",
+        "img": "_image",
+        **dict.fromkeys(("p", "div", "h1", "h2", "h3", "h4", "h5", "h6"), "_block"),
+    }
+
+    @classmethod
+    def convert(cls, text: Any) -> str:
+        text = str(text)
+        if "<" not in text:
+            return unescape(text)
+        soup = BeautifulSoup(text, "html.parser")
+        lines = [line.rstrip() for line in cls._children(soup).split("\n")]
+        # Blocks end with a blank line; more than one in a row says nothing more
+        markdown = re.sub(r"\n{3,}", "\n\n", "\n".join(lines))
+        return markdown.strip()
+
+    @classmethod
+    def _children(cls, node: Tag) -> str:
+        return "".join(cls._node(child) for child in node.children)
+
+    @classmethod
+    def _node(cls, node: PageElement) -> str:
+        if isinstance(node, Comment) or not isinstance(node, NavigableString | Tag):
+            return ""
+        if isinstance(node, NavigableString):
+            # Whitespace between tags is formatting of the HTML source
+            return re.sub(r"\s+", " ", str(node))
+        handler = getattr(cls, cls._TAG_HANDLERS.get(node.name, "_inline"))
+        return handler(node)
+
+    @classmethod
+    def _inline(cls, node: Tag) -> str:
+        content = cls._children(node)
+        if not content.strip():
+            return content
+        if node.name == "code":
+            return f"`{content}`"
+        mark = cls._INLINE_MARKS.get(node.name, "")
+        return f"{mark}{content.strip()}{mark}" if mark else content
+
+    @staticmethod
+    def _line_break(_node: Tag) -> str:
+        return "\n"
+
+    @classmethod
+    def _block(cls, node: Tag) -> str:
+        return f"\n\n{cls._children(node).strip()}\n\n"
+
+    @classmethod
+    def _list_block(cls, node: Tag) -> str:
+        return "\n" + cls._list(node) + "\n"
+
+    @staticmethod
+    def _image(node: Tag) -> str:
+        return f"![{node.get('alt', '')}]({node.get('src', '')})"
+
+    @classmethod
+    def _link(cls, node: Tag) -> str:
+        text = cls._children(node).strip()
+        href = node.get("href")
+        if not href:
+            return text
+        return f"[{text or href}]({href})"
+
+    @classmethod
+    def _list(cls, node: Tag) -> str:
+        items = []
+        for number, item in enumerate(node.find_all("li", recursive=False), 1):
+            marker = f"{number}." if node.name == "ol" else "-"
+            content = cls._children(item).strip()
+            # Lines of an item, e.g. a nested list, are indented under it
+            content = content.replace("\n", "\n" + " " * (len(marker) + 1))
+            items.append(f"{marker} {content}")
+        return "\n".join(items)
