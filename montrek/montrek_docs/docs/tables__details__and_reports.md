@@ -96,7 +96,21 @@ class HubCTableManager(MontrekTableManager):
 - The label reads "Sum", or "Summe" if `LANGUAGE_CODE` is German. It is shown in the column `label_attr`, by default the first column that is not summed.
 - Columns of the queryset are summed in one SQL query. Columns whose table element computes its value in `get_value()` are summed in Python over all rows.
 - A table with `is_large = True` cannot show a sum row; defining such a manager raises `ImproperlyConfigured`.
-- The row is shown in the HTML, PDF and LaTeX table and in the Excel download, with the totals as numbers. CSV and JSON leave it out, as programs reading them would count it as a row.
+- The row is shown in the HTML, PDF and LaTeX table, in the Markdown table and in the Excel download, with the totals as numbers. CSV and JSON leave it out, as programs reading them would count it as a row.
+
+## Markdown
+
+`to_markdown()` renders a table or a details block as GitHub flavoured Markdown, e.g. for the body of an issue on a forge or as context for a language model.
+
+```python
+markdown = HubCTableManager(session_data).to_markdown()
+markdown = HubCDetailsManager(session_data).to_markdown(base_url="")
+```
+
+- A table has the columns of its export manager, as the CSV and Excel downloads, and the rows of all pages. Numeric columns are aligned right, and a sum row is shown as in Excel.
+- A details block is a table of labels and values. An element with `markdown_section=True` follows the table as a section of its own, so that the line breaks of a long text survive; `TextTableElement` does so by default. Empty sections are left out.
+- Icon links (`LinkTableElement`) are left out, as in the other exports. Links of `LinkTextTableElement` and `LinkListTableElement` become Markdown links. They start with `base_url`, by default the host of the request (`session_data["host_url"]`), so that they work where the Markdown is read; pass `base_url=""` for relative links.
+- Each element renders its cell with `get_markdown(obj, base_url)`. HTML in a value is converted to Markdown (`HtmlMarkdownConverter`), plain text is kept as it is, so Markdown typed into a field renders. Override `format_markdown(value)` for a value that needs no row, `get_markdown()` for one that does.
 
 ## Summary
 

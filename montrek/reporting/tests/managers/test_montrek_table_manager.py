@@ -11,7 +11,8 @@ import pandas as pd
 from baseclasses.utils import montrek_time
 from bs4 import BeautifulSoup
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from montrek.utils import SystemFormatting
 from django.utils import timezone
 from montrek_example.models.example_models import SatA1
 from montrek_example.tests.factories import montrek_example_factories as me_factories
@@ -1059,3 +1060,41 @@ class TestHistoryDataTable(TestCase):
                 2: {"col_2": HistoryChangeState.NEW},
             },
         )
+
+
+@override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+class TestMontrekTableManagerMarkdown(TestCase):
+    def test_to_markdown(self):
+        markdown = MockMontrekTableManager({"host_url": "https://host"}).to_markdown()
+        self.assertEqual(
+            markdown,
+            "## Mock Table\n\n"
+            "| Field A | Field B | Field C | Field D | Field E | Link Text |\n"
+            "| --- | ---: | ---: | --- | ---: | --- |\n"
+            "| a | 1 | 1.000 | 2024-07-13 00:00:00 | 1.00€ | [a](https://host/home) |\n"
+            "| b | 2 | 2.000 | 2024-07-13 00:00:00 | 2.20€ | [b](https://host/home) |\n"
+            "| c | 3 | 3.000 | 2024-07-13 00:00:00 | 3.00€ | [c](https://host/home) |\n",
+        )
+
+    def test_explicit_base_url(self):
+        markdown = MockMontrekTableManager({"host_url": "https://host"}).to_markdown(
+            base_url=""
+        )
+        self.assertIn("[a](/home)", markdown)
+
+    def test_summary_row(self):
+        class SummaryManager(MockMontrekTableManager):
+            show_summary_row = True
+
+        markdown = SummaryManager().to_markdown()
+        self.assertTrue(
+            markdown.endswith("| **Sum** | **6** | **6.000** |  | **6.20€** |  |\n")
+        )
+
+    def test_columns_of_the_export_manager(self):
+        markdown = MockExportingMontrekTableManager().to_markdown()
+        self.assertIn("| Field A | Field B |", markdown)
+
+    def test_empty_table(self):
+        markdown = MockEmptyMontrekTableManager().to_markdown()
+        self.assertTrue(markdown.endswith("| --- | ---: | ---: | --- | ---: | --- |\n"))

@@ -3,6 +3,7 @@ import datetime
 from django.test import TestCase
 from reporting.core.text_converter import (
     HtmlLatexConverter,
+    HtmlMarkdownConverter,
     HtmlTextConverter,
     LaTeXEscaper,
 )
@@ -190,3 +191,86 @@ class TestHtmlTextConverter(TestCase):
         test_value = HtmlTextConverter.convert(test_text)
         expected_value = "Learn HTML entities: · is a middle dot · & stands for ampersand & < means less than < > means greater than > and _ represents an underscore _"
         self.assertEqual(expected_value, test_value)
+
+
+class TestHtmlMarkdownConverter(TestCase):
+    def test_plain_text_passes_unchanged(self):
+        text = "Some *markdown* and a_snake_case name\nnext line"
+        self.assertEqual(HtmlMarkdownConverter.convert(text), text)
+
+    def test_entities_of_plain_text_are_decoded(self):
+        self.assertEqual(HtmlMarkdownConverter.convert("a &amp; b"), "a & b")
+
+    def test_non_strings(self):
+        self.assertEqual(HtmlMarkdownConverter.convert(1.5), "1.5")
+
+    def test_inline_markup(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert(
+                'A <b>bold</b>, <i>italic</i> and <code>x = 1</code> <a href="/x">link</a>'
+            ),
+            "A **bold**, *italic* and `x = 1` [link](/x)",
+        )
+
+    def test_paragraphs_and_line_breaks(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert("<p>One<br>Two</p>\n<p>Three</p>"),
+            "One\nTwo\n\nThree",
+        )
+
+    def test_lists(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert(
+                "<ul><li>a</li><li>b<ol><li>c</li><li>d</li></ol></li></ul>"
+            ),
+            "- a\n- b\n  1. c\n  2. d",
+        )
+
+    def test_image_and_link_without_href(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert('<img src="/i.png" alt="Logo"> <a>text</a>'),
+            "![Logo](/i.png) text",
+        )
+
+    def test_markdown_and_plain_text_with_angle_brackets_pass_unchanged(self):
+        for text in (
+            "See <https://example.com>",
+            "a < b\nc",
+            "List<T> and x > 1",
+            "Mail <someone@example.com>",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(HtmlMarkdownConverter.convert(text), text)
+
+    def test_tags_are_found_in_any_case_and_with_attributes(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert('<SPAN class="x">a</SPAN><Br/>b'), "a\nb"
+        )
+
+    def test_spaces_around_emphasis_are_kept(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert("one<b> two </b>three"), "one **two** three"
+        )
+        self.assertEqual(
+            HtmlMarkdownConverter.convert("one <i>two</i> three"), "one *two* three"
+        )
+
+    def test_code_with_backticks(self):
+        cases = (
+            ("<code>a`b</code>", "``a`b``"),
+            ("<code>a``b`c</code>", "```a``b`c```"),
+            ("<code>`a</code>", "`` `a ``"),
+            ("<code> a </code>", "`  a  `"),
+            ("<code> a</code>", "` a`"),
+        )
+        for html, expected in cases:
+            with self.subTest(html=html):
+                self.assertEqual(HtmlMarkdownConverter.convert(html), expected)
+
+    def test_other_tags_keep_their_text(self):
+        self.assertEqual(
+            HtmlMarkdownConverter.convert(
+                '<span class="x">Text</span><!-- note --><table><tr><td>cell</td></tr></table>'
+            ),
+            "Textcell",
+        )

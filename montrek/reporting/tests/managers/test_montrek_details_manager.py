@@ -3,7 +3,8 @@ import re
 from io import BytesIO
 
 from bs4 import BeautifulSoup
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from montrek.utils import SystemFormatting
 from openpyxl import load_workbook
 from rest_framework.renderers import JSONRenderer
 from reporting.dataclasses import table_elements as te
@@ -354,3 +355,46 @@ class TestExcelFormulaText(TestCase):
 
         self.assertEqual(cell.data_type, "s")
         self.assertEqual(cell.value, "=1+1")
+
+
+@override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+class TestMontrekDetailsManagerMarkdown(TestCase):
+    def test_labels_and_values(self):
+        markdown = MockMontrekDetailsManager({"host_url": "https://host"}).to_markdown()
+        self.assertEqual(
+            markdown,
+            "|  |  |\n"
+            "| --- | --- |\n"
+            "| Field A | a |\n"
+            "| Field B | 1 |\n"
+            "| Field C | 1.000 |\n"
+            "| Field D | 2024-07-13 00:00:00 |\n"
+            "| Field E | 1.00€ |\n"
+            "| Link Text | [a](https://host/home) |\n",
+        )
+
+    def test_title_and_sections(self):
+        class SectionsManager(MockMontrekDetailsManager):
+            table_title = "Details"
+
+            @property
+            def table_elements(self):
+                return (
+                    te.StringTableElement(attr="field_a", name="Field A"),
+                    te.TextTableElement(attr="field_text", name="Text"),
+                    te.TextTableElement(attr="field_empty", name="Empty"),
+                )
+
+            def get_object_from_pk(self, pk):
+                return {
+                    "field_a": "a",
+                    "field_text": "Line 1\nLine 2",
+                    "field_empty": "",
+                }
+
+        self.assertEqual(
+            SectionsManager().to_markdown(),
+            "## Details\n\n"
+            "|  |  |\n| --- | --- |\n| Field A | a |\n\n"
+            "### Text\n\nLine 1\nLine 2\n",
+        )

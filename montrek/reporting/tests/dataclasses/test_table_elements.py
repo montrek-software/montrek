@@ -2579,3 +2579,124 @@ class TestMoneyTableElementColumnCurrency(TestCase):
         self.assertEqual(
             (element.name, element.attr, element.hover_text), ("Name", "attr", "Hover")
         )
+
+
+@override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+class TestTableElementMarkdown(TestCase):
+    def test_empty_value(self):
+        element = te.StringTableElement(name="A", attr="a")
+        self.assertEqual(element.get_markdown({"a": None}), "-")
+
+    def test_html_becomes_markdown(self):
+        element = te.StringTableElement(name="A", attr="a")
+        self.assertEqual(
+            element.get_markdown({"a": "<ul><li><b>x</b></li><li>y</li></ul>"}),
+            "- **x**\n- y",
+        )
+
+    def test_markdown_tag_of_get_attribute(self):
+        element = te.IntTableElement(name="A", attr="a")
+        self.assertEqual(element.get_attribute({"a": 1234}, "markdown"), "1,234")
+
+    def test_numbers(self):
+        self.assertEqual(
+            te.FloatTableElement(name="A", attr="a").get_markdown({"a": 1234.5}),
+            "1,234.500",
+        )
+        self.assertEqual(
+            te.PercentTableElement(name="A", attr="a").get_markdown({"a": 0.125}),
+            "12.50%",
+        )
+        self.assertEqual(
+            te.ProgressBarTableElement(name="A", attr="a").get_markdown({"a": 0.5}),
+            "50%",
+        )
+        self.assertEqual(
+            te.IntTableElement(name="A", attr="a").get_markdown({"a": "n/a"}), "n/a"
+        )
+
+    def test_money_with_the_row_symbol(self):
+        element = te.MoneyTableElement(name="A", attr="a", ccy_symbol_field="ccy")
+        self.assertEqual(element.get_markdown({"a": 2.5, "ccy": "$"}), "2.50$")
+        self.assertEqual(
+            te.EuroTableElement(name="A", attr="a").get_sum_markdown(3), "**3.00€**"
+        )
+
+    def test_dates_and_booleans(self):
+        self.assertEqual(
+            te.DateTableElement(name="A", attr="a").get_markdown(
+                {"a": datetime.date(2026, 11, 24)}
+            ),
+            "2026-11-24",
+        )
+        element = te.BooleanTableElement(name="A", attr="a")
+        self.assertEqual(element.get_markdown({"a": True}), "✅")
+        self.assertEqual(element.get_markdown({"a": False}), "❌")
+
+    def test_list_and_image(self):
+        self.assertEqual(
+            te.ListTableElement(name="A", attr="a").get_markdown({"a": '["x", "y"]'}),
+            "x\ny",
+        )
+        self.assertEqual(
+            te.ImageTableElement(name="A", attr="a", alt="Logo").get_markdown(
+                {"a": "https://example.com/logo.png"}
+            ),
+            "![Logo](https://example.com/logo.png)",
+        )
+
+    def test_external_link(self):
+        element = te.ExternalLinkTableElement(name="A", attr="a")
+        self.assertEqual(
+            element.get_markdown({"a": "example.com"}), "<https://example.com>"
+        )
+
+    def test_external_link_element_with_a_note_instead_of_a_url(self):
+        class NoteElement(te.ExternalLinkTableElement):
+            def get_value(self, obj):
+                return "No link yet"
+
+        self.assertEqual(
+            NoteElement(name="A", attr="a").get_markdown({}), "No link yet"
+        )
+
+    def test_link_text_with_base_url(self):
+        element = te.LinkTextTableElement(name="A", url="home", kwargs={}, text="a")
+        self.assertEqual(
+            element.get_markdown({"a": "Go [here]"}, "https://host"),
+            "[Go \\[here\\]](https://host/home)",
+        )
+        self.assertEqual(element.get_markdown({"a": "Go"}), "[Go](/home)")
+        self.assertEqual(element.get_markdown({"a": None}), "-")
+
+    def test_link_without_url_keeps_its_text(self):
+        element = te.LinkTextTableElement(
+            name="A", url="no_such_url", kwargs={}, text="a"
+        )
+        self.assertEqual(element.get_markdown({"a": "Text"}), "Text")
+
+    def test_icon_link_is_named_by_its_hover_text(self):
+        element = te.LinkTableElement(
+            name="Edit", url="home", kwargs={}, hover_text="Edit it", icon="edit"
+        )
+        self.assertEqual(element.get_markdown({}), "[Edit it](/home)")
+
+    def test_post_action_is_no_link(self):
+        element = te.PostActionTableElement(
+            name="Delete", url="home", kwargs={}, hover_text="Delete it"
+        )
+        self.assertEqual(element.get_markdown({}), "Delete it")
+
+    def test_comparison(self):
+        element = te.ComparisonTableElement(name="A", attr="a", comp_attr="b")
+        self.assertEqual(element.get_markdown({"a": 2, "b": 1}), "2 >> 1")
+        self.assertEqual(element.get_markdown({"a": None, "b": 1}), "-")
+
+    def test_only_text_elements_are_markdown_sections(self):
+        self.assertTrue(te.TextTableElement(name="A", attr="a").markdown_section)
+        self.assertFalse(te.StringTableElement(name="A", attr="a").markdown_section)
+        self.assertTrue(
+            te.StringTableElement(
+                name="A", attr="a", markdown_section=True
+            ).markdown_section
+        )

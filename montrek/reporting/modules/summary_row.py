@@ -101,6 +101,19 @@ class SummaryRow:
                 cells.append((" &", 0))
         return cells
 
+    def markdown_cells(self, sums: Sequence[Any]) -> list[str]:
+        """Each cell's Markdown, as the columns of the Markdown table."""
+        cells = []
+        for element, total, is_label in self._columns(sums):
+            if total is not None:
+                number_element = cast(te.NumberTableElement, element)
+                cells.append(number_element.get_sum_markdown(total))
+            elif is_label:
+                cells.append(f"**{self.config.label}**")
+            else:
+                cells.append("")
+        return cells
+
     def _columns(
         self, sums: Sequence[Any]
     ) -> Iterator[tuple[te.TableElement, Any, bool]]:
