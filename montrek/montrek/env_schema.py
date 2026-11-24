@@ -38,7 +38,16 @@ CORE_SCHEMA_FILE = Path(__file__).with_name(SCHEMA_FILENAME)
 
 TYPES = ("str", "int", "bool", "csv", "choice")
 SCOPES = ("app", "compose", "build")
-_FIELDS = {"type", "description", "required", "secret", "choices", "default", "scope"}
+_FIELDS = {
+    "type",
+    "description",
+    "required",
+    "required_unless",
+    "secret",
+    "choices",
+    "default",
+    "scope",
+}
 
 # A secrets directory can also hold files that are not a variable, such as the
 # Cloud SQL key file. Only names that could be a variable are matched up.
@@ -53,6 +62,8 @@ class Variable:
     type: str
     description: str
     required: bool = False
+    # Another variable whose value makes this one optional.
+    required_unless: str = ""
     secret: bool = False
     scope: str = "app"
     choices: tuple[str, ...] = ()
@@ -106,11 +117,14 @@ def _variable(path: Path, name: str, fields: dict) -> Variable:
         raise invalid("must list choices exactly when its type is choice.")
     if not fields.get("description"):
         raise invalid("needs a description.")
+    if "required_unless" in fields and not fields.get("required"):
+        raise invalid("has required_unless but is not required.")
     return Variable(
         name=name,
         type=fields["type"],
         description=fields["description"],
         required=fields.get("required", False),
+        required_unless=fields.get("required_unless", ""),
         secret=fields.get("secret", False),
         scope=fields.get("scope", "app"),
         choices=tuple(fields.get("choices", ())),
@@ -134,6 +148,10 @@ def find_problems(schema: dict[str, Variable], config) -> list[str]:
     for variable in schema.values():
         value = config(variable.name, default=_MISSING)
         if variable.required and value in (_MISSING, ""):
+            if variable.required_unless and config(
+                variable.required_unless, default=""
+            ):
+                continue
             problems.append(
                 f"{variable.name} is required and must not be empty: "
                 f"{variable.description}"

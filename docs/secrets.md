@@ -187,6 +187,23 @@ from the `docker` group. For encryption at rest, see below.
    On GCP, Secret Manager plus workload identity is the low-friction version,
    and Cloud SQL IAM auth removes `DB_PASSWORD` entirely.
 
+## Database login without a password
+
+On a platform where the app logs in to Postgres with its own identity, e.g. a
+managed identity whose token expires after about an hour, `DB_PASSWORD` stays
+unset and `DB_PASSWORD_PROVIDER` names a function that returns the password: the
+dotted path of a function from an extension app, which lists the settings it
+reads in its own `env.schema.toml`. Core installs no cloud SDK.
+
+Django then uses the `montrek.db_backend` engine, Django's PostgreSQL backend
+that calls the function for every new connection. A connection kept open by
+`DB_CONN_MAX_AGE` stays valid after its token expires, since Postgres checks the
+password only when it accepts a connection. Web, workers, beat and the release
+step all connect through it. The `montrek_database` system check imports the
+function, so a wrong path fails `migrate` and the release step. Setting both
+variables is refused, and so is a connection pool. `manage.py dbshell` and the
+backup scripts still need a password.
+
 ## Operational notes
 
 - Set `KEYCLOAK_ADMIN_PASSWORD` and `FLOWER_PASSWORD`. Both fall back to
