@@ -58,13 +58,23 @@ class TestPasswordProviderWrapper(SimpleTestCase):
 
 
 class TestCheckPasswordProvider(SimpleTestCase):
-    def check_with(self, path):
-        with mock.patch.dict(settings.DATABASES["default"], PASSWORD_PROVIDER=path):
+    """Each test checks a copy of the default database's settings, so the
+    suite passes also when it runs with a password provider of its own, and
+    the open test connection keeps its settings."""
+
+    def check_with(self, path=None):
+        default = {
+            key: value
+            for key, value in settings.DATABASES["default"].items()
+            if key != "PASSWORD_PROVIDER"
+        }
+        if path is not None:
+            default["PASSWORD_PROVIDER"] = path
+        with mock.patch.dict(settings.DATABASES, default=default):
             return check_password_provider()
 
     def test_nothing_to_check_without_a_provider(self):
-        self.assertNotIn("PASSWORD_PROVIDER", settings.DATABASES["default"])
-        self.assertEqual(check_password_provider(), [])
+        self.assertEqual(self.check_with(), [])
 
     def test_an_importable_function_passes(self):
         self.assertEqual(self.check_with(PROVIDER), [])
