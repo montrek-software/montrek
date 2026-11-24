@@ -98,6 +98,18 @@ class ChatClient:
         response = self._request("GET", "/models")
         return sorted(model["id"] for model in response.get("data", []))
 
+    @staticmethod
+    def _error_detail(error: urllib.error.HTTPError) -> str:
+        detail = error.read().decode(errors="replace")[:500]
+        limits = {
+            name: value
+            for name, value in error.headers.items()
+            if "ratelimit" in name.lower() or name.lower() == "retry-after"
+        }
+        if limits:
+            detail += f"\nRate-limit headers: {limits}"
+        return detail
+
     def _request(
         self, method: str, path: str, body: dict[str, Any] | None = None
     ) -> dict[str, Any]:
@@ -119,17 +131,10 @@ class ChatClient:
                 ) as response:
                     return json.loads(response.read())
             except urllib.error.HTTPError as error:
-                detail = error.read().decode(errors="replace")[:500]
-                limits = {
-                    name: value
-                    for name, value in error.headers.items()
-                    if "ratelimit" in name.lower() or name.lower() == "retry-after"
-                }
-                if limits:
-                    detail += f"\nRate-limit headers: {limits}"
                 if error.code not in RETRY_STATUSES or attempt == MAX_ATTEMPTS:
                     raise ChatClientError(
-                        f"API {method} {path} returned HTTP {error.code}: {detail}",
+                        f"API {method} {path} returned HTTP {error.code}: "
+                        f"{self._error_detail(error)}",
                         status=error.code,
                     ) from error
                 wait = float(error.headers.get("Retry-After") or 2**attempt)

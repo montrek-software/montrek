@@ -205,10 +205,13 @@ class TestSummaryRowConfig(TestCase):
 
 class TestLargeTable(TestCase):
     def test_large_table_cannot_show_a_summary_row(self):
-        with self.assertRaises(ImproperlyConfigured):
-
-            class LargeSummaryTableManager(MockSummaryRowTableManager):
-                is_large = True
+        self.assertRaises(
+            ImproperlyConfigured,
+            type,
+            "LargeSummaryTableManager",
+            (MockSummaryRowTableManager,),
+            {"is_large": True},
+        )
 
 
 class TestSummaryRowOfQuerysets(TestCase):

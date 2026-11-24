@@ -101,11 +101,12 @@ class TableElement:
             return self.get_markdown(obj)
         raise KeyError(f"Unknown tag {tag}")
 
-    def get_markdown(self, obj: Any, base_url: str = "") -> str:
+    def get_markdown(self, obj: Any, _base_url: str = "") -> str:
         """The cell as Markdown, "-" when empty.
 
-        ``base_url`` is put in front of the links into montrek, which are
-        relative otherwise, e.g. the host for a file read elsewhere.
+        Elements that link into montrek override this and put the base URL in
+        front of their links, which are relative otherwise, e.g. the host for
+        a file read elsewhere. Plain cells have no links and ignore it.
         """
         value = self.get_value(obj)
         if self.empty_value(value):

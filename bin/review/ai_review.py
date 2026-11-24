@@ -187,12 +187,11 @@ class AiReview:
         else:
             content = ChatClient.text_of(message.get("content")).lstrip()
             # Whether the answer repeats the prefix is not documented.
-            return (
-                content
-                if content.startswith(REVIEW_START)
-                else REVIEW_START
-                + (content if content.startswith("\n") else "\n" + content)
-            )
+            if content.startswith(REVIEW_START):
+                return content
+            if not content.startswith("\n"):
+                content = "\n" + content
+            return REVIEW_START + content
         message = self.chat(client, messages, 0, tool_choice="none")
         content = ChatClient.text_of(message.get("content"))
         if REVIEW_START not in content:

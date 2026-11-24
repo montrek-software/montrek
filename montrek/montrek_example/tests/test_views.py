@@ -633,7 +633,7 @@ class TestMontrekExampleAInlineFieldEditView(MontrekInlineFieldEditViewTestCase)
             list_url,
             data={"parameter_form": "example_factor", "example_factor-factor": factor},
         )
-        return "http://testserver" + list_url
+        return "https://testserver" + list_url
 
     def test_rows_use_the_parameters_of_the_list(self):
         list_url = self.choose_factor_on_the_list("3")

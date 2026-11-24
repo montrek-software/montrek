@@ -77,8 +77,17 @@ class ProviderAccessToken:
                 timeout=cls.JWKS_TIMEOUT_SECONDS,
                 # The bundle the other provider requests use, which holds the
                 # instance CA where there is one.
-                ssl_context=ssl.create_default_context(
-                    cafile=getattr(settings, "CA_BUNDLE", None)
-                ),
+                ssl_context=cls.ssl_context(),
             )
         return cls._jwks_clients[uri]
+
+    @staticmethod
+    def ssl_context() -> ssl.SSLContext:
+        context = ssl.create_default_context(
+            cafile=getattr(settings, "CA_BUNDLE", None)
+        )
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        # The defaults already, stated so that no later change loosens them.
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.check_hostname = True
+        return context
