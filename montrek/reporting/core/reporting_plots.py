@@ -92,6 +92,11 @@ class ReportingPlotBase[TData: ReportingDataBase]:
     def to_json(self) -> dict[str, str | Any | None]:
         return {"reporting_plot": self.figure.to_json()}
 
+    def to_markdown(self) -> str:
+        # Markdown cannot hold the figure itself, so it names it
+        title = self.figure.layout.title.text
+        return f"*Plot: {title}*" if title else "*Plot*"
+
     def _check_reporting_data(self, reporting_data: TData):
         raise NotImplementedError("Method is not implemented")
 

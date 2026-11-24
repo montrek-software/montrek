@@ -4,7 +4,11 @@ from reporting.core.reporting_grid_layout import (
     EmptyReportGridElement,
     ReportGridLayout,
 )
-from reporting.core.reporting_text import ReportingParagraph, ReportingText
+from reporting.core.reporting_text import (
+    MarkdownReportingElement,
+    ReportingParagraph,
+    ReportingText,
+)
 
 
 class _PdfAwareElement:
@@ -259,3 +263,28 @@ class TestReportGridLayoutToPdfHtml(TestCase):
         grid.add_report_grid_element(element, 0, 0)
         grid.to_latex()
         self.assertEqual(element.received_latex_font_scale, 1.2)
+
+
+class TestReportGridLayoutToMarkdown(TestCase):
+    def test_elements_row_by_row_without_empty_cells(self):
+        grid = ReportGridLayout(2, 2)
+        grid.add_report_grid_element(ReportingText("A"), 0, 0)
+        grid.add_report_grid_element(ReportingText("B"), 0, 1)
+        grid.add_report_grid_element(ReportingText("C"), 1, 1)
+        self.assertEqual(grid.to_markdown(), "A\n\nB\n\nC")
+
+    def test_nested_grid(self):
+        inner = ReportGridLayout(1, 2, is_nested=True)
+        inner.add_report_grid_element(ReportingText("Inner"), 0, 0)
+        outer = ReportGridLayout(1, 2)
+        outer.add_report_grid_element(inner, 0, 0)
+        outer.add_report_grid_element(ReportingText("Outer"), 0, 1)
+        self.assertEqual(outer.to_markdown(), "Inner\n\nOuter")
+
+    def test_indentation_of_a_cell_is_kept(self):
+        grid = ReportGridLayout(1, 2)
+        grid.add_report_grid_element(
+            MarkdownReportingElement("\n    code line\n    second\n"), 0, 0
+        )
+        grid.add_report_grid_element(ReportingText("After"), 0, 1)
+        self.assertEqual(grid.to_markdown(), "    code line\n    second\n\nAfter")

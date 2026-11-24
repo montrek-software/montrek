@@ -4,6 +4,7 @@ from mailing.models import MailHub
 from testing.decorators.add_logged_in_user import add_logged_in_user
 
 from reporting.managers.latex_report_manager import LatexReportManager
+from reporting.core import reporting_text
 from reporting.tests import mocks
 from testing.decorators.mock_plotly_image_write import (
     mock_plotly_write_dummy_png,
@@ -248,3 +249,42 @@ class TestComprehensiveReport(TestCase):
         pdf_path = report_manager.compile_report()
         self.assertIn("document.pdf", pdf_path)
         mock_write_image.assert_called_once()
+
+
+class TestMontrekReportManagerMarkdown(TestCase):
+    def test_title_and_elements(self):
+        markdown = mocks.MockComprehensiveReportManager(session_data={}).to_markdown()
+        self.assertEqual(
+            markdown,
+            "# Mock Comprehensive Report\n\n"
+            "# Hallo\n\n"
+            "One\n\nTwo\n\n*Plot: Test Plot*\n\nFour\n",
+        )
+
+    def test_elements_without_to_markdown_give_their_html_text(self):
+        class Manager(mocks.MockMontrekReportManager):
+            def collect_report_elements(self):
+                self.append_report_element(mocks.MockReportElement())
+
+        self.assertEqual(
+            Manager(session_data={}).to_markdown(), "# Mock Report\n\nhtml\n"
+        )
+
+    def test_indented_code_block_is_kept(self):
+        class Manager(mocks.MockMontrekReportManager):
+            def collect_report_elements(self):
+                self.append_report_element(
+                    reporting_text.MarkdownReportingElement("    code block\n")
+                )
+                self.append_report_element(reporting_text.ReportingText(""))
+                self.append_report_element(reporting_text.ReportingText("Text"))
+
+        self.assertEqual(
+            Manager(session_data={}).to_markdown(),
+            "# Mock Report\n\n    code block\n\nText\n",
+        )
+
+    def test_elements_are_cleaned_up(self):
+        manager = mocks.MockComprehensiveReportManager(session_data={})
+        manager.to_markdown()
+        self.assertEqual(manager.report_elements, [])

@@ -5,6 +5,7 @@ from django.template.loader import render_to_string
 from reporting.core.reporting_text import ContextTypes, ReportingElement
 
 from reporting.managers.montrek_report_manager import ReportElementProtocol
+from reporting.modules.report_element_markdown import ReportElementMarkdown
 
 LATEX_FONT_SCALE_MULTIPLIER = 1.2
 
@@ -130,6 +131,15 @@ class ReportGridLayout(ReportingElement):
             latex_str += "\n\\end{table}\n\n"
         return latex_str
 
+    def to_markdown(self) -> str:
+        """The elements one below the other, row by row: Markdown has no
+        columns."""
+        return ReportElementMarkdown.join(
+            ReportElementMarkdown.convert(element)
+            for row in self.report_grid_elements.report_grid_elements_container
+            for element in row
+        )
+
     def to_json(self) -> dict[str, list]:
         return_list = []
         for row in self.report_grid_elements.report_grid_elements_container:
@@ -165,6 +175,9 @@ class EmptyReportGridElement:
         return ""
 
     def to_latex(self) -> str:
+        return ""
+
+    def to_markdown(self) -> str:
         return ""
 
     def to_json(self) -> dict:

@@ -8,7 +8,7 @@ from django.conf import settings
 from bs4 import BeautifulSoup
 from django.test import TestCase
 from reporting.core import workbench
-from reporting.core.text_converter import HtmlLatexConverter
+from reporting.core.text_converter import HtmlLatexConverter, HtmlMarkdownConverter
 
 from reporting.core.reporting_text import (
     CollapsibleSection,
@@ -776,3 +776,77 @@ class TestReportingFooter(ReportingElementTestCase):
 
     def get_call_parameters(self) -> dict:
         return {"text": "Footer Text"}
+
+
+class TestReportingElementsMarkdown(TestCase):
+    def test_texts(self):
+        cases = (
+            (ReportingText("Plain <b>bold</b>"), "Plain **bold**"),
+            (ReportingParagraph("Para"), "Para"),
+            (ReportingBold("x"), "**x**"),
+            (ReportingBoldParagraph("x"), "**x**"),
+            (ReportingItalic("x"), "*x*"),
+            (ReportingItalicParagraph("x"), "*x*"),
+            (ReportingStrikethrough("x"), "~~x~~"),
+            (ReportingCode("x = 1"), "`x = 1`"),
+            (ReportingKeyboard("Ctrl"), "`Ctrl`"),
+            (ReportingUnderline("x"), "x"),
+            (ReportingUnderlineParagraph("x"), "x"),
+            (ReportingFooter("Internal"), "Internal"),
+            (ReportingBold(""), ""),
+        )
+        for element, expected in cases:
+            with self.subTest(element=type(element).__name__):
+                self.assertEqual(element.to_markdown(), expected)
+
+    def test_code_with_backticks_and_markup(self):
+        self.assertEqual(ReportingCode("a`b").to_markdown(), "``a`b``")
+        self.assertEqual(ReportingKeyboard("`").to_markdown(), "`` ` ``")
+        self.assertEqual(ReportingCode("<b>x</b>").to_markdown(), "`<b>x</b>`")
+        self.assertEqual(ReportingCode(" ").to_markdown(), "")
+
+    def test_keyboard_latex_is_typewriter_once(self):
+        self.assertEqual(ReportingKeyboard("Ctrl").to_latex().count("texttt"), 1)
+
+    def test_headers(self):
+        self.assertEqual(ReportingHeader1("Title").to_markdown(), "# Title")
+        self.assertEqual(ReportingHeader2("Sub").to_markdown(), "## Sub")
+
+    def test_editable_text_with_header(self):
+        obj = MockObject("Line 1<br>Line 2")
+        element = ReportingEditableText(obj, "field", "edit", header="Head")
+        self.assertEqual(element.to_markdown(), "## Head\n\nLine 1\nLine 2")
+        self.assertEqual(
+            ReportingEditableText(obj, "field", "edit").to_markdown(), "Line 1\nLine 2"
+        )
+
+    def test_layout_elements(self):
+        self.assertEqual(Vspace(5).to_markdown(), "")
+        self.assertEqual(NewPage().to_markdown(), "---")
+
+    def test_image_map_and_markdown(self):
+        self.assertEqual(
+            ReportingImage("/static/a.png").to_markdown(), "![](/static/a.png)"
+        )
+        self.assertTrue(
+            ReportingMap(1, 2)
+            .to_markdown()
+            .startswith("[Map](https://www.openstreetmap.org/")
+        )
+        self.assertEqual(MarkdownReportingElement("# Kept").to_markdown(), "# Kept")
+
+    def test_error(self):
+        self.assertEqual(
+            ReportingError("Failed", ["one", "two"]).to_markdown(),
+            "> **Failed**\n> one\n> two",
+        )
+
+    def test_collapsible_section(self):
+        section = CollapsibleSection("Head", ReportingParagraph("Body"))
+        self.assertEqual(section.to_markdown(), "## Head\n\nBody")
+
+    def test_default_converts_the_html(self):
+        element = DummyReportingElement()
+        self.assertEqual(
+            element.to_markdown(), HtmlMarkdownConverter.convert(element.to_html())
+        )

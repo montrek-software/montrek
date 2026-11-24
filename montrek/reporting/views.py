@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from baseclasses.access import AccessKind
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
+from baseclasses.utils import get_content_type
 from baseclasses.views import (
     MontrekApiViewMixin,
     MontrekPermissionRequiredMixin,
@@ -15,7 +16,7 @@ from baseclasses.views import (
     ToPdfMixin,
 )
 from django.forms import ValidationError
-from django.http import FileResponse, Http404, HttpResponseRedirect
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.views import View
 from django.views.decorators.http import require_safe
@@ -76,11 +77,9 @@ class MontrekReportView(
 
     def get(self, request, *args, **kwargs):
         self.get_form(request)
-        if self.request.GET.get("gen_pdf") == "true":
-            return self.list_to_pdf()
-        if self.request.GET.get("send_mail") == "true":
-            report_manager = LatexReportManager(self.manager)
-            return self.manager.prepare_mail(report_manager.store_pdf())
+        export_response = self.get_export_response()
+        if export_response is not None:
+            return export_response
         if self._is_rest(request):
             return self.list_to_rest_api()
         if request.headers.get("HX-Request"):
@@ -95,6 +94,18 @@ class MontrekReportView(
             return render(request, self.loading_template_name)
         return super().get(request, *args, **kwargs)
 
+    def get_export_response(self) -> HttpResponse | None:
+        """The report as a file or a mail, if the request asks for one."""
+        query = self.request.GET
+        if query.get("gen_pdf") == "true":
+            return self.list_to_pdf()
+        if query.get("gen_md") == "true":
+            return self.report_to_markdown()
+        if query.get("send_mail") == "true":
+            report_manager = LatexReportManager(self.manager)
+            return self.manager.prepare_mail(report_manager.store_pdf())
+        return None
+
     def post(self, request, *args, **kwargs):
         return self.post_form(request)
 
@@ -105,6 +116,16 @@ class MontrekReportView(
     def list_to_rest_api(self):
         data = self.manager.to_json()
         return Response(data, status=status.HTTP_200_OK)
+
+    def report_to_markdown(self) -> HttpResponse:
+        filename = f"{self.manager.document_name}.md"
+        response = HttpResponse(self.manager.to_markdown())
+        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
+            self.manager.document_name, DownloadType.MD
+        )
+        response["Content-Type"] = get_content_type(filename)
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
 
 class MontrekReportFieldEditView(
