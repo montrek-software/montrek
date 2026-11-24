@@ -30,7 +30,11 @@ from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
 
 SETTINGS_FILE = Path(__file__).resolve().parent.parent / "settings.py"
 # Every module that reads settings for settings.py.
-SETTINGS_FILES = [SETTINGS_FILE, SETTINGS_FILE.parent / "storage_settings.py"]
+SETTINGS_FILES = [
+    SETTINGS_FILE,
+    SETTINGS_FILE.parent / "storage_settings.py",
+    SETTINGS_FILE.parent / "database_settings.py",
+]
 
 
 class TestCoreSchema(SimpleTestCase):
@@ -143,6 +147,25 @@ class TestFindProblems(SchemaTestCase):
         )
         self.assertIn("MODE must be one of a, b, got 'c'.", problems)
 
+    def test_required_unless_makes_a_value_optional(self):
+        self.schema = load_schema(
+            self.write_schema(
+                '[TOKEN]\ntype = "str"\nrequired = true\n'
+                'required_unless = "TOKEN_PROVIDER"\ndescription = "x"\n'
+            )
+        )
+        self.isolate_environment({})
+        self.assertEqual(len(self.problems()), 1)
+        self.isolate_environment({"TOKEN_PROVIDER": "p"})
+        self.assertEqual(self.problems(), [])
+
+    def test_required_unless_without_required_is_refused(self):
+        path = self.write_schema(
+            '[TOKEN]\ntype = "str"\nrequired_unless = "X"\ndescription = "x"\n'
+        )
+        with self.assertRaisesMessage(ImproperlyConfigured, "is not required"):
+            load_schema(path)
+
     def test_secret_values_are_not_shown(self):
         self.schema = load_schema(
             self.write_schema(
@@ -169,6 +192,15 @@ class TestRaiseForInvalidSettings(ConfigurationTestCase):
     def test_passes_with_the_required_values(self):
         self.env_file.write_text("SECRET_KEY=s\n")
         (self.secrets_dir / "db_password").write_text("p")
+        raise_for_invalid_settings(self.config())
+
+    def test_db_password_is_not_required_with_a_password_provider(self):
+        self.isolate_environment(
+            {
+                "SECRET_KEY": "s",
+                "DB_PASSWORD_PROVIDER": "montrek_example.database.example_password",
+            }
+        )
         raise_for_invalid_settings(self.config())
 
     def test_ignores_compose_scope(self):

@@ -27,6 +27,7 @@ from reporting.core.reporting_colors import ReportingColors
 
 from montrek.configuration import config
 from montrek.env_schema import raise_for_invalid_settings
+from montrek.database_settings import DatabaseSettings
 from montrek.storage_settings import StorageSettings
 from montrek.filtered_warnings import add_filtered_warnings
 from montrek.utils import SystemFormatting, get_keycloak_base_url, get_oidc_endpoints
@@ -302,32 +303,8 @@ WSGI_APPLICATION = "montrek.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-# Postgres only. DB_ENGINE picks how the install reaches it (db_yml/<engine>.yml);
-# the env schema check above refuses any other value.
-db_engine = str(config("DB_ENGINE", default="postgres"))
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME", default="montrek_db"),
-        "USER": config("DB_USER", default="root"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config(
-            "DB_HOST", default="localhost"
-        ),  # in docker setup: docker-compose service name (db)
-        "PORT": config(
-            "DB_PORT", default=5432, cast=int
-        ),  # in docker setup: internal docker container port
-        # Keeps a connection per gunicorn thread or worker process for that
-        # many seconds instead of opening one per request; the health check
-        # replaces one the database has dropped meanwhile.
-        "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
-        "CONN_HEALTH_CHECKS": True,
-    }
-}
-if db_engine == "postgres_ext":
-    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+DATABASES = {"default": DatabaseSettings(config).default_database()}
 
 
 # Password validation
