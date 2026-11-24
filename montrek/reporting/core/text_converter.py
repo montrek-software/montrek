@@ -293,8 +293,18 @@ class HtmlMarkdownConverter:
 
     Covers the markup values carry: paragraphs and line breaks, bold and
     italic, links, images, lists and inline code. Other tags keep only their
-    text. Plain text passes unchanged, so Markdown typed into a field renders.
+    text. A text without HTML markup passes unchanged, apart from its entities,
+    so Markdown typed into a field renders.
     """
+
+    # A tag of an HTML element, or a comment. Only these mark a text as HTML:
+    # a Markdown autolink (<https://...>) or a "<" in plain text does not.
+    _HTML_MARKUP = re.compile(
+        r"<!--|</?(?:a|abbr|b|blockquote|br|center|code|del|div|em|font|h[1-6]|hr"
+        r"|i|img|ins|kbd|li|mark|ol|p|pre|s|small|span|strike|strong|sub|sup"
+        r"|table|tbody|td|tfoot|th|thead|tr|u|ul)(?:\s[^<>]*)?/?>",
+        re.IGNORECASE,
+    )
 
     _INLINE_MARKS = {"strong": "**", "b": "**", "em": "*", "i": "*"}
     # Name of the method converting a tag; any other tag goes to _inline
@@ -310,7 +320,7 @@ class HtmlMarkdownConverter:
     @classmethod
     def convert(cls, text: Any) -> str:
         text = str(text)
-        if "<" not in text:
+        if not cls._HTML_MARKUP.search(text):
             return unescape(text)
         soup = BeautifulSoup(text, "html.parser")
         lines = [line.rstrip() for line in cls._children(soup).split("\n")]
@@ -338,9 +348,30 @@ class HtmlMarkdownConverter:
         if not content.strip():
             return content
         if node.name == "code":
-            return f"`{content}`"
+            return cls._code_span(content)
         mark = cls._INLINE_MARKS.get(node.name, "")
-        return f"{mark}{content.strip()}{mark}" if mark else content
+        if not mark:
+            return content
+        # Markers next to a space do not emphasise, so the spaces of the tag's
+        # content go outside them.
+        stripped = content.strip()
+        leading = content[: len(content) - len(content.lstrip())]
+        trailing = content[len(content.rstrip()) :]
+        return f"{leading}{mark}{stripped}{mark}{trailing}"
+
+    @staticmethod
+    def _code_span(content: str) -> str:
+        """A code span showing content as it is: delimited by a backtick run
+        longer than any in it, and padded by a space where a backtick or the
+        space at its edges would otherwise be taken as part of the delimiter."""
+        longest_run = max((len(run) for run in re.findall(r"`+", content)), default=0)
+        delimiter = "`" * (longest_run + 1)
+        needs_padding = content.startswith("`") or content.endswith("`")
+        # A space on both sides is stripped once from a code span's content
+        needs_padding |= content.startswith(" ") and content.endswith(" ")
+        if needs_padding:
+            content = f" {content} "
+        return f"{delimiter}{content}{delimiter}"
 
     @staticmethod
     def _line_break(_node: Tag) -> str:
