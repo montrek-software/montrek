@@ -16,6 +16,7 @@ from baseclasses.dataclasses.montrek_message import (
 from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
+from baseclasses.utils import get_content_type
 from baseclasses.datetime_boundaries import DatetimeBoundaries
 from django.conf import settings
 from django.core.exceptions import FieldError, ImproperlyConfigured
@@ -456,6 +457,10 @@ class MontrekTableManagerABC(
         export_manager = self.export_manager
         return export_manager._download_or_mail("xlsx", export_manager._download_excel)
 
+    def download_or_mail_markdown(self) -> HttpResponse:
+        export_manager = self.export_manager
+        return export_manager._download_or_mail("md", export_manager._download_markdown)
+
     def _download_or_mail(
         self, filetype: str, download_method: Callable[[], HttpResponse]
     ) -> HttpResponse:
@@ -494,6 +499,14 @@ class MontrekTableManagerABC(
         )
         return response
 
+    def _download_markdown(self):
+        response = HttpResponse(self.to_markdown())
+        return self.do_download(
+            response=response,
+            filename=f"{self.document_name}.md",
+            content_type=get_content_type("md"),
+        )
+
     def do_download(self, response, filename, content_type):
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -521,6 +534,8 @@ class MontrekTableManagerABC(
                 self.to_excel(output)
             elif filetype == "csv":
                 self.get_output_df().to_csv(output, index=False)
+            elif filetype == "md":
+                output.write(self.to_markdown().encode())
             else:
                 return
             output.seek(0)

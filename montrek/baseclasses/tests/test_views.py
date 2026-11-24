@@ -560,6 +560,20 @@ class TestMontrekListView(TestCase):
         self.assertEqual(repo.receive().count(), 1)
 
     @add_logged_in_user()
+    def test_list_view_base_markdown_generation(self):
+        test_list_view = MockMontrekListView("dummy?gen_md=true")
+        test_list_view.kwargs = {"user_id": self.user.id}
+        response = test_list_view.get(test_list_view.request)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/markdown")
+        self.assertTrue(
+            response["Content-Disposition"].startswith('attachment; filename="')
+        )
+        self.assertTrue(response["Content-Disposition"].endswith('.md"'))
+        repo = DownloadRegistryRepository()
+        self.assertEqual(repo.receive().count(), 1)
+
+    @add_logged_in_user()
     def test_list_view_base_pdf_generation(self):
         test_list_view = MockMontrekListView("dummy?gen_pdf=true")
         test_list_view.kwargs = {"user_id": self.user.id}

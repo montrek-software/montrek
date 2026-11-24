@@ -346,6 +346,27 @@ class TestMontrekTableManager(TestCase):
                 "Table is too large to download. Sending it by mail.",
             )
 
+    @add_logged_in_user()
+    def test_download_markdown(self):
+        manager = MockMontrekTableManager({"user_id": self.user.id})
+        response = manager.download_or_mail_markdown()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/markdown")
+        self.assertRegex(
+            response["Content-Disposition"],
+            r'attachment; filename="mockmontrektablemanager_\d{14}\.md"',
+        )
+        self.assertEqual(response.content.decode(), manager.to_markdown())
+
+    @add_logged_in_user()
+    def test_large_download_markdown(self):
+        manager = MockLongMontrekTableManager(
+            {"user_id": self.user.id, "host_url": "test_server"}
+        )
+        response = manager.download_or_mail_markdown()
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(mail.outbox[0].subject.endswith(".md is ready for download"))
+
     def test_set_paginate_by(self):
         test_manager = MockLongMontrekTableManager({})
         self.assertEqual(test_manager.paginate_by, 10)

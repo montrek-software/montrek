@@ -1,4 +1,4 @@
-<div class="row g-2 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5">
+<div class="row g-2 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
   <!-- CSV -->
   <div class="col">
     <form method="get">
@@ -21,6 +21,17 @@
         title="Export to Excel"
       >
         <i class="bi bi-file-earmark-excel"></i>
+      </button>
+    </form>
+  </div>
+
+  <!-- Markdown -->
+  <div class="col">
+    <form method="get">
+      {% include "partials/url_kwargs_passthrough.html" with exclude_key="gen_md" %}
+      <input type="hidden" name="gen_md" value="true" />
+      <button type="submit" class="btn btn-light-custom" title="Export to Markdown">
+        <i class="bi bi-markdown"></i>
       </button>
     </form>
   </div>

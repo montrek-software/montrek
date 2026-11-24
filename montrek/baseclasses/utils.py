@@ -119,6 +119,7 @@ class FileExtensionEnum(Enum):
     )
     ZIP = FileExtensionDataClass("zip", "application/zip")
     XML = FileExtensionDataClass("xml", "application/xml")
+    MD = FileExtensionDataClass("md", "text/markdown")
 
 
 DEFAULT_CONTENT_TYPE = "application/octet-stream"
