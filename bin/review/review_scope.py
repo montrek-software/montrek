@@ -110,6 +110,13 @@ class ReviewScope:
         return statuses
 
     @staticmethod
+    def _target_lines(changed: dict[str, set[int]], target: str) -> set[int] | None:
+        """Line set for a diff's "+++" target, or None for a deleted file."""
+        if not target.startswith("b/"):
+            return None
+        return changed.setdefault(target[2:], set())
+
+    @staticmethod
     def parse_changed_lines(diff: str) -> dict[str, set[int]]:
         """Map each added or modified file to its added line numbers.
 
@@ -121,10 +128,7 @@ class ReviewScope:
         line_number = 0
         for line in diff.splitlines():
             if line.startswith("+++ "):
-                target = line[4:]
-                current = None
-                if target.startswith("b/"):
-                    current = changed.setdefault(target[2:], set())
+                current = ReviewScope._target_lines(changed, line[4:])
                 continue
             if line.startswith("--- ") or line.startswith("diff --git"):
                 continue

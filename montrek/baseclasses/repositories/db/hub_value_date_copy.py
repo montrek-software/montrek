@@ -12,6 +12,7 @@ from django.db.models import (
     QuerySet,
     Subquery,
 )
+from psycopg2 import sql
 
 from baseclasses.models import HubValueDate, ValueDateList
 
@@ -108,9 +109,12 @@ class HubValueDateCopy:
                 continue
             if not model.objects.exists():
                 continue
+            # ANALYZE takes no parameters; the driver quotes the identifier
+            statement = sql.SQL("ANALYZE {}").format(
+                sql.Identifier(model._meta.db_table)
+            )
             with connection.cursor() as cursor:
-                table = connection.ops.quote_name(model._meta.db_table)
-                cursor.execute(f"ANALYZE {table}")
+                cursor.execute(statement)
             analyzed.append(model)
         return analyzed
 

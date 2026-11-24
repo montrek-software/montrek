@@ -62,6 +62,7 @@ SUPPRESSION = re.compile(
     r"|#\s*nosec(?:\s+B\d+)*"
     r"|djlint:off"
 )
+HUNK_HEADER = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)")
 BLANKET_NOQA = re.compile(r"#\s*noqa(?!\s*:)")
 RAW_SQL = re.compile(
     r"\.raw\(|\.extra\(|RawSQL\(|connection\.cursor\(|cursor\.execute\("
@@ -366,8 +367,24 @@ class ContributionCheck:
         self.outputs[name] = result.stdout + result.stderr
         if result.returncode == 0:
             return PASS, ""
-        failed = re.findall(r"^(.+?)\.{3,}Failed$", self.outputs[name], re.M)
+        failed = self.failed_hooks(self.outputs[name])
         return FAIL, ("Failed: " + ", ".join(failed)) if failed else "Failed."
+
+    @staticmethod
+    def failed_hooks(output: str) -> list[str]:
+        """Names of the hooks pre-commit reports as "<name>.....Failed".
+
+        Parsed with string operations rather than a regex: overlapping
+        quantifiers on the dot run backtrack polynomially on long lines."""
+        failed = []
+        for line in output.splitlines():
+            if not line.endswith("Failed"):
+                continue
+            head = line[: -len("Failed")]
+            name = head.rstrip(".")
+            if name and len(head) - len(name) >= 3:
+                failed.append(name)
+        return failed
 
     def suppressions(self) -> CriterionResult:
         title = "Suppressions have a reason"
@@ -630,66 +647,78 @@ class ContributionCheck:
             if line.startswith("diff --git "):
                 in_header, path, old_path = True, "", ""
                 continue
-            if in_header:
-                # Deleted files have "+++ /dev/null"; their lines count under
-                # the old path, so a deleted test file is still seen.
-                if line.startswith("--- a/"):
-                    old_path = line[6:]
-                elif line.startswith("+++ "):
-                    path = line[6:] if line.startswith("+++ b/") else old_path
-                hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)", line)
-                if hunk:
-                    in_header = False
-                    number = int(hunk.group(1))
-                continue
-            hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)", line)
+            hunk = HUNK_HEADER.match(line)
             if hunk:
+                in_header = False
                 number = int(hunk.group(1))
+                continue
+            if in_header:
+                path, old_path = ContributionCheck.parse_header_line(
+                    line, path, old_path
+                )
                 continue
             if not path:
                 continue
-            if line.startswith("+"):
-                yield path, "+", number, line[1:]
+            sign = line[:1]
+            if sign in ("+", "-"):
+                yield path, sign, number, line[1:]
+            if sign in ("+", " "):
                 number += 1
-            elif line.startswith("-"):
-                yield path, "-", number, line[1:]
-            elif line.startswith(" "):
-                number += 1
+
+    @staticmethod
+    def parse_header_line(line: str, path: str, old_path: str) -> tuple[str, str]:
+        """Update the new and old path from a file header line of a diff."""
+        # Deleted files have "+++ /dev/null"; their lines count under the old
+        # path, so a deleted test file is still seen.
+        if line.startswith("--- a/"):
+            old_path = line[6:]
+        elif line.startswith("+++ "):
+            path = line[6:] if line.startswith("+++ b/") else old_path
+        return path, old_path
 
     @staticmethod
     def count_effective_lines(path: str, lines: list[str]) -> int:
         """Added lines without blanks and comments, docstrings included."""
         suffix = Path(path).suffix
+        is_comment = (
+            ContributionCheck.is_python_comment
+            if suffix == ".py"
+            else ContributionCheck.is_markup_comment
+        )
         count = 0
         in_block = False
         for raw in lines:
             text = raw.strip()
             if not text:
                 continue
-            if suffix == ".py":
-                if in_block:
-                    in_block = not text.endswith(('"""', "'''"))
-                    continue
-                if text.startswith(('"""', "'''")):
-                    closed = len(text) >= 6 and text.endswith(text[:3])
-                    in_block = not closed
-                    continue
-                if text.startswith("#"):
-                    continue
-            else:
-                opener, closer = ("<!--", "-->") if suffix == ".html" else ("/*", "*/")
-                if in_block:
-                    in_block = closer not in text
-                    continue
-                if text.startswith(opener):
-                    in_block = closer not in text
-                    continue
-                if suffix == ".html" and text.startswith("{#") and text.endswith("#}"):
-                    continue
-                if suffix == ".js" and text.startswith("//"):
-                    continue
-            count += 1
+            skip, in_block = is_comment(text, in_block, suffix)
+            if not skip:
+                count += 1
         return count
+
+    @staticmethod
+    def is_python_comment(
+        text: str, in_block: bool, _suffix: str = ".py"
+    ) -> tuple[bool, bool]:
+        """Return whether a Python line is a comment and the new block state."""
+        if in_block:
+            return True, not text.endswith(('"""', "'''"))
+        if text.startswith(('"""', "'''")):
+            closed = len(text) >= 6 and text.endswith(text[:3])
+            return True, not closed
+        return text.startswith("#"), False
+
+    @staticmethod
+    def is_markup_comment(text: str, in_block: bool, suffix: str) -> tuple[bool, bool]:
+        """Return whether an HTML/JS/CSS line is a comment and the block state."""
+        opener, closer = ("<!--", "-->") if suffix == ".html" else ("/*", "*/")
+        if in_block or text.startswith(opener):
+            return True, closer not in text
+        if suffix == ".html":
+            return text.startswith("{#") and text.endswith("#}"), False
+        if suffix == ".js":
+            return text.startswith("//"), False
+        return False, False
 
     @staticmethod
     def has_reason(text: str) -> bool:
