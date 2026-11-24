@@ -377,7 +377,7 @@ class MontrekTableManagerABC(
         export_manager = self.export_manager
         if base_url is None:
             base_url = export_manager.session_data.get("host_url", "")
-        elements = self._get_export_elements(export_manager.table_elements)
+        elements = export_manager.get_markdown_elements()
         table = export_manager.get_full_table()
         export_manager._preload_container(table)
         rows = [
@@ -400,6 +400,10 @@ class MontrekTableManagerABC(
         if not export_manager.table_title:
             return markdown_table
         return f"## {export_manager.table_title}\n\n{markdown_table}"
+
+    def get_markdown_elements(self) -> list[te.TableElement]:
+        """The columns of the Markdown table: those of the other exports."""
+        return self._get_export_elements(self.table_elements)
 
     def get_excel_frame(self) -> pd.DataFrame:
         """The sheet's rows, and the summary row under them. CSV and JSON
@@ -898,6 +902,19 @@ class MontrekDataFrameTableManager(MontrekTableManagerABC):
     def get_output_df(self) -> pd.DataFrame:
         df = self.get_df()
         return df.iloc[:, self._output_column_positions()]
+
+    def get_markdown_elements(self) -> list[te.TableElement]:
+        """The elements showing the output columns, in their order, as CSV and
+        Excel write them. A column may be shown by several elements, e.g. as
+        text and as a link."""
+        elements_by_field: dict[str, list[te.TableElement]] = {}
+        for element in super().get_markdown_elements():
+            elements_by_field.setdefault(element.field_name, []).append(element)
+        return [
+            element
+            for column in dict.fromkeys(self.get_output_columns())
+            for element in elements_by_field.get(column, [])
+        ]
 
     def _output_column_positions(self) -> list[int]:
         # Columns sharing a name are taken in their order in ``df``

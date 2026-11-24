@@ -1119,3 +1119,40 @@ class TestMontrekTableManagerMarkdown(TestCase):
     def test_empty_table(self):
         markdown = MockEmptyMontrekTableManager().to_markdown()
         self.assertTrue(markdown.endswith("| --- | ---: | ---: | --- | ---: | --- |\n"))
+
+
+@override_settings(NUMBER_FORMATTING=SystemFormatting.EN)
+class TestMontrekDataFrameTableManagerMarkdown(TestCase):
+    df_data = [
+        {
+            "field_a": "a",
+            "helper": True,
+            "field_b": 1000,
+            "field_c": 1.5,
+            "field_d": datetime.date(2024, 7, 13),
+            "field_e": Decimal("2.25"),
+        }
+    ]
+
+    def test_columns_of_the_data_frame(self):
+        markdown = MockMontrekDataFrameTableManager(
+            {"df_data": self.df_data}
+        ).to_markdown(base_url="")
+        self.assertIn(
+            "| Field_A | Link Text | Field B | Field C | Field D | Field E |", markdown
+        )
+
+    def test_columns_follow_a_narrowed_output(self):
+        class NarrowedManager(MockMontrekDataFrameTableManager):
+            def get_output_columns(self) -> list[str]:
+                return ["field_a", "field_e", "field_b"]
+
+        markdown = NarrowedManager({"df_data": self.df_data}).to_markdown(base_url="")
+        self.assertEqual(
+            markdown.splitlines()[:3],
+            [
+                "| Field_A | Link Text | Field E | Field B |",
+                "| --- | --- | ---: | ---: |",
+                "| a | [a](/home) | 2.25€ | 1,000 |",
+            ],
+        )
