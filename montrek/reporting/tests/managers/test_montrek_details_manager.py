@@ -398,3 +398,14 @@ class TestMontrekDetailsManagerMarkdown(TestCase):
             "|  |  |\n| --- | --- |\n| Field A | a |\n\n"
             "### Text\n\nLine 1\nLine 2\n",
         )
+
+    def test_only_sections(self):
+        class SectionsOnlyManager(MockMontrekDetailsManager):
+            @property
+            def table_elements(self):
+                return (te.TextTableElement(attr="field_text", name="Text"),)
+
+            def get_object_from_pk(self, pk):
+                return {"field_text": "Body"}
+
+        self.assertEqual(SectionsOnlyManager().to_markdown(), "### Text\n\nBody\n")

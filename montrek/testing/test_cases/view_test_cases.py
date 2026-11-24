@@ -184,8 +184,6 @@ class MarkdownTestCaseMixin:
             return
         self.assertEqual(response["Content-Type"], "text/markdown")
         self.assertIn("attachment;", response["Content-Disposition"])
-        # The separator row under the header: "---", or "---:" for numbers
-        self.assertIn("| ---", response.content.decode())
 
 
 class WithoutPermissions:
