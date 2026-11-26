@@ -29,7 +29,6 @@ class ApiTestPageView(MontrekApiViewMixin, MontrekTemplateView):
 
     manager_class = ApiTestManager
     page_class = ApiTestPage
-    template_name = "under_construction.html"
     title = "API test page"
 
     def get_template_context(self) -> dict:
