@@ -233,6 +233,35 @@ To add new dependencies:
 
 ---
 
+### Database Schema
+
+By default the tables go into the database's default schema, `public`. For a database that holds other schemas too, such as a data layer migrated by another tool, set `DB_SCHEMA` to keep montrek's tables in a schema of their own:
+
+```
+DB_SCHEMA=app_data
+```
+
+It is then the only schema on the search path. `migrate` creates it if it is missing, also for the test database of `manage.py test`. Other schemas are read by qualified names, and `public` stays empty.
+
+The database user, also one that logs in through `DB_PASSWORD_PROVIDER`, needs `USAGE` and `CREATE` on the schema:
+
+```sql
+GRANT USAGE, CREATE ON SCHEMA app_data TO montrek_user;
+```
+
+It needs `CREATE` on the database only if `migrate` has to create the schema; a schema created beforehand, e.g. with `CREATE SCHEMA app_data AUTHORIZATION montrek_user`, is enough.
+
+An install that already has its tables in `public` must move them before setting the variable, or montrek starts on an empty schema. For example, with nothing else in `public`:
+
+```sql
+ALTER SCHEMA public RENAME TO app_data;
+CREATE SCHEMA public;
+```
+
+`manage.py dbshell` does not set the search path; name the schema there, e.g. `SELECT * FROM app_data.django_migrations`.
+
+---
+
 ### Database Backup
 
 Create a backup:

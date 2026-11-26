@@ -17,6 +17,8 @@ POSTGRES_ENGINE = "django.db.backends.postgresql"
 PROVIDER_LOGIN_ENGINE = "montrek.db_backend"
 
 _DOTTED_PATH = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)+$", re.ASCII)
+# A plain, unquoted PostgreSQL name: it goes into the connection options.
+_SCHEMA_NAME = re.compile(r"^[a-z_][a-z0-9_]{0,62}$", re.ASCII)
 
 
 class DatabaseSettings:
@@ -50,8 +52,16 @@ class DatabaseSettings:
             "CONN_MAX_AGE": self.config("DB_CONN_MAX_AGE", default=60, cast=int),
             "CONN_HEALTH_CHECKS": True,
         }
+        options: dict[str, str] = {}
+        schema = self.schema()
+        if schema:
+            options["options"] = f"-c search_path={schema}"
+            # Read by the pre_migrate receiver that creates the schema.
+            database["SCHEMA"] = schema
         if self.config("DB_ENGINE", default="postgres") == "postgres_ext":
-            database["OPTIONS"] = {"sslmode": "require"}
+            options["sslmode"] = "require"
+        if options:
+            database["OPTIONS"] = options
         provider = self.config("DB_PASSWORD_PROVIDER", default="")
         if provider:
             if database["PASSWORD"]:
@@ -66,6 +76,24 @@ class DatabaseSettings:
             database["ENGINE"] = PROVIDER_LOGIN_ENGINE
             database["PASSWORD_PROVIDER"] = provider
         return database
+
+    def schema(self) -> str:
+        """The schema of the application's tables, DB_SCHEMA, or "" for the
+        database's default search path.
+
+        Set, it is the only schema on the search path, so Django creates and
+        finds its tables there and nowhere else. Without `public` on the path,
+        a schema that cannot be created makes `migrate` fail instead of putting
+        the tables into `public`. Other schemas, such as a data layer migrated
+        by another tool, are read by qualified names.
+        """
+        schema = self.config("DB_SCHEMA", default="")
+        if schema and not _SCHEMA_NAME.match(schema):
+            raise ImproperlyConfigured(
+                "DB_SCHEMA must be a lowercase PostgreSQL name (letters, digits, "
+                f"underscores, at most 63 characters), not {schema!r}."
+            )
+        return schema
 
 
 @register("montrek_database")

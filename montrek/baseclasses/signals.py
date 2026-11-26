@@ -2,6 +2,7 @@ import sys
 
 from django.dispatch import Signal
 
+from baseclasses.repositories.db.database_schema import DatabaseSchema
 from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
 
 # Sent by the base views for every document they hand out, with the keyword
@@ -27,3 +28,14 @@ def fill_hub_value_date_copies(verbosity: int = 1, **kwargs) -> None:
             )
     for model in analyzed:
         stdout.write(f"  Analyzed {model._meta.label}\n")
+
+
+def create_database_schema(
+    using: str = "default", verbosity: int = 1, **kwargs
+) -> None:
+    """Before every migrate: creates the DB_SCHEMA of the migrated database if
+    it is missing, ahead of the table that records the migrations."""
+    schema = DatabaseSchema(using)
+    if schema.ensure() and verbosity >= 1:
+        stdout = kwargs.get("stdout") or sys.stdout
+        stdout.write(f"  Created schema {schema.name}\n")
