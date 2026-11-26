@@ -54,3 +54,46 @@ class TestDatabaseSettings(ConfigurationTestCase):
                 ),
             ):
                 self.default_database({"DB_PASSWORD_PROVIDER": value})
+
+    def test_db_schema_sets_the_search_path(self):
+        database = self.default_database(
+            {"DB_PASSWORD": TEST_DB_PASSWORD, "DB_SCHEMA": "app_data"}
+        )
+        self.assertEqual(database["OPTIONS"], {"options": "-c search_path=app_data"})
+        self.assertEqual(database["SCHEMA"], "app_data")
+
+    def test_db_schema_with_postgres_ext_keeps_ssl(self):
+        database = self.default_database(
+            {
+                "DB_PASSWORD": TEST_DB_PASSWORD,
+                "DB_ENGINE": "postgres_ext",
+                "DB_SCHEMA": "app_data",
+            }
+        )
+        self.assertEqual(
+            database["OPTIONS"],
+            {"options": "-c search_path=app_data", "sslmode": "require"},
+        )
+
+    def test_an_empty_db_schema_changes_nothing(self):
+        database = self.default_database(
+            {"DB_PASSWORD": TEST_DB_PASSWORD, "DB_SCHEMA": ""}
+        )
+        self.assertNotIn("OPTIONS", database)
+        self.assertNotIn("SCHEMA", database)
+
+    def test_a_schema_that_is_no_plain_name_is_refused(self):
+        for value in ("App", "1app", "app,public", "app -c x=y", '"app"', "a" * 64):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesMessage(ImproperlyConfigured, "DB_SCHEMA must be"),
+            ):
+                self.default_database(
+                    {"DB_PASSWORD": TEST_DB_PASSWORD, "DB_SCHEMA": value}
+                )
+
+    def test_the_longest_plain_name_is_accepted(self):
+        database = self.default_database(
+            {"DB_PASSWORD": TEST_DB_PASSWORD, "DB_SCHEMA": "a" * 63}
+        )
+        self.assertEqual(database["SCHEMA"], "a" * 63)

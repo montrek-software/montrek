@@ -11,11 +11,16 @@ class BaseclassesConfig(AppConfig):
         # view layer (and with it the models it imports).
         from baseclasses import checks  # noqa: F401
         from baseclasses import theme_checks  # noqa: F401
-        from django.db.models.signals import post_migrate
+        from django.db.models.signals import post_migrate, pre_migrate
 
         from baseclasses.field_encryption import use_field_encryption_key
-        from baseclasses.signals import fill_hub_value_date_copies
+        from baseclasses.signals import (
+            create_database_schema,
+            fill_hub_value_date_copies,
+        )
 
         use_field_encryption_key()
-        # Sent once per app; with this sender the copies are filled once
+        # Sent once per app; with this sender each runs once per migrate and
+        # database
+        pre_migrate.connect(create_database_schema, sender=self)
         post_migrate.connect(fill_hub_value_date_copies, sender=self)
