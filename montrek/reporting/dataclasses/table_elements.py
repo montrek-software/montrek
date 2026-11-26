@@ -13,6 +13,7 @@ from urllib.parse import quote, urlencode, urlparse
 
 import pandas as pd
 import requests
+from baseclasses.constants import LIVE_ROW_PARAM
 from baseclasses.dataclasses.alert import AlertEnum
 from baseclasses.dataclasses.number_shortener import NoShortening, NumberShortenerABC
 from baseclasses.datetime_boundaries import DatetimeBoundaries
@@ -1300,8 +1301,8 @@ class LabelTableElement(AttrTableElement):
         )
 
 
-# Query parameters of a live row's refresh request, see LiveLabelTableElement.
-LIVE_ROW_PARAM = "live_row"
+# Second query parameter of a live row's refresh request, with LIVE_ROW_PARAM;
+# see LiveLabelTableElement.
 LIVE_SHOWN_PARAM = "live_shown"
 
 

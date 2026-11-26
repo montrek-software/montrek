@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from typing import Any, cast
 
 import pandas as pd
-from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.managers.montrek_manager import MontrekDetailsManagerBase
 from django.template.loader import get_template
 from baseclasses.typing import TableElementsType
 from reporting.core import reporting_text as rt
@@ -18,7 +18,7 @@ from reporting.modules.markdown_table import MarkdownTable
 from reporting.modules.table_serializer import TableSerializer
 
 
-class MontrekDetailsManager(ExcelSheetMixin, MontrekManager):
+class MontrekDetailsManager(ExcelSheetMixin, MontrekDetailsManagerBase):
     table_cols: int = 2
     header_col_width: float = 0.3
     table_title: str = ""

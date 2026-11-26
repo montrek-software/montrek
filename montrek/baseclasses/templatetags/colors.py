@@ -2,7 +2,7 @@ from functools import cache
 
 from django import template
 from django.conf import settings
-from reporting.core.reporting_colors import Color, ReportingColors
+from baseclasses.dataclasses.reporting_colors import Color, ReportingColors
 
 register = template.Library()
 

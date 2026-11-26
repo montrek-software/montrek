@@ -1,9 +1,8 @@
 from enum import Enum
 
+from baseclasses.constants import PdfGenMethod
 
-class PdfGenMethod(Enum):
-    WEASYPRINT = "weasyprint"
-    LATEX = "latex"
+__all__ = ["PdfGenMethod"]
 
 
 class ReportingPlotType(Enum):

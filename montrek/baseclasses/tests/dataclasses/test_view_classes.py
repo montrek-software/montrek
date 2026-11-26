@@ -31,20 +31,20 @@ class TestPostActionElement(TestCase):
 
 class TestStandardActionElementBase(TestCase):
     def test_init(self):
-        url_name = "montrek_example_a_list"
+        url_name = "under_construction"
         element = StandardActionElementBase(
             url_name=url_name,
         )
         self.assertTrue(isinstance(element, ActionElement))
         self.assertEqual(element.icon, "")
         self.assertEqual(element.link, reverse(url_name))
-        self.assertEqual(element.action_id, "id_action_montrek_example_a_list")
-        self.assertEqual(element.hover_text, "Go to Montrek Example A List")
+        self.assertEqual(element.action_id, "id_action_under_construction")
+        self.assertEqual(element.hover_text, "Go to Under Construction")
 
 
 class TestStandardActionElements(TestCase):
     def test_init(self):
-        url_name = "montrek_example_a_list"
+        url_name = "under_construction"
 
         expected_icons = (
             (BackActionElement, "arrow-left"),
@@ -65,7 +65,7 @@ class TestStandardActionElements(TestCase):
             self.assertEqual(element.icon, expected_icon)
 
     def test_with_kwargs(self):
-        url_name = "montrek_example_a_details"
+        url_name = "dummy_detail"
         action_id = "id_custom_action"
         hover_text = "Custom Action"
         kwargs = {"pk": 1}

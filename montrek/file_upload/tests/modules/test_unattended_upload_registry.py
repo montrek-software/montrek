@@ -10,7 +10,6 @@ from file_upload.modules.unattended_upload_registry import (
 )
 
 UNATTENDED_KEY = "file_upload.tests.mocks.MockUnattendedFileUploadManager"
-A1_KEY = "montrek_example.managers.a1_file_upload_manager.A1FileUploadManager"
 
 
 class TestUnattendedUploadRegistry(SimpleTestCase):
@@ -46,7 +45,6 @@ class TestUnattendedUploadRegistry(SimpleTestCase):
 
     def test_choices_list_opted_in_managers_only(self):
         choices = dict(UnattendedUploadRegistry.choices())
-        self.assertEqual(choices[A1_KEY], "Example A1 upload")
         self.assertEqual(choices[UNATTENDED_KEY], "Mock Unattended File Upload Manager")
         self.assertNotIn(UnattendedUploadRegistry.key(MockFileUploadManager), choices)
 

@@ -14,9 +14,9 @@ from baseclasses.views import (
 )
 from django.http import HttpResponse
 from django.middleware.csrf import get_token
+from django.conf import settings
 from django.test import Client, RequestFactory, TestCase, override_settings
-from django.urls import path, reverse
-from montrek.urls import urlpatterns as montrek_urlpatterns
+from django.urls import include, path, reverse
 from rest_framework import status
 from rest_framework.response import Response
 from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
@@ -40,7 +40,7 @@ class ApiMixinTestView(MontrekApiViewMixin):
 # The project URLs are kept so that LOGIN_URL and the token endpoints resolve.
 urlpatterns = [
     path("api-mixin-test/", ApiMixinTestView.as_view(), name="api_mixin_test"),
-    *montrek_urlpatterns,
+    path("", include(settings.ROOT_URLCONF)),
 ]
 
 

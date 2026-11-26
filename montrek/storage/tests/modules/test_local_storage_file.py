@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.test import TestCase
 from storage.modules.local_storage_file import LocalStorageFile
-from testing.decorators.object_storage import object_storage
+from storage.tests.object_storage import object_storage
 
 
 class TestLocalStorageFile(TestCase):

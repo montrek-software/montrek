@@ -1,9 +1,13 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from middleware.login_required_middleware import is_login_exempt_path
+from testing.api_test_views import ApiTestUrls
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
+urlpatterns = ApiTestUrls.urlpatterns()
 
+
+@override_settings(ROOT_URLCONF=__name__)
 class TestLoginRequiredMiddleware(TestCase):
     def test_startpage_redirects_to_home(self):
         response = self.client.get("/")
@@ -24,9 +28,9 @@ class TestLoginRequiredMiddleware(TestCase):
         response = self.client.get(reverse("password_reset"))
         self.assertEqual(response.status_code, 200)
 
-    @override_settings(LOGIN_EXEMPT_PATHS=[r"^montrek_example/a/.*$"])
+    @override_settings(LOGIN_EXEMPT_PATHS=[r"^api-test/.*$"])
     def test_middleware_does_not_redirect_for_exempt_path__sub_path(self):
-        response = self.client.get(reverse("montrek_example_a_list"))
+        response = self.client.get(reverse("api_test_page"))
         self.assertEqual(response.status_code, 200)
 
 
@@ -57,9 +61,12 @@ class TestUserPagesExemption(TestCase):
         ):
             with self.subTest(url=url):
                 self.assertFalse(is_login_exempt_path(url))
+
+
+@override_settings(ROOT_URLCONF=__name__)
 class TestLoginRequiredMiddlewareRestRequests(TestCase):
     def test_rest_request_to_a_page_needs_the_login(self):
-        for url in (reverse("home"), reverse("montrek_example_a_create")):
+        for url in (reverse("home"), reverse("under_construction")):
             with self.subTest(url=url):
                 response = self.client.get(url, {"gen_rest_api": "true"})
                 self.assertRedirects(
@@ -80,18 +87,16 @@ class TestLoginRequiredMiddlewareRestRequests(TestCase):
 
     def test_rest_request_to_an_api_view_is_left_to_the_view(self):
         # The view asks for a bearer token rather than sending to the login.
-        response = self.client.get(
-            reverse("montrek_example_a_list"), {"gen_rest_api": "true"}
-        )
+        response = self.client.get(reverse("api_test_page"), {"gen_rest_api": "true"})
 
         self.assertEqual(response.status_code, 401)
 
     def test_api_view_page_needs_the_login(self):
-        response = self.client.get(reverse("montrek_example_a_list"))
+        response = self.client.get(reverse("api_test_page"))
 
         self.assertRedirects(response, reverse("login"), fetch_redirect_response=False)
 
     def test_rest_only_view_is_left_to_the_view(self):
-        response = self.client.get(reverse("hub_a_rest_api"))
+        response = self.client.get(reverse("api_test_rest"))
 
         self.assertEqual(response.status_code, 401)

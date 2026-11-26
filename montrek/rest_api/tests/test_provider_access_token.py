@@ -15,6 +15,7 @@ from rest_api.modules.provider_access_token import (
     ProviderTokenError,
 )
 from rest_api.tests.test_authentication import OIDC_AUTHENTICATE, request_with_token
+from testing.api_test_views import ApiTestUrls
 from user.tests import oidc_mocks
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -51,6 +52,9 @@ def provider_token(key=PROVIDER_KEY, algorithm="RS256", **claims) -> str:
     }
     payload = {name: value for name, value in payload.items() if value is not None}
     return jwt.encode(payload, key, algorithm=algorithm, headers={"kid": KEY_ID})
+
+
+urlpatterns = ApiTestUrls.urlpatterns()
 
 
 class ProviderTokenTestCase(TestCase):
@@ -117,7 +121,7 @@ class TestProviderAccessToken(ProviderTokenTestCase):
         self.fetch_data.assert_called_once()
 
 
-@override_settings(**PROVIDER_TOKEN_SETTINGS)
+@override_settings(**PROVIDER_TOKEN_SETTINGS, ROOT_URLCONF=__name__)
 class TestApiAuthenticationWithProviderToken(ProviderTokenTestCase):
     def setUp(self):
         super().setUp()
@@ -163,7 +167,7 @@ class TestApiAuthenticationWithProviderToken(ProviderTokenTestCase):
 
     def test_the_api_answers_401_for_an_invalid_token(self):
         response = self.client.get(
-            reverse("a1_view_uploads"),
+            reverse("api_test_rest"),
             query_params={REST_API_QUERY_PARAM: "true"},
             headers={"Authorization": f"Bearer {provider_token(scp='other.api')}"},
         )
@@ -171,7 +175,7 @@ class TestApiAuthenticationWithProviderToken(ProviderTokenTestCase):
 
     def test_the_api_answers_for_a_valid_token(self):
         response = self.client.get(
-            reverse("a1_view_uploads"),
+            reverse("api_test_rest"),
             query_params={REST_API_QUERY_PARAM: "true"},
             headers={"Authorization": f"Bearer {provider_token()}"},
         )

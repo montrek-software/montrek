@@ -1,4 +1,12 @@
 from dataclasses import dataclass
+from typing import Any
+
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.test import RequestFactory
+
+from baseclasses.pages import MontrekPage
 
 
 class MockQuerySet:
@@ -88,3 +96,29 @@ class MockRepository:
 
     def create_by_dict(self, data: dict) -> MockData:
         return MockData("item1", 1)
+
+
+class MockRequester:
+    request: Any
+
+    def add_mock_request(self, url: str):
+        self.request = RequestFactory().get(url)
+        self._pass_request_to_middleware()
+
+    def add_mock_request_post(self, url: str, data: dict):
+        self.request = RequestFactory().post(url, data)
+        self._pass_request_to_middleware()
+
+    def _pass_request_to_middleware(self):
+        self.request.user = AnonymousUser()
+        session_middleware = SessionMiddleware(lambda request: None)
+        session_middleware.process_request(self.request)
+        self.request.session.save()
+        message_middleware = MessageMiddleware(lambda request: None)
+        message_middleware.process_request(self.request)
+
+
+class MockPage(MontrekPage):
+    @property
+    def tabs(self):
+        return []

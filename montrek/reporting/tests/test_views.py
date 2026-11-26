@@ -1,5 +1,7 @@
 import uuid
 
+from baseclasses.access import AccessKind
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.test import RequestFactory, TestCase
@@ -12,6 +14,7 @@ from reporting.tests.mocks import (
     MockMontrekReportWithFormView,
 )
 from reporting.modules.mailed_downloads import MailedDownloads
+from reporting.views import MontrekReportFieldEditView, MontrekReportView
 from testing.decorators import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
@@ -222,3 +225,18 @@ class TestMontrekReportFieldEditView(TestCase):
             b'<div class="error-message alert alert-danger">error: error</div>',
             response.content,
         )
+
+
+class TestReportViewAccessKinds(TestCase):
+    """Pinned down like those of the base views in ``baseclasses``."""
+
+    EXPECTED = {
+        MontrekReportView: AccessKind.VIEW,
+        MontrekReportFieldEditView: AccessKind.UPDATE,
+    }
+
+    def test_access_kinds(self):
+        for view_class, access_kind in self.EXPECTED.items():
+            with self.subTest(view=view_class.__name__):
+                self.assertIs(view_class.access_kind, access_kind)
+                self.assertTrue(issubclass(view_class, PermissionRequiredMixin))

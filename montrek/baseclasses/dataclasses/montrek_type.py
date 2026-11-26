@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Self
 
-from reporting.core.reporting_colors import Color, ReportingColors
+from baseclasses.dataclasses.reporting_colors import Color, ReportingColors
 
 
 @dataclass(frozen=True)

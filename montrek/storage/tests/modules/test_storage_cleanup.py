@@ -7,7 +7,7 @@ from django.core.files.storage import default_storage
 from django.test import TestCase
 from django.utils import timezone
 from storage.modules.storage_cleanup import StorageCleanup
-from testing.decorators.object_storage import object_storage
+from storage.tests.object_storage import object_storage
 
 MAX_AGE = datetime.timedelta(days=7)
 

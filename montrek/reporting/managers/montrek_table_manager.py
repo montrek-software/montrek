@@ -13,7 +13,7 @@ from baseclasses.dataclasses.montrek_message import (
     MontrekMessageError,
     MontrekMessageInfo,
 )
-from baseclasses.managers.montrek_manager import MontrekManager
+from baseclasses.managers.montrek_manager import MontrekTableManagerBase
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.typing import SessionDataType, TableDataType, TableElementsType
 from baseclasses.utils import get_content_type
@@ -59,7 +59,7 @@ class MontrekTableMetaClass(type):
 
 
 class MontrekTableManagerABC(
-    ExcelSheetMixin, MontrekManager, metaclass=MontrekTableMetaClass
+    ExcelSheetMixin, MontrekTableManagerBase, metaclass=MontrekTableMetaClass
 ):
     table_title = ""
     document_title = "Montrek Table"

@@ -14,10 +14,9 @@ from django.contrib.auth.models import Permission
 from baseclasses.views import REST_API_QUERY_PARAM
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
-from django.urls import path, reverse
+from django.urls import include, path, reverse
 from file_upload.managers.file_upload_manager import FileUploadManagerABC
 from file_upload.views import MontrekUploadFileView
-from montrek.urls import urlpatterns as montrek_urlpatterns
 from process_pipeline.managers.montrek_pipeline_managers import TASK_SCHEDULED_MESSAGE
 from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
@@ -115,7 +114,8 @@ urlpatterns = [
         BrowserOnlyUploadTestView.as_view(),
         name="browser_only_upload",
     ),
-    *montrek_urlpatterns,
+    # The project URLconf, whichever apps it routes.
+    path("", include(settings.ROOT_URLCONF)),
 ]
 
 

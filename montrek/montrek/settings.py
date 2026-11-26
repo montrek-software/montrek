@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 from decouple import Csv
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse_lazy
-from reporting.core.reporting_colors import ReportingColors
+from baseclasses.dataclasses.reporting_colors import ReportingColors
 
 from montrek.configuration import config
 from montrek.env_schema import raise_for_invalid_settings

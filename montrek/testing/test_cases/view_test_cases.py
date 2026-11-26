@@ -1,11 +1,13 @@
 import datetime
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, cast
+from urllib.parse import urlparse
 
 import pandas as pd
 from openpyxl import load_workbook
 from unittest.mock import patch
 from baseclasses.access import UNCONFIGURED_PERMISSION
+from baseclasses.signals import document_downloaded
 from baseclasses.views import (
     REST_API_QUERY_PARAM,
     MontrekDeleteView,
@@ -19,12 +21,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import QuerySet
 from django.http import FileResponse
 from django.test import TestCase
-from django.urls import reverse
+from django.urls import resolve, reverse
 from django.views import View
-from info.repositories.download_registry_repositories import DownloadRegistryRepository
-from mailing.repositories.mailing_repository import MailingRepository
 from middleware.permission_error_middleware import get_missing_permission_message
-from reporting.managers.montrek_table_manager import MontrekTableManagerABC
 from testing.decorators.mock_external_get import mock_external_get__report_image
 from testing.decorators.mock_plotly_image_write import mock_plotly_write_dummy_png
 from user.models import MontrekUser
@@ -577,9 +576,18 @@ class MontrekDownloadViewTestCase(MontrekViewTestCase):
         return self.__class__.__name__ == "MontrekDownloadViewTestCase"
 
     def get_response(self):
-        response = self.client.get(
-            self.url, follow=True, query_params=self.query_params()
-        )
+        self.recorded_downloads: list[dict[str, Any]] = []
+
+        def record_download(sender, **kwargs):
+            self.recorded_downloads.append(kwargs)
+
+        document_downloaded.connect(record_download)
+        try:
+            response = self.client.get(
+                self.url, follow=True, query_params=self.query_params()
+            )
+        finally:
+            document_downloaded.disconnect(record_download)
         response.context = {"view": None}
         return response
 
@@ -596,8 +604,9 @@ class MontrekDownloadViewTestCase(MontrekViewTestCase):
         self.additional_download_assertions()
 
     def assert_entry_in_download_registry(self):
-        download_registry = DownloadRegistryRepository()
-        self.assertEqual(download_registry.receive().count(), 1)
+        """The view reported the download once, which the info app stores in
+        its download registry."""
+        self.assertEqual(len(self.recorded_downloads), 1)
 
     def expected_filename(self) -> str:
         raise NotImplementedError(
@@ -671,8 +680,8 @@ class MontrekRestApiViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     def manager_json(self) -> list:
         view = cast(MontrekViewMixin, self.view_class())
         view._session_data = None
-        # REST list views are backed by table managers.
-        manager = cast(MontrekTableManagerABC, view.manager_class({}))
+        # REST list views are backed by table managers, which serialise.
+        manager: Any = view.manager_class({})
         return manager.to_json()
 
     def expected_json(self) -> list | None:
@@ -728,16 +737,6 @@ class MontrekPostActionViewTestCase(MontrekRedirectViewTestCase):
 class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
     expected_number_of_report_elements: int = -1
 
-    @property
-    def mail_success_url(self) -> str:
-        last_mail = MailingRepository({}).receive().last()
-        if last_mail is None:
-            self.fail("No mail was sent")
-        mail_kwargs = {"pk": last_mail.pk}
-        report_manager = self.view.manager
-        mail_kwargs.update(report_manager.get_mail_kwargs())
-        return reverse(report_manager.send_mail_url, kwargs=mail_kwargs)
-
     def _is_base_test_class(self) -> bool:
         return self.__class__.__name__ == "MontrekReportViewTestCase"
 
@@ -751,7 +750,18 @@ class MontrekReportViewTestCase(MontrekViewTestCase, RestApiTestCaseMixin):
         user.user_permissions.set(self.required_user_permissions())
         query_params = self.query_params() | {"send_mail": "true"}
         response = self.client.get(self.url, query_params=query_params)
-        self.assertRedirects(response, self.mail_success_url)
+        self.assert_redirects_to_mail_draft(response)
+
+    def assert_redirects_to_mail_draft(self, response):
+        """The report is attached to a new mail draft, which opens next."""
+        self.assertEqual(response.status_code, 302)
+        report_manager = self.view.manager
+        match = resolve(urlparse(response.url).path)
+        self.assertEqual(match.view_name, report_manager.send_mail_url)
+        self.assertIn("pk", match.kwargs)
+        for key, value in report_manager.get_mail_kwargs().items():
+            self.assertEqual(str(match.kwargs[key]), str(value))
+        self.assertRedirects(response, response.url)
 
     def test_report_content(self):
         if self._is_base_test_class():

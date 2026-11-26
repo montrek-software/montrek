@@ -1,5 +1,5 @@
 from django.test import TestCase
-from reporting.core.reporting_colors import Color, ReportingColors
+from baseclasses.dataclasses.reporting_colors import Color, ReportingColors
 
 
 class TestReportingColors(TestCase):
