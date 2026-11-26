@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 from baseclasses.dataclasses.montrek_type import MontrekType, MontrekTypeEnum
 from django.test import TestCase
-from reporting.core.reporting_colors import ReportingColors
+from baseclasses.dataclasses.reporting_colors import ReportingColors
 
 
 class DummyTypes(MontrekTypeEnum):

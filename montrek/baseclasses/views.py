@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import (
-    FileResponse,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
@@ -26,27 +25,6 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView
 from django.views.generic.list import ListView
 from baseclasses.templatetags.base_tags import project_display_name
-from file_upload.forms import SimpleUploadFileForm
-from file_upload.managers.simple_upload_file_manager import (
-    TABLE_MANAGER_KEY,
-    SimpleUploadFileManager,
-)
-from process_pipeline.functions.selection import get_dotted_path
-from info.managers.download_registry_storage_managers import (
-    DownloadRegistryStorageManager,
-)
-from info.models.download_registry_sat_models import DownloadType
-from reporting.constants import PdfGenMethod
-from reporting.dataclasses.table_elements import LIVE_ROW_PARAM
-from reporting.managers.latex_report_manager import LatexReportManager
-from reporting.managers.weasyprint_pdf_manager import WeasyPrintPdfManager
-from reporting.managers.montrek_details_manager import MontrekDetailsManager
-from reporting.managers.montrek_table_manager import (
-    HistoryDataTableManager,
-    MontrekDataFrameTableManager,
-    MontrekTableManager,
-    MontrekTableManagerABC,
-)
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -55,7 +33,8 @@ from rest_api.authentication import MontrekApiAuthentication
 
 from baseclasses import utils
 from baseclasses.access import AccessKind, permissions_for_view
-from baseclasses.dataclasses.montrek_message import MontrekMessageError
+from baseclasses.constants import LIVE_ROW_PARAM, PdfGenMethod
+from baseclasses.dataclasses.download_type import DownloadType
 from baseclasses.dataclasses.view_classes import ActionElement
 from baseclasses.forms import (
     DateRangeForm,
@@ -67,12 +46,16 @@ from baseclasses.forms import (
 )
 from baseclasses.parameter_forms import SUBMITTED_FORM_PARAM, ParameterForms
 from baseclasses.managers.montrek_manager import (
+    MontrekDetailsManagerBase,
     MontrekManager,
     MontrekManagerNotImplemented,
+    MontrekTableManagerBase,
 )
 from baseclasses.pages import MontrekPage, NoPage
 from baseclasses.sanitizer import HtmlSanitizer
-from baseclasses.typing import SessionDataType
+from baseclasses.signals import document_downloaded
+from baseclasses.typing import SessionDataType, TableRowManagerProtocol
+from baseclasses.view_plugins import ViewPlugins
 from baseclasses.utils import TableMetaSessionData, get_content_type
 
 logger = logging.getLogger(__name__)
@@ -234,6 +217,14 @@ class MontrekViewMixin:
     def get_view_queryset(self):
         return self.manager.repository.receive()
 
+    def record_download(self, download_type: DownloadType) -> None:
+        document_downloaded.send(
+            sender=type(self),
+            session_data=self.session_data,
+            document_name=self.manager.document_name,
+            download_type=download_type,
+        )
+
 
 class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
     """Permission gate of every Montrek view.
@@ -277,43 +268,28 @@ class MontrekPermissionRequiredMixin(PermissionRequiredMixin):
 class ToPdfMixin:
     pdf_gen_method: PdfGenMethod = PdfGenMethod.WEASYPRINT
 
-    def list_to_pdf(self):
-        if self.pdf_gen_method == PdfGenMethod.LATEX:
-            return self.list_to_pdf_latex()
-        return self._list_to_pdf_weasyprint()
+    if TYPE_CHECKING:
+        # Provided by MontrekViewMixin, which comes first in the views.
+        request: Any
+        manager: Any
 
-    def _list_to_pdf_weasyprint(self):
-        """HTML → PDF via WeasyPrint."""
-        manager = WeasyPrintPdfManager(self.manager)
-        pdf_bytes = manager.generate_pdf()
-        if not pdf_bytes:
-            self.manager.messages.append(
-                MontrekMessageError("PDF generation failed. Please try again.")
-            )
-        self.show_messages()
-        if pdf_bytes:
-            DownloadRegistryStorageManager(
-                self.session_data
-            ).store_in_download_registry(self.manager.document_name, DownloadType.PDF)
-            filename = f"{self.manager.document_name}.pdf"
-            response = HttpResponse(pdf_bytes, content_type="application/pdf")
-            response["Content-Disposition"] = f'attachment; filename="{filename}"'
-            return response
-        previous_url = utils.get_safe_redirect_url(
-            self.request, self.request.META.get("HTTP_REFERER"), self.request.path
-        )
-        return HttpResponseRedirect(previous_url)
+        def show_messages(self) -> None: ...
+
+        def record_download(self, download_type: DownloadType) -> None: ...
+
+    def list_to_pdf(self):
+        return self._pdf_response(self.pdf_gen_method)
 
     def list_to_pdf_latex(self):
         """Opt-in LaTeX path: full XeLaTeX typesetting (?gen_pdf=latex)."""
-        report_manager = LatexReportManager(self.manager)
-        pdf = report_manager.compile_pdf()
+        return self._pdf_response(PdfGenMethod.LATEX)
+
+    def _pdf_response(self, method: PdfGenMethod):
+        response = ViewPlugins.render_pdf(method, self.manager)
         self.show_messages()
-        if pdf is not None:
-            DownloadRegistryStorageManager(
-                self.session_data
-            ).store_in_download_registry(self.manager.document_name, DownloadType.PDF)
-            return FileResponse(pdf, content_type="application/pdf", filename=pdf.name)
+        if response is not None:
+            self.record_download(DownloadType.PDF)
+            return response
         previous_url = utils.get_safe_redirect_url(
             self.request, self.request.META.get("HTTP_REFERER"), self.request.path
         )
@@ -402,7 +378,7 @@ class MontrekLiveRowMixin:
         request: Any
 
         @property
-        def manager(self) -> MontrekTableManagerABC: ...
+        def manager(self) -> TableRowManagerProtocol: ...
 
     def dispatch(self, request, *args, **kwargs):
         if request.method == "GET" and self.is_live_row_request(request):
@@ -517,11 +493,9 @@ class MontrekListView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context = self.get_page_context(context, **kwargs)
-        if not isinstance(
-            self.manager, MontrekTableManager | MontrekDataFrameTableManager
-        ):
+        if not isinstance(self.manager, MontrekTableManagerBase):
             raise ValueError(
-                f"Manager {self.manager.__class__.__name__} must be of type MontrekTableManager or MontrekDataFrameTableManager"
+                f"Manager {self.manager.__class__.__name__} must be a table manager"
             )
         table = self.manager.to_html()
         # After rendering, which may add messages, e.g. from the summary row
@@ -546,37 +520,29 @@ class MontrekListView(
             for i in range(filter_count)
         ]
         if self.do_simple_file_upload:
-            context["upload_form"] = SimpleUploadFileForm(".xlsx,.csv")
+            context["upload_form"] = ViewPlugins.simple_file_upload().get_form()
 
         context["do_simple_file_upload"] = self.do_simple_file_upload
         return context
 
     def list_to_csv(self):
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.CSV
-        )
+        self.record_download(DownloadType.CSV)
         response = self.manager.download_or_mail_csv()
         self.show_messages()
         return response
 
     def list_to_excel(self):
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.XLSX
-        )
+        self.record_download(DownloadType.XLSX)
         response = self.manager.download_or_mail_excel()
         self.show_messages()
         return response
 
     def list_to_rest_api(self):
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.API
-        )
+        self.record_download(DownloadType.API)
         return Response(self.manager.to_json(), status=status.HTTP_200_OK)
 
     def list_to_markdown(self):
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.MD
-        )
+        self.record_download(DownloadType.MD)
         response = self.manager.download_or_mail_markdown()
         self.show_messages()
         return response
@@ -641,28 +607,9 @@ class MontrekListView(
         upload_permission = self.get_simple_file_upload_permission()
         if upload_permission and not request.user.has_perms(upload_permission):
             raise PermissionDenied
-        form = SimpleUploadFileForm(".xlsx,.csv", request.POST, request.FILES)
-        if form.is_valid():
-            session_data = self.session_data.copy()
-            session_data["overwrite"] = form.cleaned_data["overwrite"]
-            file_upload_manager = SimpleUploadFileManager(
-                session_data=session_data,
-                **self.kwargs,
-            )
-            file_upload_manager.set_pipeline_data(
-                {TABLE_MANAGER_KEY: get_dotted_path(self.manager_class)}
-            )
-            result = file_upload_manager.upload_and_process(request.FILES["file"])
-            if result:
-                messages.info(
-                    request,
-                    file_upload_manager.processor.message,
-                )
-            else:
-                messages.error(
-                    request,
-                    file_upload_manager.processor.message,
-                )
+        ViewPlugins.simple_file_upload().upload(
+            request, self.session_data, self.manager_class, self.kwargs
+        )
         return HttpResponseRedirect(self.request.path)
 
 
@@ -694,10 +641,10 @@ class MontrekHistoryListView(MontrekTemplateView):
         history_querysets = self.manager.repository.get_history_queryset(
             pk=self.kwargs["pk"]
         )
-
+        history_table_manager_class = ViewPlugins.history_table_manager_class()
         return {
             "history_data_tables": [
-                HistoryDataTableManager(
+                history_table_manager_class(
                     session_data=self.session_data,
                     title=queryset,
                     queryset=history_querysets[queryset],
@@ -727,7 +674,7 @@ class MontrekDetailView(
     @property
     def manager(self):
         if self._manager is None:
-            if issubclass(self.manager_class, MontrekDetailsManager):
+            if issubclass(self.manager_class, MontrekDetailsManagerBase):
                 self._manager = self.manager_class(
                     self.session_data, object_query=self._prefetched_object
                 )
@@ -745,9 +692,9 @@ class MontrekDetailView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if not isinstance(self.manager, MontrekDetailsManager):
+        if not isinstance(self.manager, MontrekDetailsManagerBase):
             raise ValueError(
-                f"Manager {self.manager_class.__name__} must be of type MontrekDetailsManager"
+                f"Manager {self.manager_class.__name__} must be a details manager"
             )
         context = self.get_page_context(context, **kwargs)
         context["table"] = self.manager.to_html()
@@ -779,9 +726,7 @@ class MontrekDetailView(
         response = HttpResponse()
         self.manager.to_excel(response, sheet_name=self.excel_sheet_name)
         filename = f"{self.manager.document_name}.xlsx"
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.XLSX
-        )
+        self.record_download(DownloadType.XLSX)
         response["Content-Type"] = get_content_type(filename)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         self.show_messages()
@@ -792,9 +737,7 @@ class MontrekDetailView(
         the Excel export is."""
         filename = f"{self.manager.document_name}.md"
         response = HttpResponse(self.manager.to_markdown())
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.MD
-        )
+        self.record_download(DownloadType.MD)
         response["Content-Type"] = get_content_type(filename)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         self.show_messages()
@@ -1105,9 +1048,9 @@ class MontrekHtmxRowRenderMixin:
     other page fragments (summaries, counters) can refresh themselves.
     """
 
-    row_table_manager_class: type[MontrekTableManager] | None = None
+    row_table_manager_class: type[TableRowManagerProtocol] | None = None
     hx_trigger_event: str | None = None
-    _row_table_manager: MontrekTableManager | None = None
+    _row_table_manager: TableRowManagerProtocol | None = None
 
     if TYPE_CHECKING:
 
@@ -1115,7 +1058,7 @@ class MontrekHtmxRowRenderMixin:
         def session_data(self) -> SessionDataType: ...
 
     @property
-    def row_table_manager(self) -> MontrekTableManager:
+    def row_table_manager(self) -> TableRowManagerProtocol:
         if self._row_table_manager is None:
             if self.row_table_manager_class is None:
                 raise NotImplementedError(
@@ -1387,8 +1330,6 @@ class MontrekDownloadView(MontrekPermissionRequiredMixin, MontrekViewMixin, View
         response["Content-Type"] = content_type
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         ext = Path(filename).suffix.lstrip(".").lower()
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType(ext)
-        )
+        self.record_download(DownloadType(ext))
         self.show_messages()
         return response

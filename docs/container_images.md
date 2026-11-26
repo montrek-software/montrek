@@ -71,7 +71,7 @@ extension app, which reads its own settings (listed in that app's
 `env.schema.toml`); core installs no cloud SDK. The `storage` system check
 creates the configured storage once, so a wrong path or a missing setting fails
 `migrate`, and with it the release step, rather than the first upload. A backend
-passes `testing/test_cases/storage_contract_test_case.py`, the behaviour the
+passes `storage/tests/storage_contract_test_case.py`, the behaviour the
 storage code relies on; core runs it against the filesystem and against the
 object storage stand-in the other tests use. Upload processors that read the file
 by path get the stored file's path, or a temporary copy on a backend without

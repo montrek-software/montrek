@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from reporting.core.reporting_colors import Color, ReportingColors
+from baseclasses.dataclasses.reporting_colors import Color, ReportingColors
 
 
 @dataclass

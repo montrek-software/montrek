@@ -12,12 +12,10 @@ from baseclasses.dataclasses.view_classes import (
     ListActionElement,
     LockActionElement,
 )
-from baseclasses.pages import MontrekPage
 from baseclasses.templatetags.base_tags import project_display_name
-from baseclasses.tests.mocks import MockRepository
+from baseclasses.tests.mocks import MockPage, MockRepository, MockRequester
 from baseclasses.views import (
     MontrekCreateUpdateView,
-    MontrekDetailView,
     MontrekListView,
     MontrekPageViewMixin,
     MontrekPostActionView,
@@ -29,76 +27,17 @@ from baseclasses.views import (
 )
 from bs4 import BeautifulSoup
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
-from django.contrib.messages.middleware import MessageMiddleware
-from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.template.loader import render_to_string
-from django.test import RequestFactory, TestCase, override_settings
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from info.repositories.download_registry_repositories import DownloadRegistryRepository
-from reporting.dataclasses import table_elements as te
-from reporting.managers.montrek_table_manager import MontrekTableManager
 from testing.decorators.add_logged_in_user import add_logged_in_user
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 
-class MockRequester:
-    request: Any
-
-    def add_mock_request(self, url: str):
-        self.request = RequestFactory().get(url)
-        self._pass_request_to_middleware()
-
-    def add_mock_request_post(self, url: str, data: dict):
-        self.request = RequestFactory().post(url, data)
-        self._pass_request_to_middleware()
-
-    def _pass_request_to_middleware(self):
-        self.request.user = AnonymousUser()
-        session_middleware = SessionMiddleware(lambda request: None)
-        session_middleware.process_request(self.request)
-        self.request.session.save()
-        message_middleware = MessageMiddleware(lambda request: None)
-        message_middleware.process_request(self.request)
-
-
-class MockManager(MontrekTableManager):
+class MockManager(MontrekManager):
     repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
-
-    @property
-    def table_elements(self):
-        return [
-            te.StringTableElement(attr="field", name="Field"),
-            te.IntTableElement(attr="value", name="Value"),
-            te.LinkTableElement(
-                name="Link",
-                url="home",
-                kwargs={},
-                hover_text="Link",
-                icon="icon",
-            ),
-        ]
-
-
-class MockFooter:
-    def to_latex(self):
-        return "Guten Abend"
-
-
-class MockManager2(MontrekManager):
-    repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
-    document_title = "Guten Tag!"
-    footer_text = MockFooter()
-    draft = True
-    document_name = "whats your name"
-
-    def to_latex(self):
-        return "Hallo!"
-
-    def to_pdf_html(self) -> str:
-        return "<p>Test PDF content</p>"
 
 
 class MockMontrekView(MontrekViewMixin, MockRequester, MontrekPageViewMixin):
@@ -107,12 +46,6 @@ class MockMontrekView(MontrekViewMixin, MockRequester, MontrekPageViewMixin):
     def __init__(self, url: str):
         super().__init__()
         self.add_mock_request(url)
-
-
-class MockPage(MontrekPage):
-    @property
-    def tabs(self):
-        return []
 
 
 class MockMontrekTemplateViewNoMethods(MontrekTemplateView, MockRequester):
@@ -128,24 +61,6 @@ class MockMontrekTemplateView(MockMontrekTemplateViewNoMethods):
 
     def get_template_context(self) -> dict:
         return {}
-
-
-class MockMontrekListViewWrongManager(MontrekListView, MockRequester):
-    manager_class = MockManager2
-    page_class = MockPage
-
-    def __init__(self, url: str):
-        super().__init__()
-        self.add_mock_request(url)
-
-
-class MockMontrekDetailViewWrongManager(MontrekDetailView, MockRequester):
-    manager_class = MockManager2
-    is_hub_based = False
-
-    def __init__(self, url: str):
-        super().__init__()
-        self.add_mock_request(url)
 
 
 class MockErrors:
@@ -249,7 +164,7 @@ class TestHomeView(TestCase):
                 self.assertEqual(_get_greeting(), expected, msg=f"hour={hour}")
 
     @add_logged_in_user
-    def test_home_page_shows_greeting_and_launchpad(self):
+    def test_home_page_shows_greeting(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         soup = BeautifulSoup(response.content, "html.parser")
@@ -257,12 +172,6 @@ class TestHomeView(TestCase):
         greeting = soup.find(class_="home-hero-greeting")
         self.assertIsNotNone(greeting)
         self.assertTrue(greeting.text.strip().startswith("Guten"))
-
-        cards = soup.find_all("a", class_="launchpad-card")
-        self.assertGreater(len(cards), 0)
-        card_hrefs = [card["href"] for card in cards]
-        self.assertIn("/montrek_example/", card_hrefs)
-        self.assertIn("/mailing/overview", card_hrefs)
 
     def test_project_display_name_formatting(self):
         with override_settings(PROJECT_NAME="mt_test_project"):
@@ -274,15 +183,6 @@ class TestHomeView(TestCase):
         response = self.client.get(reverse("home"))
         soup = BeautifulSoup(response.content, "html.parser")
         self.assertEqual(soup.title.text.strip(), "Test Project")
-
-    @add_logged_in_user
-    @override_settings(PROJECT_NAME="mt_test_project")
-    def test_browser_title_prefixes_page_title(self):
-        response = self.client.get("/montrek_example/")
-        soup = BeautifulSoup(response.content, "html.parser")
-        title = soup.title.text.strip()
-        self.assertTrue(title.endswith("– Test Project"), msg=title)
-        self.assertGreater(len(title), len("– Test Project"))
 
 
 class TestUnderConstruction(TestCase):
@@ -480,285 +380,6 @@ class MockMontrekListView(MontrekListView, MockRequester):
     def __init__(self, url: str):
         super().__init__()
         self.add_mock_request(url)
-
-
-class MockManagerMessageWhileRendering(MockManager):
-    def to_html(self):
-        html = super().to_html()
-        self.add_message(MontrekMessageWarning("Added while rendering"))
-        return html
-
-
-class MockMontrekListViewMessageWhileRendering(MockMontrekListView):
-    manager_class = MockManagerMessageWhileRendering
-
-
-class MockManagerPdfFails(MontrekTableManager):
-    repository_class = MockRepository  # type: ignore[assignment]  # test double, not a MontrekRepository
-
-    def to_latex(self):
-        return "\\textbf{This is a bold text with a missing closing brace."
-
-    def to_pdf_html(self) -> str:
-        raise RuntimeError("WeasyPrint PDF generation intentionally broken")
-
-
-class MockMontrekListViewPdfFails(MontrekListView, MockRequester):
-    manager_class = MockManagerPdfFails
-    page_class = MockPage
-    kwargs = {}
-
-    def __init__(self, url: str):
-        super().__init__()
-        self.add_mock_request(url)
-
-
-class TestMontrekListView(TestCase):
-    def test_list_view_shows_messages_added_while_rendering(self):
-        test_list_view = MockMontrekListViewMessageWhileRendering("dummy")
-
-        test_list_view.get(test_list_view.request)
-
-        messages = [message.message for message in get_messages(test_list_view.request)]
-        self.assertEqual(messages, ["Added while rendering"])
-
-    def test_list_view_base_normal_load(self):
-        """
-        Test that the page loads normally without the `gen_csv` query parameter.
-        """
-        test_list_view = MockMontrekListView("dummy")
-        response = test_list_view.get(test_list_view.request)
-        self.assertEqual(response.status_code, 200)
-
-    @add_logged_in_user()
-    def test_list_view_base_csv_generation(self):
-        test_list_view = MockMontrekListView("dummy?gen_csv=true")
-        test_list_view.kwargs = {"user_id": self.user.id}
-        response = test_list_view.get(test_list_view.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertTrue(
-            response["Content-Disposition"].startswith('attachment; filename="')
-        )
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 1)
-
-    @add_logged_in_user()
-    def test_list_view_base_excel_generation(self):
-        test_list_view = MockMontrekListView("dummy?gen_excel=true")
-        test_list_view.kwargs = {"user_id": self.user.id}
-        response = test_list_view.get(test_list_view.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response["Content-Type"],
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        self.assertTrue(
-            response["Content-Disposition"].startswith('attachment; filename="')
-        )
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 1)
-
-    @add_logged_in_user()
-    def test_list_view_base_markdown_generation(self):
-        test_list_view = MockMontrekListView("dummy?gen_md=true")
-        test_list_view.kwargs = {"user_id": self.user.id}
-        response = test_list_view.get(test_list_view.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "text/markdown")
-        self.assertTrue(
-            response["Content-Disposition"].startswith('attachment; filename="')
-        )
-        self.assertTrue(response["Content-Disposition"].endswith('.md"'))
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 1)
-
-    @add_logged_in_user()
-    def test_list_view_base_pdf_generation(self):
-        test_list_view = MockMontrekListView("dummy?gen_pdf=true")
-        test_list_view.kwargs = {"user_id": self.user.id}
-
-        response = test_list_view.get(test_list_view.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 1)
-
-    @override_settings(IS_TEST_RUN=False)
-    @add_logged_in_user()
-    def test_list_view_base_pdf_generation__fails(self):
-        test_list_view = MockMontrekListViewPdfFails("dummy?gen_pdf=true")
-        test_list_view.kwargs = {"user_id": self.user.id}
-        response = test_list_view.get(test_list_view.request)
-        self.assertEqual(response.status_code, 302)
-        self.assertGreater(len(test_list_view.manager.messages), 0)
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 0)
-
-    def test_list_view_base_filter_reset(self):
-        mock_view = MockMontrekListView(
-            "/dummy?filter_field=field1&filter_negate=false&filter_lookup=in&filter_value=value1,value2"
-        )
-        response = mock_view.get(mock_view.request)
-        self.assertNotEqual(mock_view.request.session["filter"]["/dummy"], {})
-        test_list_view = MockMontrekListView("dummy?action=reset")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(test_list_view.request.session["filter"]["/dummy"], {})
-
-    def test_list_view_base_filter_add(self):
-        test_list_view = MockMontrekListView("dummy?action=add_filter")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(test_list_view.request.session["filter_count"]["/dummy"], 2)
-
-    def test_get_context_data__raise_error(self):
-        test_view = MockMontrekListViewWrongManager("/")
-        test_view.kwargs = {}
-        self.assertRaises(ValueError, test_view.get_context_data, **{"object_list": []})
-
-    def test_list_view_base__add_paginate_by(self):
-        test_list_view = MockMontrekListView("dummy?action=add_paginate_by")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 15)
-
-    def test_list_view_base__sub_paginate_by(self):
-        test_list_view = MockMontrekListView("dummy?action=sub_paginate_by")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(test_list_view.request.session["paginate_by"]["/dummy"], 5)
-
-    def test_list_view_base__set_is_compact_format__true(self):
-        test_list_view = MockMontrekListView("dummy?action=is_compact_format_true")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["is_compact_format"]["/dummy"], True
-        )
-
-    def test_list_view_base__set_is_compact_format__false(self):
-        test_list_view = MockMontrekListView("dummy?action=is_compact_format_false")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["is_compact_format"]["/dummy"], False
-        )
-
-    def test_list_view_base__order_field(self):
-        test_list_view = MockMontrekListView("dummy?order_action=field_a&page=2")
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["order_fields"]["/dummy"], ["field_a"]
-        )
-        self.assertEqual(test_list_view.request.session["pages"]["/dummy"], ["1"])
-        request = test_list_view.request
-        test_list_view = MockMontrekListView("dummy?order_action=field_b")
-        test_list_view.request.session["order_fields"] = request.session["order_fields"]
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
-        )
-        request = test_list_view.request
-        test_list_view = MockMontrekListView("dummy?order_action=field_b")
-        test_list_view.request.session["order_fields"] = request.session["order_fields"]
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["order_fields"]["/dummy"], ["-field_b"]
-        )
-        request = test_list_view.request
-        test_list_view = MockMontrekListView("dummy?order_action=field_b")
-        test_list_view.request.session["order_fields"] = request.session["order_fields"]
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["order_fields"]["/dummy"], [None]
-        )
-        request = test_list_view.request
-        test_list_view = MockMontrekListView("dummy?order_action=field_b")
-        test_list_view.request.session["order_fields"] = request.session["order_fields"]
-        response = test_list_view.get(test_list_view.request)
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            test_list_view.request.session["order_fields"]["/dummy"], ["field_b"]
-        )
-
-
-class TestMontrekDetailView(TestCase):
-    @add_logged_in_user()
-    def test_gen_pdf(self):
-        test_view = MockMontrekDetailViewWrongManager("dummy?gen_pdf=true")
-        test_view.kwargs = {"user_id": self.user.id}
-        response = test_view.get(test_view.request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        repo = DownloadRegistryRepository()
-        self.assertEqual(repo.receive().count(), 1)
-
-    def test_get_context_data__raise_error(self):
-        test_view = MockMontrekDetailViewWrongManager("/")
-        test_view.kwargs = {}
-        test_view.object = []
-        self.assertRaises(ValueError, test_view.get_context_data)
-
-
-class TestNavbar(TestCase):
-    def setUp(self) -> None:
-        self.factory = RequestFactory()
-
-    @add_logged_in_user
-    @override_settings(DEBUG=False)
-    def test_navbar(self):
-        response = self.client.get(reverse("home"))
-        self.assertEqual(response.status_code, 200)
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # Check "Home" link
-        home_link = soup.find("a", href="/home")
-        self.assertIsNotNone(home_link)
-        self.assertEqual(home_link.text.strip(), "Home")
-
-        # Check Dropdown for "Montrek Example"
-        dropdown = soup.find("li", class_="dropdown")
-        self.assertIsNotNone(dropdown)
-
-        # Verify dropdown title
-        dropdown_toggle = dropdown.find("a", class_="dropdown-toggle")
-        self.assertIsNotNone(dropdown_toggle)
-        self.assertIn("Montrek Example", dropdown_toggle.text)
-
-        # Verify dropdown items
-        dropdown_items = dropdown.find_all("li")
-        self.assertEqual(len(dropdown_items), 1)  # Should contain one item
-
-        dropdown_link = dropdown_items[0].find("a")
-        self.assertIsNotNone(dropdown_link)
-        self.assertEqual(dropdown_link.text.strip(), "Montrek Example Report")
-        self.assertEqual(dropdown_link["href"], "/montrek_example/")
-
-        # Check individual "Mailing" link (not inside dropdown)
-        mailing_link = soup.find("a", href="/mailing/overview")
-        self.assertIsNotNone(mailing_link)
-        self.assertEqual(mailing_link.text.strip(), "Mailing")
-
-        # Check individual "Info" link (renamed)
-        mailing_link = soup.find("a", href="/info/info")
-        self.assertIsNotNone(mailing_link)
-        self.assertEqual(mailing_link.text.strip(), "Amazing App")
 
 
 class TestMontrekTemplateView(TestCase):

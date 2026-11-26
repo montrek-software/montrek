@@ -13,10 +13,6 @@ from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekHubFactory,
 )
 from baseclasses.tests.factories.montrek_factory_schemas import ValueDateListFactory
-from info.models.test_models import TestHubValueDateA
-from montrek_example.models import example_models as me_models
-from montrek_example.repositories.hub_c_repository import HubCRepository
-from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 DATE = datetime.date(2024, 1, 15)
 
@@ -57,21 +53,6 @@ class TestValueDateCopyIsWritten(TestCase):
                 )
             ),
             [None],
-        )
-
-    def test_create_by_dict_copies_the_date(self):
-        user = MontrekUserFactory()
-        hub = HubCRepository({"user_id": user.pk}).create_by_dict(
-            {"field_tsc2_float": 0.1, "value_date": DATE}
-        )
-
-        self.assertEqual(
-            list(
-                me_models.CHubValueDate.objects.filter(
-                    hub=hub, value_date_list__value_date=DATE
-                ).values_list("value_date_copy", flat=True)
-            ),
-            [DATE],
         )
 
 
@@ -157,11 +138,6 @@ class TestCheck(TestCase):
         TestHubValueDate.objects.filter(pk=row.pk).update(value_date_copy=None)
 
         self.assertEqual(self._finding().stale_copies, 1)
-
-
-class TestModels(TestCase):
-    def test_leaves_out_unmanaged_models(self):
-        self.assertNotIn(TestHubValueDateA, HubValueDateCopy(["info"]).models)
 
 
 class TestCheckHubValueDatesCommand(TestCase):

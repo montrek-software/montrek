@@ -95,3 +95,16 @@ class MontrekManagerNotImplemented(MontrekManager):
         raise NotImplementedError(
             "Assign valid MontrekManager class to views manager_class attribute"
         )
+
+
+class MontrekTableManagerBase(MontrekManager):
+    """Base of the managers a ``MontrekListView`` renders as its table.
+
+    The table managers themselves live in the reporting app, which builds on
+    this one; the views only need to recognise them.
+    """
+
+
+class MontrekDetailsManagerBase(MontrekManager):
+    """Base of the managers a ``MontrekDetailView`` renders, see
+    ``MontrekTableManagerBase``."""

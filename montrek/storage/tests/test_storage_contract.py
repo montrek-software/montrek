@@ -3,7 +3,7 @@ import tempfile
 from django.test import SimpleTestCase, override_settings
 
 from montrek.storage_settings import FILESYSTEM_BACKEND
-from testing.test_cases.storage_contract_test_case import StorageContractTests
+from storage.tests.storage_contract_test_case import StorageContractTests
 
 
 class TestFileSystemStorageContract(StorageContractTests, SimpleTestCase):
@@ -24,4 +24,4 @@ class TestObjectStorageContract(StorageContractTests, SimpleTestCase):
     """The stand-in the other tests use for an object storage."""
 
     def default_storage_settings(self):
-        return {"BACKEND": "testing.decorators.object_storage.ObjectStorage"}
+        return {"BACKEND": "storage.tests.object_storage.ObjectStorage"}

@@ -31,13 +31,10 @@ class MontrekTestRunner(DiscoverRunner):
             "ADMIN_MAILING_LIST": "test_admin@example.com",
             "CELERY_TASK_ALWAYS_EAGER": 1,
             "CELERY_TASK_EAGER_PROPAGATES": 1,
-            "NAVBAR_APPS": [
-                "mailing",
-                "info",
-                "montrek_example.montrek_example_report",
-                "",
-            ],
-            "NAVBAR_RENAME": {"info": "Amazing App"},
+            # Empty, as the apps an install has differ; the tests of the
+            # navigation set their own.
+            "NAVBAR_APPS": [],
+            "NAVBAR_RENAME": {},
             "MONTREK_EXTENSION_APPS": ["app1", "app2", "mt_dummy.app3"],
             "ENABLE_KEYCLOAK": False,
             "ENABLE_OIDC": False,

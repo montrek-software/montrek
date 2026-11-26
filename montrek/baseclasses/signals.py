@@ -1,6 +1,13 @@
 import sys
 
+from django.dispatch import Signal
+
 from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
+
+# Sent by the base views for every document they hand out, with the keyword
+# arguments ``session_data``, ``document_name`` and ``download_type`` (a
+# ``DownloadType``). The info app records it in its download registry.
+document_downloaded = Signal()
 
 
 def fill_hub_value_date_copies(verbosity: int = 1, **kwargs) -> None:

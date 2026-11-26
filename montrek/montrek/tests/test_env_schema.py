@@ -25,8 +25,7 @@ from montrek.env_schema import (
     load_schema,
     raise_for_invalid_settings,
 )
-from montrek.tests.test_configuration import ConfigurationTestCase
-from testing.test_cases.view_test_cases import TEST_USER_PASSWORD
+from montrek.tests.test_configuration import TEST_DB_PASSWORD, ConfigurationTestCase
 
 SETTINGS_FILE = Path(__file__).resolve().parent.parent / "settings.py"
 # Every module that reads settings for settings.py.
@@ -207,7 +206,7 @@ class TestRaiseForInvalidSettings(ConfigurationTestCase):
         self.isolate_environment(
             {
                 "SECRET_KEY": "s",
-                "DB_PASSWORD": TEST_USER_PASSWORD,
+                "DB_PASSWORD": TEST_DB_PASSWORD,
                 "GUNICORN_WORKERS": "many",
             }
         )

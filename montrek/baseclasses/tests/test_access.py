@@ -28,13 +28,12 @@ from baseclasses.access import (
     permissions_for_view,
     resolve_app_policy,
 )
-from reporting.views import MontrekReportFieldEditView, MontrekReportView
 
 # The app a view is restricted through is resolved from the view class'
 # __module__, so the tests borrow a real app rather than inventing a module
 # path that belongs to nothing.
-HOST_APP = "montrek_example"
-HOST_MODULE = "montrek_example.views"
+HOST_APP = "rest_api"
+HOST_MODULE = "rest_api.views"
 
 
 class AccessTestPermissions(Enum):
@@ -64,10 +63,11 @@ class RestrictedAppTestCase(TestCase):
     """Turn ``HOST_APP`` into a restricted app for the duration of a test."""
 
     access_permissions: dict = FULL_PERMISSIONS
+    host_app = HOST_APP
 
     def setUp(self):
         super().setUp()
-        app_config = apps.get_app_config(HOST_APP)
+        app_config = apps.get_app_config(self.host_app)
         patches = [
             mock.patch.object(
                 app_config, "access_policy", AccessPolicy.RESTRICTED, create=True
@@ -245,7 +245,6 @@ class TestBaseViewAccessKinds(TestCase):
         views.MontrekDetailView: AccessKind.VIEW,
         views.MontrekDownloadView: AccessKind.VIEW,
         views.MontrekRestApiView: AccessKind.VIEW,
-        MontrekReportView: AccessKind.VIEW,
         views.MontrekCreateView: AccessKind.CREATE,
         views.MontrekCreateUpdateView: AccessKind.UPDATE,
         views.MontrekUpdateView: AccessKind.UPDATE,
@@ -253,7 +252,6 @@ class TestBaseViewAccessKinds(TestCase):
         views.MontrekRedirectView: AccessKind.UPDATE,
         views.MontrekPostActionView: AccessKind.UPDATE,
         views.MontrekHtmxRowActionView: AccessKind.UPDATE,
-        MontrekReportFieldEditView: AccessKind.UPDATE,
         views.MontrekDeleteView: AccessKind.DELETE,
     }
 
@@ -390,23 +388,6 @@ class TestMalformedPermissionsDenyRatherThanRaise(TestCase):
         self.assertEqual(permissions, (UNCONFIGURED_PERMISSION,))
 
 
-class TestStartupChecksSurviveAMalformedApp(RestrictedAppTestCase):
-    """The checks must report a malformed app, not die on it."""
-
-    access_permissions = [object()]  # type: ignore[assignment]  # deliberately malformed
-
-    def test_view_check_reports_instead_of_raising(self):
-        from baseclasses.checks import check_restricted_app_views
-
-        with self.assertLogs("baseclasses.access", level="ERROR"):
-            errors = check_restricted_app_views()
-
-        # The gated views resolve to the unobtainable permission, which is what
-        # E004 reports. That the call returned at all is the point: before the
-        # resolver was made to fail closed it raised here.
-        self.assertIn("montrek.E004", {error.id for error in errors})
-
-
 class TestNavigationRedirectView(TestCase):
     """The navigational redirect reads; MontrekRedirectView writes."""
 
@@ -443,14 +424,10 @@ class TestNavigationRedirectView(TestCase):
         return view
 
     def test_fixed_kwargs_are_reversed_into_the_target(self):
-        docs_name = "01_montrek_software_architecture"
-        view = self._view(
-            pattern_name="montrek_docs", pattern_kwargs={"docs_name": docs_name}
-        )
+        view = self._view(pattern_name="dummy_detail", pattern_kwargs={"pk": 7})
 
         self.assertEqual(
-            view.get_redirect_url(),
-            reverse("montrek_docs", kwargs={"docs_name": docs_name}),
+            view.get_redirect_url(), reverse("dummy_detail", kwargs={"pk": 7})
         )
 
     def test_without_fixed_kwargs_it_behaves_like_redirect_view(self):

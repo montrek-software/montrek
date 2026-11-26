@@ -9,10 +9,13 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from baseclasses.views import REST_API_QUERY_PARAM
 from rest_api.authentication import MontrekApiAuthentication
+from testing.api_test_views import ApiTestUrls
 from user.tests.factories.montrek_user_factories import MontrekUserFactory
 
 KEYCLOAK_TOKEN = "issued.by.keycloak"  # noqa: S105 - dummy test token  # nosec B105
 OIDC_AUTHENTICATE = "mozilla_django_oidc.contrib.drf.OIDCAuthentication.authenticate"
+
+urlpatterns = ApiTestUrls.urlpatterns()
 
 
 def request_with_token(token: str | None):
@@ -75,13 +78,14 @@ class TestMontrekApiAuthentication(TestCase):
         oidc_authenticate.assert_not_called()
 
 
+@override_settings(ROOT_URLCONF=__name__)
 class TestRestApiViewWithKeycloakToken(TestCase):
     def setUp(self):
         self.user = MontrekUserFactory()
 
     def get_uploads(self):
         return self.client.get(
-            reverse("a1_view_uploads"),
+            reverse("api_test_rest"),
             query_params={REST_API_QUERY_PARAM: "true"},
             headers={"Authorization": f"Bearer {KEYCLOAK_TOKEN}"},
         )

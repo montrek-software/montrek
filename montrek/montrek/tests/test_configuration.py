@@ -20,6 +20,9 @@ from montrek.configuration import (
 )
 
 
+TEST_DB_PASSWORD = "S3cret!123"  # nosec B105 #noqa S105 : test-only password
+
+
 class ConfigurationTestCase(SimpleTestCase):
     """Base class providing an isolated .env file and secrets directory."""
 
