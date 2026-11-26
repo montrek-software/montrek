@@ -389,6 +389,18 @@ class TestMontrekTemplateView(TestCase):
         test_view.get_context_data(**kwargs)
         self.assertEqual(test_view.kwargs, kwargs)
 
+    def test_renders_the_default_page(self):
+        test_view = MockMontrekTemplateView("/")
+        test_view.title = "Default Page"
+
+        response = test_view.get(test_view.request)
+        response.render()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template_name, ["montrek.html"])
+        soup = BeautifulSoup(response.content, "html.parser")
+        self.assertIn("Default Page", soup.get_text())
+
     def test_no_get_template_context(self):
         test_view = MockMontrekTemplateViewNoMethods("/")
         self.assertRaises(NotImplementedError, test_view.get_context_data)
