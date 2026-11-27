@@ -516,10 +516,18 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers.DatabaseScheduler"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    # Time, logger and level on every line: the platform's log view shows the
+    # bare line, and without them it cannot be told which module wrote it.
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "level": config("LOG_LEVEL", default="WARNING"),
+            "formatter": "simple",
         },
     },
     "root": {
@@ -527,8 +535,9 @@ LOGGING = {
         "level": config("LOG_LEVEL", default="WARNING"),
     },
     "loggers": {
+        # No handler of its own: it propagates to the root's, so each line is
+        # printed once.
         "django.db.backends": {
-            "handlers": ["console"],
             "level": "WARNING",
         },
     },
