@@ -1,6 +1,7 @@
 import warnings
 
 from baseclasses import models as bc_models
+from baseclasses.testing import models as bc_test_models
 from baseclasses.repositories.subquery_builder import (
     JsonAgg,
     LinkedSatelliteSubqueryBuilder,
@@ -64,29 +65,35 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 
     def test_get_subquery(self):
         builder = LinkedSatelliteSubqueryBuilder(
-            satellite_class=bc_models.TestLinkSatellite,
+            satellite_class=bc_test_models.TestLinkSatellite,
             field="test_id",
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
         )
         subquery = builder.build(self.reference_date)
-        query = bc_models.TestHubValueDate.objects.annotate(**{"test_id": subquery})
+        query = bc_test_models.TestHubValueDate.objects.annotate(
+            **{"test_id": subquery}
+        )
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
         self.assertEqual(query[1].test_id, self.sat_2_2.test_id)
 
         builder = LinkedSatelliteSubqueryBuilder(
-            satellite_class=bc_models.TestLinkSatellite,
+            satellite_class=bc_test_models.TestLinkSatellite,
             field="test_id",
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
         )
         subquery = builder.build(self.reference_date + timezone.timedelta(days=1))
-        query = bc_models.TestHubValueDate.objects.annotate(**{"test_id": subquery})
+        query = bc_test_models.TestHubValueDate.objects.annotate(
+            **{"test_id": subquery}
+        )
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
         self.assertEqual(query[1].test_id, self.sat_2_2.test_id)
 
         subquery = builder.build(self.reference_date + timezone.timedelta(days=-1))
-        query = bc_models.TestHubValueDate.objects.annotate(**{"test_id": subquery})
+        query = bc_test_models.TestHubValueDate.objects.annotate(
+            **{"test_id": subquery}
+        )
         self.assertEqual(len(query), 2)
         self.assertEqual(query[0].test_id, self.sat_1.test_id)
         # self.assertEqual(query[1].test_id, self.sat_2_1.test_id)
@@ -94,16 +101,16 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 
     def test_build_alias_returns_satellite_pk(self):
         builder = LinkedSatelliteSubqueryBuilder(
-            satellite_class=bc_models.TestLinkSatellite,
+            satellite_class=bc_test_models.TestLinkSatellite,
             field="test_id",
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
         )
         alias_subquery = builder.build_alias(self.reference_date)
-        query = bc_models.TestHubValueDate.objects.alias(
+        query = bc_test_models.TestHubValueDate.objects.alias(
             linked_sat_pk=alias_subquery
         ).annotate(
             test_id=Subquery(
-                bc_models.TestLinkSatellite.objects.filter(
+                bc_test_models.TestLinkSatellite.objects.filter(
                     pk=OuterRef("linked_sat_pk")
                 ).values("test_id")
             )
@@ -122,9 +129,9 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
 
     def test_no_agg_func(self):
         builder = MockLinkedSatelliteSubqueryBuilder(
-            satellite_class=bc_models.TestLinkSatellite,
+            satellite_class=bc_test_models.TestLinkSatellite,
             field="test_id",
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
         )
         builder.agg_func = None
         self.assertRaises(NotImplementedError, builder._annotate_agg_field, "", [])
@@ -139,7 +146,7 @@ class TestLinkedSatelliteSubqueryBuilder(TestCase):
             TypeError, "DummyLinkClass must inherit from valid LinkClass!"
         ):
             LinkedSatelliteSubqueryBuilder(
-                bc_models.TestLinkSatellite,
+                bc_test_models.TestLinkSatellite,
                 "test_id",
                 DummyLinkClass,
             )
@@ -161,20 +168,20 @@ class TestIsPlainColumnFilter(TestCase):
     def test_literal_column_filter_is_plain(self):
         self.assertTrue(
             is_plain_column_filter(
-                bc_models.TestLinkSatellite, Q(test_id__in=[1, 2]) & ~Q(test_id=3)
+                bc_test_models.TestLinkSatellite, Q(test_id__in=[1, 2]) & ~Q(test_id=3)
             )
         )
 
     def test_relation_lookup_is_not_plain(self):
         self.assertFalse(
             is_plain_column_filter(
-                bc_models.TestLinkSatellite, Q(hub_entity__state_date_end__gt=1)
+                bc_test_models.TestLinkSatellite, Q(hub_entity__state_date_end__gt=1)
             )
         )
 
     def test_expression_nested_in_lookup_value_is_not_plain(self):
         self.assertFalse(
             is_plain_column_filter(
-                bc_models.TestLinkSatellite, Q(test_id__in=[1, OuterRef("hub_id")])
+                bc_test_models.TestLinkSatellite, Q(test_id__in=[1, OuterRef("hub_id")])
             )
         )

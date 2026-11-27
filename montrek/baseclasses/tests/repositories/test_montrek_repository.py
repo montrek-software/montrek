@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.test import TestCase
 from django.utils import timezone
 
-from baseclasses.models import TestMontrekHub, TestMontrekSatellite
+from baseclasses.testing.models import TestMontrekHub, TestMontrekSatellite
 from baseclasses.repositories.montrek_repository import MontrekRepository
 from baseclasses.tests.factories.baseclass_factories import TestMontrekSatelliteFactory
 from baseclasses.tests.factories.baseclass_factories import TestMontrekHubFactory

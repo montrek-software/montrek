@@ -4,8 +4,8 @@ import re
 from django.test import TestCase
 from django.utils import timezone
 
-from baseclasses import models as bc_models
-from baseclasses.models import (
+from baseclasses.testing import models as bc_test_models
+from baseclasses.testing.models import (
     TestMontrekHub,
     TestMontrekSatellite,
     TestMontrekTimeSeriesSatellite,
@@ -279,9 +279,9 @@ class TestQueryBuilder(TestCase):
         query_builder = QueryBuilder(annotator, {})
         annotator.subquery_builder_to_annotations(
             ["test_id"],
-            bc_models.TestLinkSatellite,
+            bc_test_models.TestLinkSatellite,
             LinkedSatelliteSubqueryBuilder,
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
             agg_func="string_concat",
         )
 
@@ -306,9 +306,9 @@ class TestQueryBuilder(TestCase):
         annotator = Annotator(TestMontrekHub)
         annotator.subquery_builder_to_annotations(
             ["test_id", "hub_entity_id"],
-            bc_models.TestLinkSatellite,
+            bc_test_models.TestLinkSatellite,
             LinkedSatelliteSubqueryBuilder,
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
             agg_func="string_concat",
             link_satellite_filter={"test_id__gte": 5},
             rename_field_map={"hub_entity_id": "link_hub_id"},
@@ -336,9 +336,9 @@ class TestQueryBuilder(TestCase):
         annotator = Annotator(TestMontrekHub)
         annotator.subquery_builder_to_annotations(
             ["test_id"],
-            bc_models.TestLinkSatellite,
+            bc_test_models.TestLinkSatellite,
             LinkedSatelliteSubqueryBuilder,
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
             agg_func="string_concat",
             link_satellite_filter={"hub_entity__state_date_start__lte": reference_date},
         )
@@ -357,16 +357,16 @@ class TestQueryBuilder(TestCase):
         # Register the same satellite twice with different fields — should share one alias
         annotator.subquery_builder_to_annotations(
             ["test_id"],
-            bc_models.TestLinkSatellite,
+            bc_test_models.TestLinkSatellite,
             LinkedSatelliteSubqueryBuilder,
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
             agg_func="string_concat",
         )
         annotator.subquery_builder_to_annotations(
             ["test_id"],
-            bc_models.TestLinkSatellite,
+            bc_test_models.TestLinkSatellite,
             LinkedSatelliteSubqueryBuilder,
-            link_class=bc_models.LinkTestMontrekTestLink,
+            link_class=bc_test_models.LinkTestMontrekTestLink,
             agg_func="string_concat",
             rename_field_map={"test_id": "test_id_copy"},
         )
@@ -665,7 +665,7 @@ class TestQueryBuilderLatestTs(TestCase):
 
         # Both the dated and the undated lookup are narrowed to the scope
         scoped_lookups = re.findall(
-            rf'FROM "baseclasses_testmontrekhub" (\w+) INNER JOIN [^)]*\) '
+            rf'FROM "baseclasses_testing_testmontrekhub" (\w+) INNER JOIN [^)]*\) '
             rf'WHERE \(\1\."id" IN \({hub_id}\)',
             sql,
         )

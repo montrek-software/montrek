@@ -5,7 +5,7 @@ from typing import cast
 from django.core.management import CommandError, call_command
 from django.test import TestCase
 
-from baseclasses.models import TestHubValueDate
+from baseclasses.testing.models import TestHubValueDate
 from baseclasses.repositories.db.hub_value_date_copy import HubValueDateCopy
 from baseclasses.signals import fill_hub_value_date_copies
 from baseclasses.tests.factories.baseclass_factories import (
@@ -61,7 +61,7 @@ class TestFill(TestCase):
         row = dated_row(TestMontrekHubFactory())
         TestHubValueDate.objects.filter(pk=row.pk).update(value_date_copy=None)
 
-        filled = HubValueDateCopy(["baseclasses"]).fill()
+        filled = HubValueDateCopy(["baseclasses_testing"]).fill()
 
         row.refresh_from_db()
         self.assertEqual(row.value_date_copy, DATE)
@@ -70,7 +70,7 @@ class TestFill(TestCase):
     def test_leaves_undated_rows_alone(self):
         TestMontrekHubFactory()
 
-        filled = HubValueDateCopy(["baseclasses"]).fill()
+        filled = HubValueDateCopy(["baseclasses_testing"]).fill()
 
         self.assertEqual(filled[TestHubValueDate], 0)
 
@@ -79,19 +79,21 @@ class TestAnalyze(TestCase):
     def test_analyzes_a_table_without_statistics_on_the_copy(self):
         dated_row(TestMontrekHubFactory())
 
-        analyzed = HubValueDateCopy(["baseclasses"]).analyze()
+        analyzed = HubValueDateCopy(["baseclasses_testing"]).analyze()
 
         self.assertIn(TestHubValueDate, analyzed)
 
     def test_leaves_analyzed_tables_alone(self):
         dated_row(TestMontrekHubFactory())
-        hub_value_date_copy = HubValueDateCopy(["baseclasses"])
+        hub_value_date_copy = HubValueDateCopy(["baseclasses_testing"])
         hub_value_date_copy.analyze()
 
         self.assertNotIn(TestHubValueDate, hub_value_date_copy.analyze())
 
     def test_leaves_empty_tables_alone(self):
-        self.assertNotIn(TestHubValueDate, HubValueDateCopy(["baseclasses"]).analyze())
+        self.assertNotIn(
+            TestHubValueDate, HubValueDateCopy(["baseclasses_testing"]).analyze()
+        )
 
 
 class TestFillAfterMigrate(TestCase):
@@ -101,14 +103,14 @@ class TestFillAfterMigrate(TestCase):
 
         fill_hub_value_date_copies(sender=None, stdout=out)
 
-        self.assertIn("Analyzed baseclasses.TestHubValueDate", out.getvalue())
+        self.assertIn("Analyzed baseclasses_testing.TestHubValueDate", out.getvalue())
 
 
 class TestCheck(TestCase):
     def _finding(self):
         (finding,) = (
             finding
-            for finding in HubValueDateCopy(["baseclasses"]).check()
+            for finding in HubValueDateCopy(["baseclasses_testing"]).check()
             if finding.model is TestHubValueDate
         )
         return finding
@@ -145,7 +147,7 @@ class TestCheckHubValueDatesCommand(TestCase):
         dated_row(TestMontrekHubFactory())
         out = StringIO()
 
-        call_command("check_hub_value_dates", "baseclasses", stdout=out)
+        call_command("check_hub_value_dates", "baseclasses_testing", stdout=out)
 
         self.assertIn("consistent", out.getvalue())
 
@@ -155,8 +157,10 @@ class TestCheckHubValueDatesCommand(TestCase):
         out = StringIO()
 
         with self.assertRaises(CommandError):
-            call_command("check_hub_value_dates", "baseclasses", stdout=out)
-        self.assertIn("baseclasses.TestHubValueDate: 1 stale copies", out.getvalue())
+            call_command("check_hub_value_dates", "baseclasses_testing", stdout=out)
+        self.assertIn(
+            "baseclasses_testing.TestHubValueDate: 1 stale copies", out.getvalue()
+        )
 
     def test_unknown_app_label(self):
         with self.assertRaises(CommandError):

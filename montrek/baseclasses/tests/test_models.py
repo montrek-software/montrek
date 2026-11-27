@@ -4,7 +4,7 @@ import time
 from collections.abc import Iterable
 from typing import cast
 
-from baseclasses.models import (
+from baseclasses.testing.models import (
     LinkTestMontrekTestLink,
     TestLinkHub,
     TestMontrekHub,

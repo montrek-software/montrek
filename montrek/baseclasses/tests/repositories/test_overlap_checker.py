@@ -3,7 +3,7 @@ from io import StringIO
 from django.core.management import CommandError, call_command
 from django.test import TestCase
 
-from baseclasses import models as bc_models
+from baseclasses.testing import models as bc_test_models
 from baseclasses.repositories.db.overlap_checker import (
     OverlapFinding,
     find_overlapping_versions,
@@ -47,7 +47,7 @@ class TestFindOverlappingVersions(TestCase):
             find_overlapping_versions(),
             [
                 OverlapFinding(
-                    model=bc_models.TestMontrekSatellite,
+                    model=bc_test_models.TestMontrekSatellite,
                     key_field="hub_entity",
                     key_values=[first.hub_entity_id],
                 )
@@ -62,7 +62,9 @@ class TestFindOverlappingVersions(TestCase):
         findings = find_overlapping_versions()
 
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].model, bc_models.TestMontrekTimeSeriesSatellite)
+        self.assertEqual(
+            findings[0].model, bc_test_models.TestMontrekTimeSeriesSatellite
+        )
         self.assertEqual(findings[0].key_field, "hub_value_date")
         self.assertEqual(findings[0].key_values, [hub_value_date.pk])
 
@@ -76,7 +78,7 @@ class TestFindOverlappingVersions(TestCase):
             findings,
             [
                 OverlapFinding(
-                    model=bc_models.LinkTestMontrekTestLink,
+                    model=bc_test_models.LinkTestMontrekTestLink,
                     key_field="hub_in",
                     key_values=[link.hub_in_id],
                 )
@@ -104,5 +106,5 @@ class TestCheckOverlappingVersionsCommand(TestCase):
         with self.assertRaises(CommandError):
             call_command("check_overlapping_versions", stdout=out)
 
-        self.assertIn("baseclasses.TestMontrekSatellite", out.getvalue())
+        self.assertIn("baseclasses_testing.TestMontrekSatellite", out.getvalue())
         self.assertIn(str(first.hub_entity_id), out.getvalue())

@@ -12,12 +12,12 @@ from baseclasses.tests.factories.montrek_factory_schemas import (
 
 class TestMontrekHubFactory(MontrekHubFactory):
     class Meta:
-        model = "baseclasses.TestMontrekHub"
+        model = "baseclasses_testing.TestMontrekHub"
 
 
 class TestHubValueDateFactory(MontrekHubValueDateFactory):
     class Meta:
-        model = "baseclasses.TestHubValueDate"
+        model = "baseclasses_testing.TestHubValueDate"
 
     hub = factory.SubFactory(TestMontrekHubFactory)
     value_date_list = factory.SubFactory(ValueDateListFactory)
@@ -25,7 +25,7 @@ class TestHubValueDateFactory(MontrekHubValueDateFactory):
 
 class TestMontrekSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
-        model = "baseclasses.TestMontrekSatellite"
+        model = "baseclasses_testing.TestMontrekSatellite"
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
     test_name = factory.Sequence(lambda n: f"Test Name {n}")
@@ -34,12 +34,12 @@ class TestMontrekSatelliteFactory(MontrekSatelliteFactory):
 
 class TestLinkHubFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "baseclasses.TestLinkHub"
+        model = "baseclasses_testing.TestLinkHub"
 
 
 class TestLinkSatelliteFactory(MontrekSatelliteFactory):
     class Meta:
-        model = "baseclasses.TestLinkSatellite"
+        model = "baseclasses_testing.TestLinkSatellite"
 
     hub_entity = factory.SubFactory(TestLinkHubFactory)
     test_id = factory.Sequence(lambda n: n)
@@ -49,7 +49,7 @@ class TestLinkSatelliteFactory(MontrekSatelliteFactory):
 
 class LinkTestMontrekTestLinkFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "baseclasses.LinkTestMontrekTestLink"
+        model = "baseclasses_testing.LinkTestMontrekTestLink"
 
     hub_in = factory.SubFactory(TestMontrekHubFactory)
     hub_out = factory.SubFactory(TestLinkHubFactory)
@@ -57,13 +57,13 @@ class LinkTestMontrekTestLinkFactory(factory.django.DjangoModelFactory):
 
 class TestMontrekSatelliteNoIdFieldsFactory(MontrekSatelliteFactory):
     class Meta:
-        model = "baseclasses.TestMontrekSatelliteNoIdFields"
+        model = "baseclasses_testing.TestMontrekSatelliteNoIdFields"
 
     hub_entity = factory.SubFactory(TestMontrekHubFactory)
 
 
 class TestMontrekTimeSeriesSatelliteFactory(MontrekTSSatelliteFactory):
     class Meta:
-        model = "baseclasses.TestMontrekTimeSeriesSatellite"
+        model = "baseclasses_testing.TestMontrekTimeSeriesSatellite"
 
     hub_value_date = factory.SubFactory(TestHubValueDateFactory)

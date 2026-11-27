@@ -39,7 +39,7 @@ from baseclasses.tests.factories.baseclass_factories import (
     TestMontrekSatelliteFactory,
     TestMontrekHubFactory,
 )
-from baseclasses.models import TestMontrekSatellite
+from baseclasses.testing.models import TestMontrekSatellite
 
 
 class TestFilterForm(TestCase):

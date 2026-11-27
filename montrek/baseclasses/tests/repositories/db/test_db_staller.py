@@ -1,7 +1,7 @@
 from django.test import TestCase
 from baseclasses.repositories.db.db_staller import DbStaller
 
-from baseclasses.models import TestMontrekHub, TestMontrekSatellite
+from baseclasses.testing.models import TestMontrekHub, TestMontrekSatellite
 from baseclasses.repositories.annotator import Annotator
 
 

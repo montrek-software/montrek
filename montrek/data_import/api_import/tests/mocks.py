@@ -8,7 +8,7 @@ from data_import.api_import.managers.api_data_import_processor import (
 from data_import.api_import.repositories.api_data_import_registry_repositories import (
     ApiDataImportRegistryRepository,
 )
-from data_import.base.models import TestApiRegistrySatellite, TestRegistryHub
+from data_import.testing.models import TestApiRegistrySatellite, TestRegistryHub
 from requesting.managers.request_manager import RequestJsonManager
 
 

@@ -220,7 +220,7 @@ def get_montrek_extension_apps_list():
 # `manage.py test`, and under `makemigrations` so that their migrations are kept
 # up to date. Elsewhere only with ADD_TEST_ONLY_APPS (default: DEBUG), e.g. to
 # try the examples on a development database; production never sees them.
-TEST_ONLY_APPS = ["montrek_example"]
+TEST_ONLY_APPS = ["baseclasses.testing", "data_import.testing", "montrek_example"]
 ADD_TEST_ONLY_APPS = config("ADD_TEST_ONLY_APPS", default=DEBUG, cast=bool)
 
 MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
