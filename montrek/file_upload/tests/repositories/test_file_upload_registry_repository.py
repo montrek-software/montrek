@@ -1,6 +1,4 @@
-from django.test import TestCase, RequestFactory
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.messages.middleware import MessageMiddleware
+from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from file_upload.tests.factories.file_upload_factories import (
     FileUploadRegistryStaticSatelliteFactory,
@@ -21,7 +19,7 @@ class TestFileUploadRegistryRepository(TestCase):
         self.session_data = {"user_id": self.user.id}
         self.test_file = SimpleUploadedFile(
             name="test_file.txt",
-            content="test".encode("utf-8"),
+            content=b"test",
             content_type="text/plain",
         )
         self.registry_sat = FileUploadRegistryStaticSatelliteFactory(
@@ -31,18 +29,12 @@ class TestFileUploadRegistryRepository(TestCase):
         self.registry_sat.hub_entity.link_file_upload_registry_file_upload_file.add(
             self.file_sat.hub_entity
         )
-        self.request = RequestFactory().get("/fake/")
-        session_middleware = SessionMiddleware(lambda request: None)
-        session_middleware.process_request(self.request)
-        self.request.session.save()
-        message_middleware = MessageMiddleware(lambda request: None)
-        message_middleware.process_request(self.request)
 
     def test_get_upload_file_from_registry(self):
         repository = MockFileUploadRegistryRepository(self.session_data)
         file_upload_registry = repository.receive().first()
         test_file = repository.get_upload_file_from_registry(
-            file_upload_registry.hub.get_hub_value_date().id, self.request
+            file_upload_registry.hub.get_hub_value_date().id
         )
         expected_file = self.file_sat.file
         self.assertEqual(test_file.read(), expected_file.read())
@@ -53,7 +45,7 @@ class TestFileUploadRegistryRepository(TestCase):
         first_upload_date = queryset.first().upload_date
 
         self.assertEqual(first_upload_date, self.file_sat.created_at)
-        assert queryset.count() == 1
+        self.assertEqual(queryset.count(), 1)
 
         second_file_sat = FileUploadFileStaticSatelliteFactory(file=self.test_file)
         repository.std_create_object(
@@ -66,9 +58,9 @@ class TestFileUploadRegistryRepository(TestCase):
         queryset = repository.receive()
         second_upload_date = queryset.first().upload_date
 
-        assert second_upload_date > first_upload_date
-        assert second_upload_date == second_file_sat.created_at
-        assert queryset.count() == 1
+        self.assertGreater(second_upload_date, first_upload_date)
+        self.assertEqual(second_upload_date, second_file_sat.created_at)
+        self.assertEqual(queryset.count(), 1)
 
 
 class TestFileUploadRegistryRepositorySetUp(TestCase):

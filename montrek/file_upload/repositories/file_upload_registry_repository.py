@@ -1,6 +1,5 @@
 import os
 from typing import cast
-from django.contrib import messages
 from django.core.files import File
 from django.core.files.storage import default_storage
 from baseclasses.models import MontrekLinkABC
@@ -92,29 +91,24 @@ class FileUploadRegistryRepositoryABC(PipelineRegistryRepositoryABC):
             )
 
     def get_upload_file_from_registry(
-        self, file_upload_registry_id: int, request
+        self, file_upload_registry_id: int
     ) -> File | None:
         file_upload_registry_path = self.receive().get(pk=file_upload_registry_id).file
-        return self._get_file_from_registry(file_upload_registry_path, request)
+        return self._get_file_from_registry(file_upload_registry_path)
 
-    def get_log_file_from_registry(
-        self, file_log_registry_id: int, request
-    ) -> File | None:
+    def get_log_file_from_registry(self, file_log_registry_id: int) -> File | None:
         file_log_registry_path = self.receive().get(pk=file_log_registry_id).log_file
+        return self._get_file_from_registry(file_log_registry_path)
 
-        return self._get_file_from_registry(file_log_registry_path, request)
-
-    def _get_file_from_registry(
-        self, file_registry_path: str | None, request
-    ) -> File | None:
+    def _get_file_from_registry(self, file_registry_path: str | None) -> File | None:
         """
-        Returns an open File handle for streaming. The caller is responsible
-        for closing it, or passing it to FileResponse which will close it automatically.
+        Returns an open File handle for streaming, or None if the registry has no
+        file or the storage has lost it. The caller is responsible for closing it,
+        or passing it to FileResponse which will close it automatically.
         """
         if not file_registry_path:
             return None
         if not default_storage.exists(file_registry_path):
-            messages.error(request, f"File {file_registry_path} not found")
             return None
         return File(
             default_storage.open(file_registry_path, "rb"),

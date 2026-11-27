@@ -1,3 +1,7 @@
+from django.core.files import File
+from baseclasses.errors.montrek_user_error import MontrekError
+from django.http import FileResponse
+from django.http.response import HttpResponseBase
 from file_upload.constants import UploadStatus
 from process_pipeline.managers.pipeline_registry_manager import (
     PipelineRegistryManagerABC,
@@ -27,6 +31,26 @@ class FileUploadRegistryManagerABC(PipelineRegistryManagerABC):
     download_column_name = "File"
     revoke_url = "revoke_file_upload_task"
     revoke_hover_text = "Revoke Upload Task"
+    # Repository method that returns the file to download for the registry ``pk``.
+    get_file_method = "get_upload_file_from_registry"
+    _download_file: File | None = None
+
+    def download(self) -> HttpResponseBase:
+        return FileResponse(self.download_file)
+
+    def get_filename(self) -> str:
+        return str(self.download_file.name)
+
+    @property
+    def download_file(self) -> File:
+        if self._download_file is None:
+            download_file = getattr(self.repository, self.get_file_method)(
+                int(self.session_data["pk"])
+            )
+            if download_file is None:
+                raise MontrekError("File Not Found")
+            self._download_file = download_file
+        return self._download_file
 
     @property
     def file_name_element(self) -> StringTableElement:
