@@ -1,7 +1,10 @@
-import pandas as pd
-import subprocess
+import logging
 import os
-from functools import wraps
+import subprocess  # nosec B404 - runs git with fixed arguments, no shell
+
+import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class GitInfo:
@@ -41,9 +44,11 @@ class GitInfo:
                 cmd.extend(["-C", self.git_path])
             cmd.extend(command_args)
 
-            result = subprocess.check_output(cmd).decode("utf-8").strip()
-            return result
-        except subprocess.CalledProcessError:
+            # Fixed git command, no shell.
+            output = subprocess.check_output(cmd)  # noqa: S603  # nosec B603
+            return output.decode("utf-8").strip()
+        # FileNotFoundError: no git executable on PATH, as in slim app images.
+        except (subprocess.CalledProcessError, FileNotFoundError):
             return default
 
     def _check_is_git_repo(self) -> bool:
@@ -52,11 +57,10 @@ class GitInfo:
 
         if result == "true":
             return True
-        else:
-            print(
-                f"Error: {self.git_path} is not a git repository or git is not installed"
-            )
-            return False
+        logger.warning(
+            "%s is not a git repository or git is not installed", self.git_path
+        )
+        return False
 
     def _collect_git_info(self):
         """Collect all git information and store it in self.git_info."""

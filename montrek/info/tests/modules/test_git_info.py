@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-import subprocess
+import subprocess  # nosec B404 - builds a git repository for the tests
 import tempfile
 import shutil
 from unittest.mock import patch
@@ -18,36 +18,32 @@ class GitInfoTests(TestCase):
         # Create a temporary directory that will simulate a git repository
         self.temp_dir = tempfile.mkdtemp()
 
-        # Store current directory to restore later
-        self.original_dir = os.getcwd()
-
     def tearDown(self):
         """Clean up after each test."""
         # Remove the temporary directory
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-        # Return to original directory
-        os.chdir(self.original_dir)
+    def _git(self, *args: str) -> None:
+        # Fixed git command in a temporary directory.
+        subprocess.run(  # noqa: S603  # nosec B603 B607
+            ["git", "-C", self.temp_dir, *args],  # noqa: S607
+            check=True,
+            capture_output=True,
+        )
 
     def _create_mock_git_repo(self):
         """Helper method to simulate a git repository for tests."""
-        os.chdir(self.temp_dir)
-        subprocess.run(["git", "init"], check=True)
-        subprocess.run(["git", "config", "user.name", "Test User"], check=True)
-        subprocess.run(["git", "config", "user.email", "test@example.com"], check=True)
+        self._git("init")
+        self._git("config", "user.name", "Test User")
+        self._git("config", "user.email", "test@example.com")
 
         # Create a dummy file and commit it
         with open(os.path.join(self.temp_dir, "test.txt"), "w") as f:
             f.write("Test content")
 
-        subprocess.run(["git", "add", "."], check=True)
-        subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
-
-        # Create a tag
-        subprocess.run(["git", "tag", "v1.0.0"], check=True)
-
-        # Return to original directory
-        os.chdir(self.original_dir)
+        self._git("add", ".")
+        self._git("commit", "-m", "Initial commit")
+        self._git("tag", "v1.0.0")
 
     def test_init_with_valid_git_repo(self):
         """Test initializing GitInfo with a valid git repository."""
@@ -80,6 +76,17 @@ class GitInfoTests(TestCase):
 
             self.assertFalse(git_info.is_git_repo)
             self.assertEqual(git_info.git_info, {})
+
+    def test_init_without_git_executable(self):
+        with patch("subprocess.check_output") as mock_check_output:
+            mock_check_output.side_effect = FileNotFoundError(2, "No such file", "git")
+            with self.assertLogs("info.modules.git_info", "WARNING") as logs:
+                git_info = GitInfo(self.temp_dir)
+
+        self.assertFalse(git_info.is_git_repo)
+        self.assertEqual(git_info.to_dict(), {})
+        self.assertTrue(git_info.to_dataframe().empty)
+        self.assertIn("git is not installed", logs.output[0])
 
     @patch("subprocess.check_output")
     def test_run_git_command_success(self, mock_check_output):
@@ -115,33 +122,23 @@ class GitInfoTests(TestCase):
     def test_collect_git_info(self, mock_check_output):
         """Test the _collect_git_info method."""
 
-        # Mock different return values for different commands
-        def side_effect(*args, **kwargs):
-            cmd = args[0]
-            if "rev-parse" in cmd and "--abbrev-ref" in cmd:
-                return b"master"
-            elif (
-                "rev-parse" in cmd
-                and "--abbrev-ref" not in cmd
-                and "--show-toplevel" not in cmd
-            ):
-                return b"abcdef1234567890"
-            elif "describe" in cmd:
-                return b"v1.0.0"
-            elif "log" in cmd and "format:%an" in cmd[0]:
-                return b"Test User"
-            elif "log" in cmd and "format:%cd" in cmd[0]:
-                return b"2023-01-01 12:00:00 +0000"
-            elif "config" in cmd:
-                return b"git@github.com:user/repo.git"
-            elif "rev-parse" in cmd and "--show-toplevel" in cmd:
-                return b"/path/to/repo"
-            elif "rev-list" in cmd:
-                return b"42"
-            elif "status" in cmd:
-                return b""
-            else:
-                return b"unknown"
+        # Output per command, by the first argument found in it; the order
+        # matters, as "--abbrev-ref" commands are "rev-parse" commands too.
+        outputs = {
+            "--abbrev-ref": b"master",
+            "rev-parse": b"abcdef1234567890",
+            "describe": b"v1.0.0",
+            "--pretty=format:%an": b"Test User",
+            "--pretty=format:%cd": b"2023-01-01 12:00:00 +0000",
+            "config": b"git@github.com:user/repo.git",
+            "rev-list": b"42",
+            "status": b"",
+        }
+
+        def side_effect(cmd, *args, **kwargs):
+            return next(
+                (output for arg, output in outputs.items() if arg in cmd), b"unknown"
+            )
 
         mock_check_output.side_effect = side_effect
 
@@ -170,6 +167,7 @@ class GitInfoTests(TestCase):
         self.assertEqual(git_info.git_info["latest_tag"], "v1.0.0")
         self.assertEqual(git_info.git_info["is_clean"], "True")
         self.assertEqual(git_info.git_info["commit_count"], "42")
+        self.assertEqual(git_info.git_info["author"], "Test User")
 
     def test_to_dict_with_valid_repo(self):
         """Test the to_dict method with a valid git repository."""
