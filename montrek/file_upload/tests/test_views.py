@@ -1,4 +1,6 @@
 import datetime
+import re
+from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -34,7 +36,7 @@ from process_pipeline.dataclasses.registry_table_elements import (
 )
 from testing.decorators.add_logged_in_user import add_logged_in_user
 from testing.test_cases.view_test_cases import (
-    MontrekFileResponseTestCase,
+    MontrekDownloadViewTestCase,
     MontrekListViewTestCase,
 )
 
@@ -321,10 +323,9 @@ class TestFileUploadRegistryViewInvalidReferenceDate(TestCase):
         )
 
 
-class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
+class TestMontrekDownloadFileView(MontrekDownloadViewTestCase):
     view_class = MontrekDownloadFileView
     viewname = "montrek_download_file"
-    is_redirected = True
 
     def build_factories(self):
         self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
@@ -334,6 +335,9 @@ class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
     def url_kwargs(self) -> dict:
         return {"pk": self.registrysat.get_hub_value_date().pk}
 
+    def expected_filename(self) -> str:
+        return re.escape(Path(self.registrysat.file_name).stem) + r".*\.csv"
+
     def test_return_file(self):
         content = b"".join(self.response.streaming_content)
         self.assertEqual(content, b"test")
@@ -341,10 +345,12 @@ class TestMontrekDownloadFileView(MontrekFileResponseTestCase):
         self.assertEqual(repo.receive().count(), 1)
 
 
-class TestMontrekDownloadLogFileView(MontrekFileResponseTestCase):
+class TestMontrekDownloadLogFileView(MontrekDownloadViewTestCase):
     view_class = MontrekDownloadLogFileView
     viewname = "montrek_download_log_file"
-    is_redirected = True
+
+    def expected_filename(self) -> str:
+        return r"test_file.*\.txt"
 
     def build_factories(self):
         self.registrysat = FileUploadRegistryStaticSatelliteFactory.create(
@@ -359,3 +365,40 @@ class TestMontrekDownloadLogFileView(MontrekFileResponseTestCase):
         self.assertEqual(content, b"test")
         repo = DownloadRegistryRepository()
         self.assertEqual(repo.receive().count(), 1)
+
+
+class TestMontrekDownloadFileViewWithoutFile(TestCase):
+    @add_logged_in_user
+    def setUp(self):
+        self.registrysat = FileUploadRegistryStaticSatelliteFactory.create()
+
+    def _get(self, viewname: str):
+        return self.client.get(
+            reverse(viewname, kwargs={"pk": self.registrysat.get_hub_value_date().pk})
+        )
+
+    def _assert_file_not_found(self, viewname: str):
+        response = self._get(viewname)
+        self.assertRedirects(response, reverse("home"), fetch_redirect_response=False)
+        self.assertEqual(
+            [str(m) for m in get_messages(response.wsgi_request)], ["File Not Found"]
+        )
+        self.assertEqual(DownloadRegistryRepository().receive().count(), 0)
+
+    def test_missing_upload_file_is_not_found(self):
+        self._assert_file_not_found("montrek_download_file")
+
+    def test_missing_log_file_is_not_found(self):
+        self._assert_file_not_found("montrek_download_log_file")
+
+    def test_missing_file_redirects_back_to_referer(self):
+        response = self.client.get(
+            reverse(
+                "montrek_download_file",
+                kwargs={"pk": self.registrysat.get_hub_value_date().pk},
+            ),
+            headers={"referer": "/file_upload/registry/"},
+        )
+        self.assertRedirects(
+            response, "/file_upload/registry/", fetch_redirect_response=False
+        )

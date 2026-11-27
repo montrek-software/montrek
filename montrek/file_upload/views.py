@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 from django.forms import Form
@@ -9,6 +8,7 @@ from django.template.response import TemplateResponse
 from baseclasses.views import (
     MontrekApiViewMixin,
     MontrekCreateView,
+    MontrekDownloadView,
     MontrekListView,
     MontrekRedirectView,
     MontrekTemplateView,
@@ -17,8 +17,7 @@ from baseclasses.views import (
 from django.contrib import messages
 from django.core.files import File
 from django.contrib.auth.views import redirect_to_login
-from django.http import FileResponse, HttpResponseRedirect
-from django.shortcuts import redirect
+from django.http import HttpResponseRedirect
 from django.urls import resolve, reverse
 from file_upload.forms import FieldMapCreateForm, UploadFileForm
 from file_upload.managers.field_map_manager import FieldMapManagerABC
@@ -27,13 +26,8 @@ from file_upload.managers.file_upload_registry_manager import (
     FileUploadRegistryManager,
     FileUploadRegistryManagerABC,
 )
-from baseclasses.managers.montrek_manager import MontrekManager
 from baseclasses.pages import MontrekPage
 from file_upload.pages import FileUploadPage
-from info.managers.download_registry_storage_managers import (
-    DownloadRegistryStorageManager,
-)
-from info.models.download_registry_sat_models import DownloadType
 
 from montrek.celery_app import app as celery_app
 from rest_framework import status
@@ -185,28 +179,17 @@ class MontrekUploadFileView(MontrekApiViewMixin, MontrekTemplateView):
         return self.upload_form_class(self.accept, request.POST, request.FILES)
 
 
-class MontrekDownloadFileBaseView(MontrekTemplateView):
-    # Any manager works whose repository provides ``get_file_method`` and that
-    # names the download via ``document_name``.
-    manager_class: type[MontrekManager] = FileUploadRegistryManager
-    page_class: type[MontrekPage] = FileUploadPage
+class MontrekDownloadFileBaseView(MontrekDownloadView):
+    """Hands out the file of a registry. Without one, the user is sent back with
+    a "File Not Found" message."""
+
+    manager_class: type[FileUploadRegistryManagerABC] = FileUploadRegistryManager
+    # Repository method that returns the file for the ``pk`` of the URL.
     get_file_method = ""
 
-    def get(self, request, *args, **kwargs):
-        upload_file = getattr(self.manager.repository, self.get_file_method)(
-            self.kwargs["pk"], self.request
-        )
-        if upload_file is None:
-            messages.info(request, "No download file available!")
-            return redirect(request.META.get("HTTP_REFERER"))
-        ext = Path(upload_file.name).suffix.lstrip(".").lower()
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType(ext)
-        )
-        return FileResponse(upload_file, as_attachment=True)
-
-    def get_template_context(self, **kwargs):
-        return {}
+    def configure_manager(self, manager: FileUploadRegistryManagerABC) -> None:
+        super().configure_manager(manager)
+        manager.get_file_method = self.get_file_method
 
 
 class MontrekDownloadFileView(MontrekDownloadFileBaseView):

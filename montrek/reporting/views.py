@@ -5,8 +5,10 @@ from pathlib import Path
 from django.contrib.auth.decorators import login_required
 
 from baseclasses.access import AccessKind
+from baseclasses.dataclasses.download_type import DownloadType
 from baseclasses.forms import MontrekCreateForm
 from baseclasses.sanitizer import HtmlSanitizer
+from baseclasses.signals import document_downloaded
 from baseclasses.utils import get_content_type
 from baseclasses.views import (
     MontrekApiViewMixin,
@@ -20,10 +22,6 @@ from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirec
 from django.shortcuts import render
 from django.views import View
 from django.views.decorators.http import require_safe
-from info.managers.download_registry_storage_managers import (
-    DownloadRegistryStorageManager,
-)
-from info.models.download_registry_sat_models import DownloadType
 from reporting.managers.latex_report_manager import LatexReportManager
 from reporting.managers.montrek_report_manager import MontrekReportManager
 from reporting.mixins.view_form_mixin import ViewFormMixin
@@ -44,10 +42,11 @@ def download_reporting_file_view(request, download_id: uuid.UUID, file_name: str
     if not mailed_downloads.exists(download_id, file_name):
         raise Http404
     file = mailed_downloads.open(download_id, file_name)
-    DownloadRegistryStorageManager(
-        {"user_id": request.user.id}
-    ).store_in_download_registry(
-        file_name, DownloadType(Path(file_name).suffix.lstrip(".").lower())
+    document_downloaded.send(
+        sender=download_reporting_file_view,
+        session_data={"user_id": request.user.id},
+        document_name=file_name,
+        download_type=DownloadType(Path(file_name).suffix.lstrip(".").lower()),
     )
     return FileResponse(
         file,
@@ -120,9 +119,7 @@ class MontrekReportView(
     def report_to_markdown(self) -> HttpResponse:
         filename = f"{self.manager.document_name}.md"
         response = HttpResponse(self.manager.to_markdown())
-        DownloadRegistryStorageManager(self.session_data).store_in_download_registry(
-            self.manager.document_name, DownloadType.MD
-        )
+        self.record_download(DownloadType.MD)
         response["Content-Type"] = get_content_type(filename)
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
