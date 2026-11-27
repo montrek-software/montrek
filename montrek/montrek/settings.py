@@ -566,7 +566,7 @@ CUSTOM_CSS = [
 # CLient Logo
 CLIENT_LOGO_PATH = config(
     "CLIENT_LOGO_PATH",
-    default="https://vme-stiftung.de/wp-content/uploads/2019/09/example-logo-2-300x201.jpg",
+    default="montrek_logo.svg",
 )
 CLIENT_LOGO_LINK = config("CLIENT_LOGO_LINK", default="https://example.com")
 
