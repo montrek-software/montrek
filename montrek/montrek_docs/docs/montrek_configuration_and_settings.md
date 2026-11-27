@@ -8,7 +8,7 @@ The following is an overview of the Montrek project structure:
 
 *   `baseclasses`: This directory contains the core classes and utilities that make up the Montrek framework.
 *   `reporting`: This directory contains the reporting-related classes and utilities.
-*   `montrek_example`: This directory contains example models, views, and templates that demonstrate how to use the Montrek framework.
+*   `montrek_example`: This directory contains example models, views, and templates that demonstrate how to use the Montrek framework. It is a test-only app: installed under `manage.py test`, and otherwise only with `ADD_TEST_ONLY_APPS` (default: `DEBUG`), so a production database never gets its tables.
 
 ## Settings and Environment Variables
 
