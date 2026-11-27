@@ -209,12 +209,25 @@ def get_montrek_extension_apps_list():
         list: Fully qualified Montrek extension apps.
     """
     base_dir = Path(BASE_DIR)
-    return get_montrek_extension_apps(base_dir, "")
+    return [
+        app
+        for app in get_montrek_extension_apps(base_dir, "")
+        if app not in TEST_ONLY_APPS
+    ]
 
+
+# Apps whose models belong in the test database only. They are installed under
+# `manage.py test`, and under `makemigrations` so that their migrations are kept
+# up to date. Elsewhere only with ADD_TEST_ONLY_APPS (default: DEBUG), e.g. to
+# try the examples on a development database; production never sees them.
+TEST_ONLY_APPS = ["montrek_example"]
+ADD_TEST_ONLY_APPS = config("ADD_TEST_ONLY_APPS", default=DEBUG, cast=bool)
 
 MONTREK_EXTENSION_APPS = get_montrek_extension_apps_list()
 
 INSTALLED_APPS = DJANGO_APPS + MONTREK_EXTENSION_APPS
+if TESTING or "makemigrations" in sys.argv or ADD_TEST_ONLY_APPS:
+    INSTALLED_APPS += TEST_ONLY_APPS
 
 NAVBAR_APPS = config("NAVBAR_APPS", default="").replace(" ", "").split(",")
 # some_repo::NEW*Name -> {some_repo: "NEW Name"}

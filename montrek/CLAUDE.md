@@ -138,7 +138,7 @@ Make sure that the produced code is ruff and sonarcube compliant
 
 ### App Discovery
 
-`settings.py` auto-discovers Django apps by recursively scanning `BASE_DIR` for directories containing `apps.py`. Apps do **not** need to be manually registered in `INSTALLED_APPS` — they are picked up automatically via `get_montrek_extension_apps()`.
+`settings.py` auto-discovers Django apps by recursively scanning `BASE_DIR` for directories containing `apps.py`. Apps do **not** need to be manually registered in `INSTALLED_APPS` — they are picked up automatically via `get_montrek_extension_apps()`. Exception: `TEST_ONLY_APPS` (`montrek_example`) are installed only under `manage.py test` and `makemigrations`, or with `ADD_TEST_ONLY_APPS` (default `DEBUG`), so their tables stay out of production databases.
 
 URL routing in `montrek/urls.py` similarly auto-discovers and includes each app's `urls.py`.
 

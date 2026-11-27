@@ -36,7 +36,9 @@ repos:
     hooks:
       - id: mypy
         name: mypy
-        entry: bash -c "cd montrek && mypy . --exclude '^mt_[^/]+/'"
+        # ADD_TEST_ONLY_APPS: the django-stubs plugin loads the installed apps'
+        # models, and the test-only apps' code is checked as well.
+        entry: bash -c "cd montrek && ADD_TEST_ONLY_APPS=1 mypy . --exclude '^mt_[^/]+/'"
         language: system
         types: [python]
         pass_filenames: false
