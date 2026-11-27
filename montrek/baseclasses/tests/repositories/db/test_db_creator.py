@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 
-from baseclasses.models import (
+from baseclasses.testing.models import (
     LinkTestMontrekTestLink,
     TestMontrekSatellite,
     TestMontrekTimeSeriesSatellite,

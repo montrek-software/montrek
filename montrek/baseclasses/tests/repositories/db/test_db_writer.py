@@ -3,7 +3,7 @@ from baseclasses.repositories.db.db_staller import DbStaller
 from baseclasses.repositories.db.db_writer import DbWriter
 from baseclasses.repositories.annotator import Annotator
 
-from baseclasses.models import TestMontrekSatellite, TestMontrekHub
+from baseclasses.testing.models import TestMontrekSatellite, TestMontrekHub
 from baseclasses.utils import montrek_time
 
 

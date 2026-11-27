@@ -3,10 +3,7 @@ from data_import.base.managers.data_import_managers import (
     ImportDataType,
 )
 from data_import.base.managers.processor_base import ProcessorBaseABC
-from data_import.base.models import (
-    TestRegistryHub,
-    TestRegistrySatellite,
-)
+from data_import.testing.models import TestRegistryHub, TestRegistrySatellite
 from data_import.base.repositories.registry_repositories import RegistryRepositoryABC
 from data_import.base.tasks.data_import_task import DataImportTask
 

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from baseclasses.models import TestMontrekSatellite
+from baseclasses.testing.models import TestMontrekSatellite
 from baseclasses.repositories.db.satellite_hashes import (
     identifier_hash,
     recompute_hash_values,

@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from data_import.base.models import TestRegistryHub, TestRegistrySatellite
+from data_import.testing.models import TestRegistryHub, TestRegistrySatellite
 
 
 class TestCeleryTaskIdOnConcreteModel(TestCase):
