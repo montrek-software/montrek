@@ -12,7 +12,7 @@ from django.db.models import (
     QuerySet,
     Subquery,
 )
-from psycopg2 import sql
+from django.db.backends.postgresql.psycopg_any import sql
 
 from baseclasses.models import HubValueDate, ValueDateList
 
