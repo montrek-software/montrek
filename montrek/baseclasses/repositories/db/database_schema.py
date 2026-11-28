@@ -1,5 +1,5 @@
 from django.db import connections
-from psycopg2 import sql
+from django.db.backends.postgresql.psycopg_any import sql
 
 
 class DatabaseSchema:

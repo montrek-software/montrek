@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import ProgrammingError, connection, transaction
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
-from psycopg2 import sql
+from django.db.backends.postgresql.psycopg_any import sql
 
 from baseclasses.repositories.db.database_schema import DatabaseSchema
 from baseclasses.signals import create_database_schema
